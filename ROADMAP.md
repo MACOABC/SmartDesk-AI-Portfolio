@@ -4,15 +4,15 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Solo Gate 0 está aprobado. Los criterios siguientes concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0 y Gate 1 están aprobados. Los criterios siguientes concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
 | Fase | Alcance | Gate / hito | Estado |
 | --- | --- | --- | --- |
 | 0 | Hardening OCI, Ubuntu y Docker. | Gate 0. | APROBADO. |
-| 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | ACTUAL: documentos aprobados; repositorio local inicializado. |
-| 2 | Webhook, validación y persistencia inicial. | Gate 2. | Pendiente. |
+| 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | APROBADA. |
+| 2 | Webhook, validación y persistencia inicial. | Gate 2. | ACTUAL. |
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | Pendiente. |
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | Pendiente. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | Pendiente. |

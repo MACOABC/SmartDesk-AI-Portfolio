@@ -1,16 +1,17 @@
 # SmartDesk AI — Estado actual
 
 - **Gate 0: APROBADO.**
-- **Fase actual: Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n.**
+- **Gate 1: APROBADO.**
+- **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
+- **Fase actual: Fase 2 — Webhook + validación + persistencia inicial.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
 - **Base de n8n de Fase 1: IMPLEMENTADA Y VALIDADA EN LA VM ORACLE; el túnel SSH fue comprobado manualmente por el usuario.**
-- **Gate 1: PENDIENTE de revisión integral y aprobación explícita.**
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con la solicitud documental actual. La aprobación de Gate 0 es histórica y explícita; no equivale a una nueva auditoría de la VM en esta tarea.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL y n8n. Gate 0 y Gate 1 cuentan con aprobación explícita del usuario.
 
 ## Infraestructura aprobada
 
@@ -86,13 +87,26 @@ n8n fue incorporado al stack y validado dinámicamente en la VM Oracle ARM64. La
 
 Durante una validación, una salida de herramienta incluyó accidentalmente valores sensibles específicos de n8n. Los valores fueron rotados inmediatamente antes de que existieran workflows o credenciales de aplicación; la contraseña anterior quedó invalidada y las claves internas generadas por n8n fueron reemplazadas sin borrar bases ni volúmenes. No se registran valores antiguos ni nuevos en el repositorio.
 
-## Pendientes de Fase 1
+## Cierre de Fase 1 y Gate 1
 
-PostgreSQL y la base de n8n ya están implementados y validados. Queda pendiente la revisión formal de todos los criterios de Gate 1 y su aprobación explícita; este registro no lo declara aprobado ni autoriza el inicio de Fase 2.
+La auditoría integral de Gate 1 fue ejecutada sobre el repositorio local y el stack real de la VM Oracle. Todos los criterios finalizaron con resultado `PASS` y el usuario aprobó formalmente Gate 1.
+
+| Criterio de cierre | Estado | Evidencia saneada |
+| --- | --- | --- |
+| Salud de servicios | PASS | PostgreSQL y n8n alcanzaron y conservaron estado `healthy`. |
+| Separación de datos y permisos | PASS | `n8n_db`/`n8n_app` y `smartdesk_db`/`smartdesk_app` permanecen separados, con acceso cruzado denegado y sin privilegios administrativos para los roles de aplicación. |
+| Persistencia PostgreSQL | PASS | Un marcador temporal persistió después de bajar y levantar el stack; fue eliminado al concluir la auditoría. |
+| Persistencia n8n | PASS | Un marcador temporal persistió en el volumen de n8n después del ciclo completo; fue eliminado al concluir la auditoría. |
+| Redes y exposición | PASS | La red `database` es interna; PostgreSQL no publica `5432` y n8n está enlazado únicamente a `127.0.0.1:5678`, sin acceso público directo. |
+| Ciclo del stack | PASS | `docker compose down` y `docker compose up -d` se completaron sin borrar volúmenes ni perder datos; ambos servicios recuperaron su estado saludable. |
+| Políticas de reinicio | PASS | Ambos servicios declaran y aplican efectivamente `unless-stopped`. |
+| Contenedores esperados | PASS | Al cierre solo estaban ejecutándose los contenedores de PostgreSQL y n8n. |
+
+Fase 1 queda completada. Esta aprobación no anticipa el cumplimiento de Gate 2 ni autoriza funcionalidades fuera del alcance de Fase 2.
 
 ## Siguiente paso
 
-Registrar la integración persistente de n8n en Git y detenerse. Esperar una instrucción explícita antes de evaluar el cierre de Gate 1 o iniciar cualquier trabajo posterior.
+Iniciar Fase 2 únicamente mediante una instrucción explícita y comenzar por el contrato del webhook, su validación y la persistencia inicial. No incorporar todavía IA, Telegram ni otras fases posteriores.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
@@ -100,6 +114,6 @@ Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos
 
 - No hay V1 desplegada ni pruebas funcionales de tickets documentadas.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- IA, webhook empresarial, Telegram, Power BI, Caddy público y CI/CD quedan fuera del paso actual.
+- El webhook empresarial, su validación y la persistencia inicial corresponden a Fase 2 y todavía no están implementados. IA, Telegram, Power BI, Caddy público y CI/CD permanecen fuera del paso actual.
 - Proveedor/modelo de IA, versiones de imágenes, límites del contrato y dominio/DNS se concretarán en su fase. El identificador de categoría residual ya está aprobado como `other`.
-- Ningún gate posterior a Gate 0 está aprobado.
+- Ningún gate posterior a Gate 1 está aprobado.
