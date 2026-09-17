@@ -3,7 +3,8 @@
 - **Gate 0: APROBADO.**
 - **Fase actual: Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
-- **Primer paso de Fase 1: COMPLETADO en el espacio de trabajo local; repositorio Git inicializado y verificado en `main`.**
+- **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
+- **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
 - **Gate 1: PENDIENTE; no se ha demostrado su cumplimiento.**
 
 ## Alcance de este registro
@@ -37,25 +38,42 @@ Los aparentes puertos adicionales detectados por un escaneo externo se documenta
 
 Los cuatro documentos fueron revisados y aprobados por el usuario. Se incorporó la corrección que fija el identificador de categoría residual como `other`. Esta aprobación documental no aprueba Gate 1 ni acredita un repositorio remoto o un despliegue.
 
-## Resultado del primer paso de Fase 1
+## Base local de Fase 1
 
-La comprobación local confirmó que `SmartDesk-AI` no era un repositorio Git ni pertenecía a uno superior. Se ejecutó `git init --initial-branch=main` correctamente, sin reinicializar un repositorio existente.
+El repositorio local `SmartDesk-AI` está inicializado en `main`. La documentación de contexto y el manejo inicial de configuración y secretos quedaron registrados en los commits `1e76317` y `063b6b9`.
 
-- Rama actual: `main`.
-- Sin commits, sin archivos preparados para commit y sin remotos configurados.
-- Archivos presentes: `AGENTS.md`, `ROADMAP.md`, `STATUS.md` y `docs/PROJECT_CONTEXT.md`, además del directorio interno `.git/`.
-- `git status --untracked-files=all`: `On branch main`, `No commits yet`; los cuatro documentos aparecen como `Untracked files`.
-- No se encontraron problemas de inicialización. Los archivos sin seguimiento son el estado esperado antes de añadirlos a Git.
+- `.gitignore` excluye `.env`, variantes locales, credenciales, claves, temporales y dumps locales; `.env.example` permanece versionable.
+- `.env.example` contiene únicamente placeholders y configuración no secreta conocida.
+- Las credenciales reales de ejecución permanecen en `.env`, fuera de Git.
+- No hay remotos configurados.
 
-Esta verificación corresponde exclusivamente al espacio de trabajo local. No se ha comprobado ni inicializado un repositorio en la VM, ni publicado el proyecto en GitHub.
+## PostgreSQL de Fase 1
+
+La base PostgreSQL fue desplegada y validada dinámicamente en la VM Oracle ARM64 mediante Docker Compose. Todas las pruebas de esta subparte finalizaron con resultado `PASS`.
+
+| Comprobación | Estado | Evidencia saneada |
+| --- | --- | --- |
+| Imagen y arquitectura | PASS | `postgres:17.11-bookworm` ejecutada como `arm64`. |
+| Persistencia | PASS | Volumen Docker nombrado conservó el dato de prueba tras recrear el contenedor; el dato temporal fue eliminado. |
+| Red de base de datos | PASS | Red Docker interna, sin publicación de puertos al host. |
+| Exposición de PostgreSQL | PASS | Sin binding de host para `5432`; el puerto existe solo dentro del contenedor. |
+| Bases separadas | PASS | `n8n_db` y `smartdesk_db` creadas automáticamente. |
+| Roles separados | PASS | `n8n_app` y `smartdesk_app`, sin superusuario, `CREATEDB`, `CREATEROLE`, replicación ni bypass RLS. |
+| Acceso por aplicación | PASS | Cada rol conecta a su propia base; el acceso cruzado entre bases fue denegado. |
+| Bootstrap desde cero | PASS | El entrypoint oficial ejecutó automáticamente `db/init-databases.sh` sobre un volumen vacío y creó bases, roles y permisos sin intervención manual. |
+| Repetición del bootstrap | PASS | Una ejecución adicional no duplicó recursos y reaplicó de forma segura atributos y permisos. |
+| Salud del servicio | PASS | El contenedor principal y el contenedor temporal alcanzaron estado `healthy`. |
+| Limpieza de la prueba aislada | PASS | El proyecto temporal, su red y su volumen se eliminaron sin afectar el volumen ni las bases principales. |
+
+El servicio PostgreSQL principal permanece `healthy`, con su volumen persistente y las dos bases intactas. No se crearon tablas empresariales y n8n todavía no está implementado.
 
 ## Pendientes de Fase 1
 
-Quedan pendientes `.gitignore`, `.env.example`, configuración segura de secretos, `compose.yaml`, PostgreSQL, bases y permisos separados, n8n, redes, volúmenes y validaciones de Gate 1. En esta tarea no se han implementado servicios, creado credenciales, cambiado la VM ni abierto puertos.
+Quedan pendientes la incorporación de n8n, su persistencia y conexión con `n8n_db`, la validación del acceso administrativo mediante localhost y túnel SSH, y las comprobaciones integrales restantes de Gate 1. PostgreSQL ya cumple la subparte validada, pero Gate 1 no se aprobará hasta completar y probar todo su alcance.
 
 ## Siguiente paso
 
-El primer paso concluyó. Detenerse aquí conforme a la instrucción del usuario; no preparar commits, publicar el repositorio ni implementar servicios en este paso. Esperar la indicación del siguiente paso de Fase 1.
+Registrar la base PostgreSQL en Git y detenerse. Esperar una instrucción explícita antes de implementar n8n o continuar con otra subparte de Fase 1.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
