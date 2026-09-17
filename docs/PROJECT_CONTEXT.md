@@ -31,7 +31,7 @@ POST al webhook
   → PostgreSQL: ticket inicial en estado processing
   → API de IA: clasificación, prioridad y resumen
   → n8n: validación del JSON y sus valores permitidos
-  → PostgreSQL: predicción y actualización del ticket
+  → PostgreSQL: predicción asociada al ticket
   → reglas de negocio
   → Telegram: notificación
   → registro del resultado y respuesta con ticket_id y estado
@@ -63,15 +63,13 @@ La infraestructura disponible es una VM Oracle Cloud ARM64 con Ubuntu 22.04, 2 O
 3. Generar identificador único, origen, fechas y estado, y persistir la solicitud válida.
 4. Obtener de la IA un JSON con `category`, `priority` y `summary`, y validar esquema y valores permitidos.
 5. Guardar clasificación y trazabilidad de proveedor, modelo y versión del prompt.
-6. Aplicar reglas explícitas en n8n, por ejemplo para prioridad alta/crítica o categoría de seguridad.
+6. Aplicar reglas explícitas en n8n durante la Fase 4 según la clasificación y la prioridad validadas.
 7. Notificar por Telegram y registrar éxito o fallo.
 8. Responder con `ticket_id` y estado, dejando los datos disponibles para consultas.
 
 Los fallos de clasificación o notificación deben registrarse sin eliminar el ticket. Los reintentos avanzados se desarrollarán después de V1.
 
-El diseño propone categorías de acceso/identidad, hardware, software, red, aplicación empresarial, seguridad y una categoría residual. Las prioridades propuestas son `low`, `medium`, `high` y `critical`. El identificador aprobado de la categoría residual es `other`.
-
-`confidence` se contempla como señal experimental; no debe interpretarse como una probabilidad calibrada ni como evidencia de calidad del modelo. La revisión humana pertenece a una fase posterior.
+El contrato de clasificación V1 admite exactamente las categorías `access`, `hardware`, `software`, `network`, `service_request` y `other`. Las prioridades permitidas son `low`, `medium`, `high` y `critical`. La salida contiene únicamente `category`, `priority` y `summary`; no incluye `confidence` ni razonamiento. Este contrato está versionado durante la Fase 3, cuya integración todavía está en construcción.
 
 ## Datos y trazabilidad
 
@@ -81,11 +79,11 @@ El modelo conceptual empresarial incluye:
 
 | Entidad | Responsabilidad |
 | --- | --- |
-| `tickets` | Entrada original, categoría, prioridad, resumen, estado y marcas de tiempo. |
-| `ai_predictions` | Predicción, proveedor, modelo, versión del prompt, latencia, éxito o error y confianza experimental. |
+| `tickets` | Entrada original, estado propio del ticket y marcas de tiempo. |
+| `ticket_ai_predictions` | Predicción, proveedor, modelo, versiones del prompt y schema, estado y error, relacionados con el ticket sin sobrescribir su historial. |
 | `automation_events` | Eventos de creación, clasificación y notificación, relacionados por `ticket_id`; metadatos sin secretos. |
 
-Estados iniciales previstos: `processing`, `classified`, `notified`, `classification_failed` y `notification_failed`. Son estados de procesamiento; no equivalen al ciclo de resolución de una incidencia ni acreditan cumplimiento de SLA.
+La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla ya fue creada y verificada, pero su uso desde n8n continúa pendiente. La Fase 3 no modifica el lifecycle ni los valores actuales de `tickets.status`.
 
 ## Tecnologías y justificación
 
