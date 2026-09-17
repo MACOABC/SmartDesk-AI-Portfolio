@@ -1,0 +1,83 @@
+{
+  "id": "119c40ad-ccff-44d9-9ece-d5c6f52cef08",
+  "name": "SmartDesk - Ticket Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tickets",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "eb39000d-8385-4fb4-9255-83934f26f4c1",
+      "name": "Receive Ticket",
+      "webhookId": "e83cb95b-1f4e-41d4-89f6-a2bdd6a4b7a5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $input.first().json;\nconst body = request.body;\nconst payload = body !== null && typeof body === 'object' && !Array.isArray(body)\n  ? body\n  : {};\n\nconst errors = [];\nconst normalized = {};\nconst hasOwn = (field) => Object.prototype.hasOwnProperty.call(payload, field);\n\nfunction validateEmail() {\n  const field = 'requester_email';\n\n  if (!hasOwn(field) || payload[field] === null) {\n    errors.push({ field, message: `${field} is required` });\n    return;\n  }\n\n  const value = payload[field];\n\n  if (typeof value !== 'string') {\n    errors.push({ field, message: `${field} must be a string` });\n    return;\n  }\n\n  if (value.length === 0) {\n    errors.push({ field, message: `${field} must not be empty` });\n    return;\n  }\n\n  if (value.length > 254) {\n    errors.push({ field, message: `${field} must contain at most 254 characters` });\n  }\n\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(value)) {\n    errors.push({ field, message: `${field} must be a valid email address` });\n  }\n\n  if (!errors.some((error) => error.field === field)) {\n    normalized[field] = value;\n  }\n}\n\nfunction validateTrimmedText(field, minimum, maximum) {\n  if (!hasOwn(field) || payload[field] === null) {\n    errors.push({ field, message: `${field} is required` });\n    return;\n  }\n\n  const value = payload[field];\n\n  if (typeof value !== 'string') {\n    errors.push({ field, message: `${field} must be a string` });\n    return;\n  }\n\n  const trimmedValue = value.trim();\n\n  if (trimmedValue.length < minimum || trimmedValue.length > maximum) {\n    errors.push({\n      field,\n      message: `${field} must contain between ${minimum} and ${maximum} characters`,\n    });\n    return;\n  }\n\n  normalized[field] = trimmedValue;\n}\n\nvalidateEmail();\nvalidateTrimmedText('requester_area', 2, 80);\nvalidateTrimmedText('title', 5, 150);\nvalidateTrimmedText('description', 10, 5000);\n\nconst isValid = errors.length === 0;\n\nreturn [{\n  json: {\n    statusCode: isValid ? 200 : 400,\n    response: isValid\n      ? { success: true, received: normalized }\n      : { success: false, errors },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "921c65ea-ced1-4d03-9675-7483f73ac953",
+      "name": "Validate and Normalize Ticket"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.response }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        480,
+        0
+      ],
+      "id": "fa71cf90-c9ae-482f-9001-aa6751a4ae9e",
+      "name": "Return Received Payload"
+    }
+  ],
+  "connections": {
+    "Receive Ticket": {
+      "main": [
+        [
+          {
+            "node": "Validate and Normalize Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate and Normalize Ticket": {
+      "main": [
+        [
+          {
+            "node": "Return Received Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "versionId": "7131988c-3021-4c2c-b64e-622012138db3",
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
