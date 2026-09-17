@@ -58,8 +58,8 @@ La infraestructura disponible es una VM Oracle Cloud ARM64 con Ubuntu 22.04, 2 O
 
 ## Alcance V1
 
-1. Recibir por HTTP POST `department`, `subject` y `description`; un formulario podrá añadirse como otra interfaz posteriormente.
-2. Validar presencia, tipos, textos no vacíos, longitudes y departamento permitido antes de consumir servicios externos.
+1. Recibir por HTTP POST `requester_email`, `requester_area`, `title` y `description`; un formulario podrá añadirse como otra interfaz posteriormente.
+2. Validar presencia, tipos, textos no vacíos, formato de email y longitudes antes de consumir servicios externos.
 3. Generar identificador único, origen, fechas y estado, y persistir la solicitud válida.
 4. Obtener de la IA un JSON con `category`, `priority` y `summary`, y validar esquema y valores permitidos.
 5. Guardar clasificación y trazabilidad de proveedor, modelo y versión del prompt.

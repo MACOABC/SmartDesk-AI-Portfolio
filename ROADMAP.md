@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0 y Gate 1 están aprobados. Los criterios siguientes concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1 y Gate 2 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -12,8 +12,8 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | --- | --- | --- | --- |
 | 0 | Hardening OCI, Ubuntu y Docker. | Gate 0. | APROBADO. |
 | 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | APROBADA. |
-| 2 | Webhook, validación y persistencia inicial. | Gate 2. | ACTUAL. |
-| 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | Pendiente. |
+| 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
+| 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | ACTUAL. |
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | Pendiente. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | Pendiente. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
@@ -53,6 +53,8 @@ Cerrar con tabla `PASS / FAIL / evidencia`. Esta fase excluye IA, webhook empres
 Implementar el webhook y el contrato de entrada, generar `ticket_id` y guardar el ticket válido antes de cualquier llamada a IA.
 
 Gate 2: una entrada válida queda persistida y relacionada con su identificador; campos ausentes, tipos incorrectos, valores no permitidos y longitudes excesivas se rechazan con error comprensible. Verificar restricciones, fechas y persistencia. La IA todavía no forma parte de esta fase.
+
+Gate 2 fue aprobado el 2026-09-17 tras una batería controlada de 30 solicitudes end-to-end. La evidencia saneada se conserva en `docs/testing/GATE_2.md` y el contrato implementado en `docs/INTAKE.md`.
 
 ## Fase 3 — Clasificación con IA
 

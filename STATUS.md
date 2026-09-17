@@ -2,8 +2,10 @@
 
 - **Gate 0: APROBADO.**
 - **Gate 1: APROBADO.**
+- **Gate 2: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
-- **Fase actual: Fase 2 — Webhook + validación + persistencia inicial.**
+- **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
+- **Fase actual: Fase 3 — IA, salida estructurada y versionado de prompts.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -11,7 +13,7 @@
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL y n8n. Gate 0 y Gate 1 cuentan con aprobación explícita del usuario.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n y el intake de tickets. Gate 0, Gate 1 y Gate 2 cuentan con aprobación explícita del usuario.
 
 ## Infraestructura aprobada
 
@@ -35,6 +37,8 @@ Los aparentes puertos adicionales detectados por un escaneo externo se documenta
 
 - `AGENTS.md`: instrucciones permanentes y concisas para Codex.
 - `docs/PROJECT_CONTEXT.md`: producto, objetivo profesional, arquitectura, V1 y tecnologías justificadas.
+- `docs/INTAKE.md`: contrato HTTP, validación, persistencia, respuestas y límites del intake V1.
+- `docs/testing/GATE_2.md`: evidencia saneada de la batería controlada y cierre de Gate 2.
 - `ROADMAP.md`: fases, gates y criterios de cierre.
 - `STATUS.md`: estado confirmado, pendientes y siguiente paso.
 
@@ -67,7 +71,7 @@ La base PostgreSQL fue desplegada y validada dinámicamente en la VM Oracle ARM6
 | Salud del servicio | PASS | El contenedor principal y el contenedor temporal alcanzaron estado `healthy`. |
 | Limpieza de la prueba aislada | PASS | El proyecto temporal, su red y su volumen se eliminaron sin afectar el volumen ni las bases principales. |
 
-El servicio PostgreSQL principal permanece `healthy`, con su volumen persistente y las dos bases intactas. No se crearon tablas empresariales.
+Al cierre de Gate 1 no se habían creado tablas empresariales. En Fase 2 se añadió `public.tickets` mediante una migración versionada, sin alterar la separación de bases ni la exposición de PostgreSQL.
 
 ## n8n de Fase 1
 
@@ -102,18 +106,52 @@ La auditoría integral de Gate 1 fue ejecutada sobre el repositorio local y el s
 | Políticas de reinicio | PASS | Ambos servicios declaran y aplican efectivamente `unless-stopped`. |
 | Contenedores esperados | PASS | Al cierre solo estaban ejecutándose los contenedores de PostgreSQL y n8n. |
 
-Fase 1 queda completada. Esta aprobación no anticipa el cumplimiento de Gate 2 ni autoriza funcionalidades fuera del alcance de Fase 2.
+Fase 1 queda completada. Su aprobación no anticipó el cumplimiento de Gate 2; el cierre posterior de Gate 2 se documenta a continuación.
+
+## Fase 2 — Intake y persistencia inicial
+
+Fase 2 implementó y verificó el primer flujo empresarial de SmartDesk AI:
+
+- webhook `POST /webhook/tickets` administrado por n8n;
+- contrato V1 para `requester_email`, `requester_area`, `title` y `description`;
+- validación de presencia, tipos, formato y longitudes, con acumulación de errores;
+- normalización de espacios externos en área, título y descripción;
+- persistencia de tickets válidos en PostgreSQL mediante un `INSERT` parametrizado;
+- generación en PostgreSQL de UUID, estado `processing` y marcas de tiempo;
+- respuestas HTTP 201, 400 y 500 controladas;
+- rama nativa de error de n8n para evitar filtrar detalles de persistencia;
+- workflow y credencial conservados después de reiniciar n8n y PostgreSQL.
+
+El contrato completo se documenta en `docs/INTAKE.md`.
+
+## Cierre de Fase 2 y Gate 2
+
+La batería formal se ejecutó el 2026-09-17 sobre el commit `73913e279892bf7b4be3a94b120cedaedcdc7063`. Las 30 solicitudes end-to-end cumplieron sus resultados esperados.
+
+| Criterio de cierre | Estado | Evidencia saneada |
+| --- | --- | --- |
+| Happy path | PASS | HTTP 201, UUID, estado y timestamps; exactamente una fila persistida. |
+| Validación y errores múltiples | PASS | HTTP 400 y todos los campos relevantes informados, sin insertar filas. |
+| Normalización y límites | PASS | Espacios externos eliminados y bordes mínimos/máximos aceptados o rechazados según el contrato. |
+| SQL parametrizado | PASS | Caracteres especiales benignos persistidos literalmente sin alterar tabla ni esquema. |
+| Fallo de persistencia | PASS | HTTP 500 genérico con `TICKET_PERSISTENCE_ERROR`, sin información interna ni inserción. |
+| Recuperación | PASS | La solicitud inmediatamente posterior al fallo respondió HTTP 201. |
+| Reinicio de servicios | PASS | n8n y PostgreSQL recuperaron salud; workflow, credencial, tabla y conexión permanecieron operativos. |
+| Limpieza e integridad | PASS | Conteo `0 → 0`; tabla, ocho columnas, PK, defaults y CHECK constraints intactos. |
+| Exposición y secretos | PASS | PostgreSQL sin puerto publicado; workflow versionado sin secretos. |
+
+La evidencia detallada y sus límites se conservan en `docs/testing/GATE_2.md`. Gate 2 queda aprobado; esta prueba controlada no constituye una métrica de producción.
 
 ## Siguiente paso
 
-Iniciar Fase 2 únicamente mediante una instrucción explícita y comenzar por el contrato del webhook, su validación y la persistencia inicial. No incorporar todavía IA, Telegram ni otras fases posteriores.
+Iniciar Fase 3 únicamente mediante una instrucción explícita y comenzar por concretar el proveedor/modelo, el contrato estructurado de salida, las taxonomías y el versionado del prompt. No incorporar todavía Telegram, reglas de Fase 4 ni funcionalidades posteriores.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- No hay V1 desplegada ni pruebas funcionales de tickets documentadas.
+- V1 todavía no está completa ni publicada mediante HTTPS; Gate 2 cubre únicamente intake y persistencia inicial.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- El webhook empresarial, su validación y la persistencia inicial corresponden a Fase 2 y todavía no están implementados. IA, Telegram, Power BI, Caddy público y CI/CD permanecen fuera del paso actual.
-- Proveedor/modelo de IA, versiones de imágenes, límites del contrato y dominio/DNS se concretarán en su fase. El identificador de categoría residual ya está aprobado como `other`.
-- Ningún gate posterior a Gate 1 está aprobado.
+- La IA, Telegram, Power BI, Caddy público y CI/CD todavía no están implementados.
+- Proveedor/modelo de IA y dominio/DNS se concretarán en su fase. El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
+- Ningún gate posterior a Gate 2 está aprobado.
