@@ -34,20 +34,95 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "004dfe15-6cc8-4145-87c9-82ed357ca953",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        0
+      ],
+      "id": "f1b5ab27-e165-4791-b7c8-797a2c922a82",
+      "name": "Is Ticket Valid?"
+    },
+    {
+      "parameters": {
         "respondWith": "json",
         "responseBody": "={{ $json.response }}",
         "options": {
-          "responseCode": "={{ $json.statusCode }}"
+          "responseCode": 400
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        480,
-        0
+        720,
+        160
       ],
       "id": "fa71cf90-c9ae-482f-9001-aa6751a4ae9e",
-      "name": "Return Received Payload"
+      "name": "Return Validation Error"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.tickets (\n    requester_email,\n    requester_area,\n    title,\n    description\n)\nVALUES ($1, $2, $3, $4)\nRETURNING\n    id,\n    status,\n    created_at,\n    updated_at;",
+        "options": {
+          "queryReplacement": "={{ [ $json.response.received.requester_email, $json.response.received.requester_area, $json.response.received.title, $json.response.received.description ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        720,
+        -120
+      ],
+      "id": "7b195ce2-a865-4c54-914b-378c80b37ca5",
+      "name": "Insert Ticket",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, ticket: $json } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        -120
+      ],
+      "id": "39ec4b33-8300-4703-af9f-942aca6134fa",
+      "name": "Return Persisted Ticket"
     }
   ],
   "connections": {
@@ -66,7 +141,36 @@
       "main": [
         [
           {
-            "node": "Return Received Payload",
+            "node": "Is Ticket Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Ticket Valid?": {
+      "main": [
+        [
+          {
+            "node": "Insert Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Ticket": {
+      "main": [
+        [
+          {
+            "node": "Return Persisted Ticket",
             "type": "main",
             "index": 0
           }
@@ -76,7 +180,7 @@
   },
   "pinData": {},
   "active": false,
-  "versionId": "7131988c-3021-4c2c-b64e-622012138db3",
+  "versionId": "d3f89d67-6688-475c-9f6d-1d09ca243df9",
   "settings": {
     "executionOrder": "v1"
   }
