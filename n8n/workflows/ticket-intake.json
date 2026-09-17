@@ -141,6 +141,201 @@
       ],
       "id": "04d1604a-e05f-4dc3-966c-349bf1a8d191",
       "name": "Return Persistence Error"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "1c3f63fa-4e10-4e95-a3e2-b10663cb67f8",
+      "name": "Run AI Contract Tests"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "68f72496-c494-49a0-b776-2d3a1cc7bc86",
+              "name": "prompt_version",
+              "value": "ticket-classification-v1",
+              "type": "string"
+            },
+            {
+              "id": "80a00958-4a34-4fa8-90c0-a0dbd61c68eb",
+              "name": "schema_version",
+              "value": "ticket-classification-schema-v1",
+              "type": "string"
+            },
+            {
+              "id": "82cf4690-ce38-42ef-b043-befaa84e893e",
+              "name": "prompt_path",
+              "value": "/opt/smartdesk/prompts/ticket-classification/v1.md",
+              "type": "string"
+            },
+            {
+              "id": "2773e563-f4bd-4ef8-92d6-c1b5ef6a2708",
+              "name": "schema_path",
+              "value": "/opt/smartdesk/prompts/ticket-classification/schema-v1.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        400
+      ],
+      "id": "25044378-1ea9-42d8-a879-23a6acdde82a",
+      "name": "Contract Versions and Paths"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $json.prompt_path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        400
+      ],
+      "id": "91c5e2ca-c6e2-4ca5-8b26-2e436595336d",
+      "name": "Read Prompt File",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "prompt_content",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": true,
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        400
+      ],
+      "id": "21d41875-484f-4bef-ad42-201ac65d173e",
+      "name": "Extract Prompt Text",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $('Contract Versions and Paths').first().json.schema_path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        400
+      ],
+      "id": "2bf89743-3ffc-4453-92d1-398beb36c9a7",
+      "name": "Read Schema File",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "schema_content",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": true,
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        400
+      ],
+      "id": "ddf8a95f-832a-4992-87dd-e944735c31e7",
+      "name": "Extract Schema Text",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const versions = $('Contract Versions and Paths').first().json;\nconst promptItem = $('Extract Prompt Text').first().json;\nconst schemaItem = $('Extract Schema Text').first().json;\nconst promptContent = promptItem.prompt_content;\nconst schemaContent = schemaItem.schema_content;\nconst loadError = promptItem.error || schemaItem.error || null;\n\nconst base = {\n  prompt_version: versions.prompt_version,\n  schema_version: versions.schema_version,\n  prompt_path: versions.prompt_path,\n  schema_path: versions.schema_path,\n  prompt_content: promptContent,\n  schema_content: schemaContent,\n  load_error: loadError,\n};\n\nlet wrongIdSchema = '{}';\ntry {\n  const parsed = JSON.parse(schemaContent);\n  wrongIdSchema = JSON.stringify({ ...parsed, $id: 'wrong-schema-id' });\n} catch {}\n\nreturn [\n  { json: { ...base, case_id: 'C0', expected_valid: true } },\n  { json: { ...base, case_id: 'C1_INVALID_JSON', expected_valid: false, schema_content: '{ invalid json' } },\n  { json: { ...base, case_id: 'C2_WRONG_ID', expected_valid: false, schema_content: wrongIdSchema } },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        400
+      ],
+      "id": "6e985229-1a48-49bc-bffe-6ce63a83aa86",
+      "name": "Build Contract Test Inputs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const expectedRequired = ['category', 'priority', 'summary'];\nconst expectedCategories = ['access', 'hardware', 'software', 'network', 'service_request', 'other'];\nconst expectedPriorities = ['low', 'medium', 'high', 'critical'];\nconst isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst sameMembers = (actual, expected) => Array.isArray(actual) && actual.length === expected.length && expected.every((value) => actual.includes(value));\n\nreturn $input.all().map((item) => {\n  const input = item.json;\n  const checks = {\n    prompt_load: false,\n    prompt_version: false,\n    schema_load: false,\n    schema_parse: false,\n    schema_version: false,\n  };\n\n  try {\n    if (input.load_error) throw new Error('file load failed');\n    if (typeof input.prompt_content !== 'string' || input.prompt_content.length === 0) throw new Error('prompt unavailable or empty');\n    checks.prompt_load = true;\n    if (!input.prompt_content.includes(input.prompt_version)) throw new Error('prompt version mismatch');\n    checks.prompt_version = true;\n    if (typeof input.schema_content !== 'string' || input.schema_content.length === 0) throw new Error('schema unavailable or empty');\n    checks.schema_load = true;\n\n    const schema = JSON.parse(input.schema_content);\n    checks.schema_parse = true;\n    if (!isPlainObject(schema)) throw new Error('schema must be an object');\n    if (schema.$id !== input.schema_version) throw new Error('schema version mismatch');\n    checks.schema_version = true;\n    if (schema.type !== 'object' || schema.additionalProperties !== false) throw new Error('schema root mismatch');\n    if (!sameMembers(schema.required, expectedRequired)) throw new Error('schema required mismatch');\n    if (!isPlainObject(schema.properties) || !sameMembers(Object.keys(schema.properties), expectedRequired)) throw new Error('schema properties mismatch');\n    if (schema.properties.category.type !== 'string' || !sameMembers(schema.properties.category.enum, expectedCategories)) throw new Error('category schema mismatch');\n    if (schema.properties.priority.type !== 'string' || !sameMembers(schema.properties.priority.enum, expectedPriorities)) throw new Error('priority schema mismatch');\n    if (schema.properties.summary.type !== 'string' || schema.properties.summary.minLength !== 1 || schema.properties.summary.maxLength !== 300) throw new Error('summary schema mismatch');\n\n    return {\n      json: {\n        case_id: input.case_id,\n        expected_valid: input.expected_valid,\n        contract_valid: true,\n        checks,\n        prompt_version: input.prompt_version,\n        schema_version: input.schema_version,\n        prompt_path: input.prompt_path,\n        schema_path: input.schema_path,\n        schema,\n      },\n    };\n  } catch {\n    return {\n      json: {\n        case_id: input.case_id,\n        expected_valid: input.expected_valid,\n        contract_valid: false,\n        error_code: 'AI_CONTRACT_LOAD_ERROR',\n        checks,\n        prompt_version: input.prompt_version,\n        schema_version: input.schema_version,\n        prompt_path: input.prompt_path,\n        schema_path: input.schema_path,\n      },\n    };\n  }\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        400
+      ],
+      "id": "0687df42-327d-47e9-8922-46a6d9f6a54b",
+      "name": "Validate Local Contract"
+    },
+    {
+      "parameters": {
+        "jsCode": "const contractResults = $input.all().map((item) => item.json);\nconst actual = contractResults.find((item) => item.case_id === 'C0');\nconst corruptCases = contractResults.filter((item) => item.case_id !== 'C0');\nconst contractFailurePass = corruptCases.length === 2 && corruptCases.every((item) => item.contract_valid === false && item.error_code === 'AI_CONTRACT_LOAD_ERROR');\n\nif (!actual || actual.contract_valid !== true || !contractFailurePass) {\n  throw new Error('AI_CONTRACT_LOAD_ERROR');\n}\n\nconst validSoftware = {\n  category: 'software',\n  priority: 'high',\n  summary: 'La aplicación se cierra al iniciar.',\n};\nconst validAccess = {\n  category: 'access',\n  priority: 'medium',\n  summary: 'El usuario no puede autenticarse.',\n};\n\nconst cases = [\n  { case_id: 'A1', expected_valid: true, ai_response: validSoftware },\n  { case_id: 'A2', expected_valid: true, ai_response: validAccess },\n  { case_id: 'A3', expected_valid: true, ai_response: JSON.stringify(validSoftware) },\n  { case_id: 'R1', expected_valid: false, ai_response: '{ invalid json' },\n  { case_id: 'R2', expected_valid: false, ai_response: [validSoftware] },\n  { case_id: 'R3', expected_valid: false, ai_response: { priority: 'high', summary: 'Falta categoría.' } },\n  { case_id: 'R4', expected_valid: false, ai_response: { category: 'software', summary: 'Falta prioridad.' } },\n  { case_id: 'R5', expected_valid: false, ai_response: { category: 'software', priority: 'high' } },\n  { case_id: 'R6', expected_valid: false, ai_response: { ...validSoftware, extra: true } },\n  { case_id: 'R7', expected_valid: false, ai_response: { ...validSoftware, category: 'unknown' } },\n  { case_id: 'R8', expected_valid: false, ai_response: { ...validSoftware, category: 'Software' } },\n  { case_id: 'R9', expected_valid: false, ai_response: { ...validSoftware, priority: 'urgent' } },\n  { case_id: 'R10', expected_valid: false, ai_response: { ...validSoftware, summary: '' } },\n  { case_id: 'R11', expected_valid: false, ai_response: { ...validSoftware, summary: '   ' } },\n  { case_id: 'R12', expected_valid: false, ai_response: { ...validSoftware, summary: 'x'.repeat(301) } },\n  { case_id: 'R13', expected_valid: false, ai_response: { ...validSoftware, summary: 123 } },\n  { case_id: 'R14', expected_valid: false, ai_response: null },\n  { case_id: 'R15', expected_valid: false, ai_response: {} },\n  { case_id: 'R16', expected_valid: false, ai_response: 'Here is the JSON:\\n' + JSON.stringify(validSoftware) },\n];\n\nreturn cases.map((testCase) => ({\n  json: {\n    ...testCase,\n    contract_valid: true,\n    contract_failure_pass: true,\n    contract_checks: actual.checks,\n    prompt_version: actual.prompt_version,\n    schema_version: actual.schema_version,\n    prompt_path: actual.prompt_path,\n    schema_path: actual.schema_path,\n    schema: actual.schema,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        400
+      ],
+      "id": "50f14663-a43e-494d-ad80-78583eb90f0d",
+      "name": "Build Simulated AI Cases"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item) => {\n  const input = item.json;\n  const invalid = () => ({\n    json: {\n      case_id: input.case_id,\n      expected_valid: input.expected_valid,\n      valid: false,\n      error_code: 'AI_RESPONSE_INVALID',\n      contract_failure_pass: input.contract_failure_pass,\n      contract_checks: input.contract_checks,\n      prompt_version: input.prompt_version,\n      schema_version: input.schema_version,\n    },\n  });\n\n  let candidate = input.ai_response;\n  if (typeof candidate === 'string') {\n    try {\n      candidate = JSON.parse(candidate);\n    } catch {\n      return invalid();\n    }\n  }\n\n  if (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) return invalid();\n  const keys = Object.keys(candidate);\n  const expectedKeys = ['category', 'priority', 'summary'];\n  if (keys.length !== expectedKeys.length || !expectedKeys.every((key) => keys.includes(key))) return invalid();\n\n  const schema = input.schema;\n  if (typeof candidate.category !== 'string' || !schema.properties.category.enum.includes(candidate.category)) return invalid();\n  if (typeof candidate.priority !== 'string' || !schema.properties.priority.enum.includes(candidate.priority)) return invalid();\n  if (typeof candidate.summary !== 'string') return invalid();\n  const summaryLength = candidate.summary.trim().length;\n  if (summaryLength < schema.properties.summary.minLength || summaryLength > schema.properties.summary.maxLength) return invalid();\n\n  return {\n    json: {\n      case_id: input.case_id,\n      expected_valid: input.expected_valid,\n      valid: true,\n      data: candidate,\n      contract_failure_pass: input.contract_failure_pass,\n      contract_checks: input.contract_checks,\n      prompt_version: input.prompt_version,\n      schema_version: input.schema_version,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        400
+      ],
+      "id": "a946930d-a5e9-4b91-a56c-18b563ac96ac",
+      "name": "Validate Simulated AI Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.all().map((item) => item.json);\nconst expectedIds = ['A1', 'A2', 'A3', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11', 'R12', 'R13', 'R14', 'R15', 'R16'];\nconst matrix = {};\n\nfor (const caseId of expectedIds) {\n  const result = results.find((item) => item.case_id === caseId);\n  const passed = Boolean(result) && result.valid === result.expected_valid && (result.valid === true || result.error_code === 'AI_RESPONSE_INVALID');\n  matrix[caseId] = passed ? 'PASS' : 'FAIL';\n}\n\nconst first = results[0];\nconst contractChecks = first?.contract_checks || {};\nconst contractLoad = {\n  prompt_load: contractChecks.prompt_load === true ? 'PASS' : 'FAIL',\n  prompt_version: contractChecks.prompt_version === true ? 'PASS' : 'FAIL',\n  schema_load: contractChecks.schema_load === true ? 'PASS' : 'FAIL',\n  schema_parse: contractChecks.schema_parse === true ? 'PASS' : 'FAIL',\n  schema_version: contractChecks.schema_version === true ? 'PASS' : 'FAIL',\n};\nconst allPass = expectedIds.every((caseId) => matrix[caseId] === 'PASS') && first?.contract_failure_pass === true && Object.values(contractLoad).every((value) => value === 'PASS');\n\nif (!allPass) throw new Error('AI_VALIDATOR_TEST_FAILURE');\n\nreturn [{\n  json: {\n    validator_suite: 'PASS',\n    accept_cases: 3,\n    reject_cases: 16,\n    contract_load: contractLoad,\n    contract_failure: {\n      invalid_schema_json: 'PASS',\n      wrong_schema_id: 'PASS',\n      error_code: 'AI_CONTRACT_LOAD_ERROR',\n    },\n    matrix,\n    prompt_version: first.prompt_version,\n    schema_version: first.schema_version,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        400
+      ],
+      "id": "954f8e22-56a3-4b8f-933d-66cfc2937626",
+      "name": "Assert AI Contract Tests"
     }
   ],
   "connections": {
@@ -201,11 +396,121 @@
           }
         ]
       ]
+    },
+    "Run AI Contract Tests": {
+      "main": [
+        [
+          {
+            "node": "Contract Versions and Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contract Versions and Paths": {
+      "main": [
+        [
+          {
+            "node": "Read Prompt File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Prompt File": {
+      "main": [
+        [
+          {
+            "node": "Extract Prompt Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Prompt Text": {
+      "main": [
+        [
+          {
+            "node": "Read Schema File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Schema File": {
+      "main": [
+        [
+          {
+            "node": "Extract Schema Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Schema Text": {
+      "main": [
+        [
+          {
+            "node": "Build Contract Test Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Contract Test Inputs": {
+      "main": [
+        [
+          {
+            "node": "Validate Local Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Local Contract": {
+      "main": [
+        [
+          {
+            "node": "Build Simulated AI Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Simulated AI Cases": {
+      "main": [
+        [
+          {
+            "node": "Validate Simulated AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Simulated AI Response": {
+      "main": [
+        [
+          {
+            "node": "Assert AI Contract Tests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
-  "active": false,
-  "versionId": "871958fe-1b48-4734-b893-65fc82cb5c94",
+  "active": true,
+  "versionId": "fc2c5433-a6bc-418d-b5ad-0b69d7707569",
   "settings": {
     "executionOrder": "v1"
   }

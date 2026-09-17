@@ -41,12 +41,14 @@ services:
       N8N_PORT: ${N8N_PORT:?N8N_PORT must be set}
       N8N_PROTOCOL: ${N8N_PROTOCOL:?N8N_PROTOCOL must be set}
       N8N_SECURE_COOKIE: "false"
+      N8N_RESTRICT_FILE_ACCESS_TO: /opt/smartdesk/prompts/ticket-classification
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:?GENERIC_TIMEZONE must be set}
       TZ: ${TZ:?TZ must be set}
     ports:
       - "127.0.0.1:5678:5678"
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./prompts/ticket-classification:/opt/smartdesk/prompts/ticket-classification:ro
     networks:
       - app
       - database

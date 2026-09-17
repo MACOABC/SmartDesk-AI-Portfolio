@@ -4,7 +4,7 @@
 
 - **Fecha de la evidencia disponible:** 2026-09-17.
 - **Gate 3 status: IN PROGRESS.**
-- **Alcance verificado:** contrato versionado de clasificación y base de persistencia PostgreSQL.
+- **Alcance verificado:** contrato versionado, base de persistencia PostgreSQL, acceso read-only desde n8n y validación determinista de respuestas simuladas.
 
 Gate 3 no está aprobado ni cerrado. Este documento registra únicamente la evidencia ejecutada hasta este checkpoint.
 
@@ -86,10 +86,73 @@ prediction_rows=0
 predictions_table_exists=true
 ```
 
+## Runtime del prompt
+
+La carpeta `prompts/ticket-classification/` se montó en el contenedor n8n como read-only en:
+
+`/opt/smartdesk/prompts/ticket-classification`
+
+La configuración `N8N_RESTRICT_FILE_ACCESS_TO` limita el acceso del workflow a esa ruta. Desde el contenedor se comprobó que `v1.md` y `schema-v1.json` existen, son legibles y conservan sus identificadores versionados.
+
+Los SHA-256 del checkout/host coincidieron exactamente con los calculados dentro del contenedor:
+
+- `v1.md`: `bd75a0aede54a4c59c6711fd1107e6e7473e484767ae49bb571f9172f0819fee`;
+- `schema-v1.json`: `b5dfbd52a07972ca33baac9763c9bc8dcf5e0a41634c52a5c1db6a801a19db33`.
+
+Un intento controlado de crear un archivo desde n8n fue rechazado con `Read-only file system`. No apareció un archivo temporal y los hashes permanecieron sin cambios.
+
+## Carga del contrato
+
+La rama manual del workflow cargó y validó los artefactos locales con estos resultados:
+
+```text
+prompt_load=PASS
+prompt_version=PASS
+schema_load=PASS
+schema_parse=PASS
+schema_version=PASS
+```
+
+## Validador determinista
+
+El validador real de n8n se ejecutó con:
+
+- 3 casos ACCEPT;
+- 16 casos REJECT.
+
+Todos los casos obtuvieron `PASS`. Los casos REJECT cubrieron JSON inválido, estructura incorrecta, campos ausentes o adicionales, enums desconocidos, diferencias de mayúsculas, `summary` inválido, `null`, objeto vacío y texto añadido antes del JSON.
+
+El validador opera fail closed. No corrige categorías, no cambia mayúsculas/minúsculas, no rellena campos, no convierte tipos y no asigna valores predeterminados silenciosamente.
+
+## Fallos del contrato
+
+Sin modificar permanentemente los archivos versionados, se comprobaron dos entradas aisladas:
+
+- JSON Schema inválido → `AI_CONTRACT_LOAD_ERROR`;
+- `$id` inválido → `AI_CONTRACT_LOAD_ERROR`.
+
+Ambas pruebas obtuvieron `PASS`.
+
+## Regresión mínima de Gate 2
+
+Se ejecutó una regresión mínima de exactamente dos casos; no se repitieron los 30 casos completos de Gate 2:
+
+- solicitud sintética válida → HTTP 201 y ticket persistido;
+- solicitud inválida sin `title` → HTTP 400 y sin persistencia adicional.
+
+No se creó ninguna predicción para el ticket sintético y el conteo de predicciones permaneció sin cambios. El ticket sintético fue eliminado mediante su UUID al finalizar.
+
+## Workflow
+
+- La rama de pruebas comienza con un `Manual Trigger` y permanece desconectada del webhook productivo.
+- El workflow desplegado y exportado contiene 18 nodos.
+- El export versionado quedó sincronizado con el workflow publicado.
+- No se añadieron nodos externos ni nodos de IA.
+- No se añadieron credenciales.
+- El export no contiene `pinData` ni datos de ejecución.
+
 ## Pendiente para cerrar Gate 3
 
-- Hacer disponibles el prompt y el schema versionados dentro de n8n en modo de solo lectura.
-- Implementar validación determinista de la salida en el workflow.
 - Seleccionar y configurar de forma segura el proveedor y el modelo.
 - Ejecutar una llamada real a la API de IA.
 - Persistir predicciones desde n8n.
@@ -101,5 +164,7 @@ predictions_table_exists=true
 - No se llamó ninguna API de IA.
 - No se seleccionó proveedor ni modelo.
 - No se configuraron credenciales de IA.
-- n8n y Docker Compose no fueron modificados en estos pasos.
+- No se persistieron predicciones simuladas.
+- La regresión de Gate 2 fue mínima y no acredita la repetición de sus 30 casos.
+- La evidencia versionada no contiene secrets, API keys, tokens, IP pública, datos personales ni datos de ejecución.
 - Esta evidencia no mide precisión, rendimiento, disponibilidad ni impacto de producción.
