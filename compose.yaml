@@ -25,9 +25,47 @@ services:
       start_period: 10s
     stop_grace_period: 30s
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.39.6
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME:?N8N_DB_NAME must be set}
+      DB_POSTGRESDB_USER: ${N8N_DB_USER:?N8N_DB_USER must be set}
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:?N8N_DB_PASSWORD must be set}
+      DB_POSTGRESDB_SCHEMA: public
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY must be set}
+      N8N_HOST: ${N8N_HOST:?N8N_HOST must be set}
+      N8N_PORT: ${N8N_PORT:?N8N_PORT must be set}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:?N8N_PROTOCOL must be set}
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:?GENERIC_TIMEZONE must be set}
+      TZ: ${TZ:?TZ must be set}
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - app
+      - database
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5678/healthz/readiness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    stop_grace_period: 30s
+
 volumes:
   postgres_data:
+  n8n_data:
 
 networks:
+  app:
   database:
     internal: true
