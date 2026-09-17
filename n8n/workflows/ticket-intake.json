@@ -105,14 +105,15 @@
           "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
           "name": "SmartDesk PostgreSQL"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, ticket: $json } }}",
+        "responseBody": "={{ { success: true, ticket: { id: $json.id, status: $json.status, created_at: $json.created_at, updated_at: $json.updated_at } } }}",
         "options": {
-          "responseCode": 200
+          "responseCode": 201
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -122,7 +123,24 @@
         -120
       ],
       "id": "39ec4b33-8300-4703-af9f-942aca6134fa",
-      "name": "Return Persisted Ticket"
+      "name": "Return Created Ticket"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'TICKET_PERSISTENCE_ERROR', message: 'Unable to create ticket' } } }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        40
+      ],
+      "id": "04d1604a-e05f-4dc3-966c-349bf1a8d191",
+      "name": "Return Persistence Error"
     }
   ],
   "connections": {
@@ -170,7 +188,14 @@
       "main": [
         [
           {
-            "node": "Return Persisted Ticket",
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Persistence Error",
             "type": "main",
             "index": 0
           }
@@ -180,7 +205,7 @@
   },
   "pinData": {},
   "active": false,
-  "versionId": "d3f89d67-6688-475c-9f6d-1d09ca243df9",
+  "versionId": "871958fe-1b48-4734-b893-65fc82cb5c94",
   "settings": {
     "executionOrder": "v1"
   }
