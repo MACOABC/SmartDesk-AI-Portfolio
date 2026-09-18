@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1 y Gate 2 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2 y Gate 3 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -13,8 +13,8 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 0 | Hardening OCI, Ubuntu y Docker. | Gate 0. | APROBADO. |
 | 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | APROBADA. |
 | 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
-| 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | ACTUAL. |
-| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | Pendiente. |
+| 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
+| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | SIGUIENTE / NO INICIADA. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | Pendiente. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
@@ -61,6 +61,8 @@ Gate 2 fue aprobado el 2026-09-17 tras una batería controlada de 30 solicitudes
 Integrar el proveedor elegido, versionar el prompt y validar el esquema de salida y las taxonomías. Registrar predicción, proveedor, modelo, versión del prompt y resultado de ejecución.
 
 Gate 3: un ticket de prueba obtiene categoría, prioridad y resumen válidos; JSON inválido, valores fuera de contrato, timeout y error del proveedor se gestionan sin perder el ticket ni ejecutar reglas con una salida inválida. Una prueba funcional no acredita accuracy.
+
+Gate 3 fue aprobado el 2026-09-17 después de integrar la clasificación estructurada en el intake real, persistir su ciclo `pending → succeeded/failed` y superar la regresión final 30/30 de Gate 2 sobre el workflow final. La evidencia saneada se conserva en `docs/testing/GATE_3.md`.
 
 ## Fase 4 — Reglas y notificaciones
 

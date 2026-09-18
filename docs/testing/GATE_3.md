@@ -3,10 +3,10 @@
 ## Estado
 
 - **Fecha de la evidencia disponible:** 2026-09-17.
-- **Gate 3 status: IN PROGRESS.**
-- **Alcance verificado:** contrato versionado, base de persistencia PostgreSQL, acceso read-only desde n8n, validación determinista y clasificación real aislada mediante OpenAI.
+- **Gate 3 status: PASS.**
+- **Alcance verificado:** contrato versionado, base de persistencia PostgreSQL, acceso read-only desde n8n, validación determinista, clasificación real aislada y primera integración end-to-end con el webhook de intake.
 
-Gate 3 no está aprobado ni cerrado. Este documento registra únicamente la evidencia ejecutada hasta este checkpoint.
+Gate 3 está aprobado y cerrado formalmente. Este documento registra únicamente la evidencia realmente ejecutada para su cierre.
 
 ## Base del contrato
 
@@ -363,9 +363,275 @@ synthetic_tickets_remaining=0
 
 También se eliminaron los registros temporales correspondientes a las dos ejecuciones CLI controladas. El export conserva `pinData` vacío y no contiene API key, header `Authorization` manual, passwords, tickets sintéticos, respuestas del proveedor ni datos de ejecución. La petición real mantuvo `store=false`.
 
-## Regresión mínima de Gate 2
+## Paso 9 — integración end-to-end con el webhook
 
-Se ejecutó una regresión mínima de exactamente dos casos; no se repitieron los 30 casos completos de Gate 2:
+La rama productiva de `POST /webhook/tickets` quedó conectada con este orden:
+
+```text
+validar/normalizar
+  ↓
+INSERT ticket
+  ↓
+INSERT prediction pending
+  ↓
+cargar y validar prompt/schema read-only
+  ↓
+OpenAI Responses API
+  ↓
+validador determinista
+  ↓
+UPDATE prediction succeeded | failed
+  ↓
+HTTP 201
+```
+
+El `prediction_id` devuelto por PostgreSQL y el `ticket_id` permanecen explícitos durante toda la ejecución. Las dos actualizaciones terminales exigen conjuntamente `prediction_id`, `ticket_id` y `status = pending`, y deben afectar exactamente una fila. `tickets.status` permaneció en `processing` en ambos casos E2E.
+
+### E2E-S1 — success real
+
+Se envió un ticket completamente sintético al endpoint real. Antes de la petición se comprobó que un único item alcanzaría el nodo HTTP y que `retryOnFail=false`.
+
+```text
+openai_requests=1
+http_status=201
+ticket_status=processing
+pending_insert=PASS
+contract_load=PASS
+response_status=completed
+structured_output=PASS
+deterministic_validator=PASS
+terminal_update_rows=1
+final_status=succeeded
+
+category=network
+priority=medium
+
+input_tokens=1035
+cached_input_tokens=0
+output_tokens=40
+total_tokens=1075
+workflow_ai_latency_ms=2329
+http_end_to_end_latency_ms=2656
+estimated_cost_usd=0.000255
+```
+
+`workflow_ai_latency_ms` fue medido por el workflow desde la construcción de la petición hasta la extracción de la respuesta. `http_end_to_end_latency_ms` fue medido externamente sobre el webhook completo. El coste se estimó con el `usage` real y los precios oficiales vigentes durante la prueba. Estas mediciones aisladas no constituyen un benchmark ni una medición formal de accuracy.
+
+La respuesta pública conservó todos los campos existentes de Gate 2 y añadió únicamente:
+
+```json
+"classification": {
+  "status": "succeeded",
+  "category": "network",
+  "priority": "medium",
+  "summary": "..."
+}
+```
+
+### E2E-F1 — provider failure real y controlado
+
+Se publicó temporalmente un model id ficticio exclusivamente para una petición E2E. No se modificó ni expuso la credencial y no hubo retries. El model id válido `gpt-5.6-luna` fue restaurado inmediatamente después y es el único presente en el export final.
+
+```text
+openai_requests=1
+automatic_retries=0
+http_status=201
+provider_failure_handled=PASS
+validator_executed=false
+terminal_update_rows=1
+final_status=failed
+error_code=AI_PROVIDER_ERROR
+prediction_fields_null=PASS
+ticket_status=processing
+provider_details_exposed=false
+```
+
+La respuesta pública añadió únicamente:
+
+```json
+"classification": {
+  "status": "failed"
+}
+```
+
+No expuso `error_code`, status o mensajes de OpenAI, stack trace, `prediction_id` ni detalles internos.
+
+### Regresión de entrada inválida
+
+Antes de las llamadas a OpenAI se envió una solicitud sintética sin `title`:
+
+```text
+http_status=400
+ticket_created=false
+prediction_created=false
+openai_called=false
+```
+
+La acumulación y forma de los errores de Gate 2 se conservaron.
+
+### Manejo de fallos internos
+
+Los errores internos controlables ocurridos después de crear `pending` se enrutan a un intento de transición terminal con `AI_INTERNAL_ERROR`. Si falla la propia escritura terminal en PostgreSQL, el workflow devuelve HTTP 500 y no afirma que la clasificación fue persistida. Por decisión de alcance de Fase 3 no se añadieron retries, workers ni infraestructura adicional; por tanto, ese fallo de base de datos puede dejar una fila `pending` que requiere intervención operativa.
+
+### Limpieza de Paso 9
+
+Tras capturar la evidencia se eliminaron exclusivamente las dos predicciones y sus dos tickets sintéticos mediante sus UUID exactos, respetando `ON DELETE RESTRICT`. También se eliminaron por ID las tres ejecuciones sintéticas de n8n —entrada inválida, success y provider failure— para que no permanecieran tickets ni respuestas del proveedor en execution data.
+
+```text
+prediction_count_before=0
+prediction_count_after=0
+synthetic_predictions_remaining=0
+synthetic_tickets_remaining=0
+synthetic_execution_entities_remaining=0
+synthetic_execution_data_remaining=0
+```
+
+El presupuesto de este paso fue respetado exactamente: dos requests reales a OpenAI, uno exitoso y uno fallido mediante model id temporal inválido, sin llamadas adicionales y sin retries.
+
+## Regresión final de Fase 3
+
+Se recuperó y reejecutó la batería original exacta de Gate 2: 28 casos de contrato/persistencia más los casos posteriores a reinicio de n8n y PostgreSQL. No se sustituyó por una batería nueva con el mismo número.
+
+Resultado global:
+
+```text
+cases_executed=30
+passed=30
+failed=0
+openai_requests_expected=13
+openai_requests_observed=13
+automatic_retries=0
+```
+
+Los 13 casos válidos crearon exactamente un ticket y una prediction cada uno, devolvieron HTTP 201 y terminaron en `succeeded`. Los 16 casos inválidos devolvieron HTTP 400, no crearon ticket ni prediction y no alcanzaron OpenAI. El caso de fallo PostgreSQL devolvió el HTTP 500 genérico aprobado, sin ticket, prediction, llamada a OpenAI ni detalles internos.
+
+Matriz de los 30 casos originales:
+
+```text
+happy_path=PASS
+normalization=PASS
+missing_email=PASS
+invalid_email=PASS
+area_spaces=PASS
+title_under_5=PASS
+description_under_10=PASS
+empty_payload=PASS
+wrong_types=PASS
+null_fields=PASS
+multiple_errors=PASS
+boundary_area_2=PASS
+boundary_area_80=PASS
+boundary_area_1=PASS
+boundary_area_81=PASS
+boundary_title_5=PASS
+boundary_title_150=PASS
+boundary_title_4=PASS
+boundary_title_151=PASS
+boundary_description_10=PASS
+boundary_description_5000=PASS
+boundary_description_9=PASS
+boundary_description_5001=PASS
+boundary_email_254=PASS
+boundary_email_255=PASS
+special_characters=PASS
+persistence_failure=PASS
+recovery_after_500=PASS
+after_n8n_restart=PASS
+after_postgres_restart=PASS
+```
+
+Para cada success se comprobó que la clasificación pública coincidiera con la fila de PostgreSQL y que la metadata fuera exactamente `openai`, `gpt-5.6-luna`, `ticket-classification-v1` y `ticket-classification-schema-v1`. En al menos el caso `happy_path` se verificó además:
+
+```text
+http_status=201
+ticket_persisted=true
+prediction_persisted=true
+prediction_status=succeeded
+category_valid=true
+priority_valid=true
+summary_valid=true
+public_classification_equals_database=true
+ticket_status=processing
+```
+
+### AI_RESPONSE_INVALID productivo
+
+Se desplegó temporalmente un único nodo de simulación entre la aserción de petición y el validador determinista. Durante esa versión temporal el nodo OpenAI no era alcanzable desde el webhook. La simulación entregó una categoría fuera del enum aprobado y recorrió la rama productiva real desde la creación del ticket y `pending` hasta la actualización terminal.
+
+```text
+openai_requests=0
+validator=REJECT
+prediction_final_status=failed
+error_code=AI_RESPONSE_INVALID
+prediction_fields_null=PASS
+http_status=201
+public_classification_status=failed
+error_code_exposed_to_client=false
+```
+
+La versión normal fue restaurada inmediatamente. El export final contiene 56 nodos, no contiene el nodo temporal, la categoría simulada ni el model id inválido de Paso 9, y vuelve a conectar la rama productiva con OpenAI.
+
+### Integridad PostgreSQL de la regresión
+
+Antes de limpiar se observaron 14 tickets y 14 predictions: 13 success reales de la batería y un failure simulado para `AI_RESPONSE_INVALID`.
+
+```text
+tickets_processing=14
+predictions_succeeded=13
+predictions_failed=1
+test_pending_predictions=0
+metadata_correct=14
+succeeded_consistent=13
+failed_consistent=1
+foreign_key_validated=true
+on_delete=RESTRICT
+```
+
+No existió ningún `succeeded` con `error_code`, ningún `failed` con `category`, `priority` o `summary`, ni cambios de estado de ticket provocados por IA.
+
+### Limpieza de la regresión final
+
+Se validaron primero los UUID exactos y luego se eliminaron las 14 predictions, seguidas por sus 14 tickets. También se eliminaron exclusivamente las 31 ejecuciones webhook de esta regresión —30 casos originales y la simulación inválida—, identificadas como ejecuciones 86–116 del workflow probado.
+
+```text
+synthetic_tickets_remaining=0
+synthetic_predictions_remaining=0
+synthetic_execution_entities_remaining=0
+synthetic_execution_data_remaining=0
+test_pending_predictions=0
+```
+
+### Seguridad, infraestructura y sincronización final
+
+```text
+api_key_in_git=false
+authorization_manual=false
+password_in_git=false
+raw_openai_response_versioned=false
+execution_data_versioned=false
+synthetic_ticket_versioned=false
+pinData_empty=true
+store=false
+automatic_retries=false
+
+postgres=healthy
+n8n=healthy
+postgres_published_ports=none
+n8n_binding=127.0.0.1:5678
+workflow_active=true
+```
+
+El export publicado y `n8n/workflows/ticket-intake.json` coincidieron funcionalmente: 56 nodos, cero diferencias de configuración de nodos, conexiones iguales y settings iguales. La importación CLI de n8n generó un `versionId` nuevo para la versión publicada; esa identidad de despliegue difiere del artefacto fuente, sin diferencia funcional.
+
+La evidencia real de `AI_PROVIDER_ERROR` del Paso 9 sigue vigente y su lógica continúa presente en el workflow final. No se repitió deliberadamente otra llamada fallida al proveedor.
+
+### Limitación conocida de escritura terminal
+
+Si PostgreSQL falla después de crear `pending` pero antes de persistir la transición terminal, el workflow puede devolver HTTP 500 y la prediction puede permanecer `pending`. El ticket original permanece persistido y el workflow no inventa un estado terminal. Gate 3 no incorpora retries, workers ni recuperación automática; esa recuperación pertenece a una fase posterior.
+
+## Regresión mínima histórica de Gate 2
+
+En el Paso 6 se había ejecutado una regresión mínima de exactamente dos casos; esa evidencia histórica no corresponde a la regresión final anterior:
 
 - solicitud sintética válida → HTTP 201 y ticket persistido;
 - solicitud inválida sin `title` → HTTP 400 y sin persistencia adicional.
@@ -374,27 +640,25 @@ No se creó ninguna predicción para el ticket sintético y el conteo de predicc
 
 ## Workflow
 
-- La rama de pruebas comienza con un `Manual Trigger` y permanece desconectada del webhook productivo.
-- El workflow desplegado y exportado contiene 34 nodos.
+- La rama de pruebas continúa comenzando con un `Manual Trigger` y permanece desconectada de la rama iniciada por el webhook.
+- La rama productiva del webhook contiene su propia carga del contrato read-only, llamada a OpenAI, validación determinista y persistencia terminal.
+- El workflow desplegado y exportado contiene 56 nodos.
 - El export versionado quedó sincronizado con el workflow publicado.
 - La llamada real utiliza un nodo HTTP Request contra OpenAI Responses API porque permite cargar dinámicamente el schema versionado y controlar `strict`, `store`, usage y errores sin duplicar el contrato.
 - La rama manual inserta y verifica `pending`, conserva `prediction_id` y aplica transiciones terminales condicionadas por `prediction_id`, `ticket_id` y estado `pending`.
 - El workflow contiene únicamente una referencia a la credencial administrada por n8n; no contiene el secreto.
 - El export mantiene `pinData` vacío y no contiene datos de ejecución.
 
-## Pendiente para cerrar Gate 3
+## Conclusión de Gate 3
 
-- Integrar el flujo de clasificación con `POST /webhook/tickets`.
-- Comprobar las rutas success y failure sobre el intake real.
-- Verificar el contrato HTTP cuando la IA falla.
-- Ejecutar la regresión final.
-- Documentar la evidencia end-to-end de Fase 3.
-- Realizar el cierre formal de Gate 3.
+Gate 3 fue aprobado porque el intake de Gate 2 conservó una regresión 30/30 sobre el workflow final; los tickets válidos se clasifican mediante IA; el output se valida determinísticamente; y las predicciones se persisten mediante la transición `pending → succeeded/failed`. Los fallos del proveedor conservan el ticket y responden HTTP 201, las respuestas inválidas del modelo no se utilizan y las solicitudes inválidas no alcanzan OpenAI.
+
+La limpieza no dejó datos sintéticos, la revisión de seguridad pasó y el workflow desplegado coincide funcionalmente con el export versionado.
 
 ## Límites de esta evidencia
 
-- La rama de IA continúa aislada del webhook productivo.
+- La clasificación IA ya forma parte del webhook productivo; Telegram, email, routing, SLA, HITL, retries, fallback model y reglas de negocio de Fase 4 continúan fuera de alcance.
 - Las predicciones del Paso 8 fueron persistidas temporalmente para verificar la máquina de estados y eliminadas al finalizar; no permanecen datos sintéticos.
-- La regresión de Gate 2 fue mínima y no acredita la repetición de sus 30 casos.
+- La regresión final cubrió los 30 casos originales de Gate 2, 13 clasificaciones reales exitosas y una simulación productiva sin API de `AI_RESPONSE_INVALID`. No constituye un benchmark ni una medición formal de accuracy.
 - La evidencia versionada no contiene secrets, API keys, tokens, IP pública, datos personales ni datos de ejecución.
 - La batería real es evidencia experimental y no mide formalmente accuracy, rendimiento, disponibilidad ni impacto de producción.

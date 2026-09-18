@@ -3,9 +3,11 @@
 - **Gate 0: APROBADO.**
 - **Gate 1: APROBADO.**
 - **Gate 2: APROBADO.**
+- **Gate 3: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
-- **Fase actual: Fase 3 — IA, salida estructurada y versionado de prompts.**
+- **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
+- **Fase actual: Fase 4 — reglas de negocio + notificación; todavía no implementada.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -13,7 +15,7 @@
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n y el intake de tickets. Gate 0, Gate 1 y Gate 2 cuentan con aprobación explícita del usuario.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets y la clasificación mediante IA. Gate 0, Gate 1, Gate 2 y Gate 3 cuentan con aprobación explícita.
 
 ## Infraestructura aprobada
 
@@ -142,16 +144,32 @@ La batería formal se ejecutó el 2026-09-17 sobre el commit `73913e279892bf7b4b
 
 La evidencia detallada y sus límites se conservan en `docs/testing/GATE_2.md`. Gate 2 queda aprobado; esta prueba controlada no constituye una métrica de producción.
 
+## Fase 3 — Clasificación estructurada mediante IA
+
+Fase 3 integró en el intake real la clasificación de tickets mediante OpenAI Responses API, manteniendo el ticket persistido antes de invocar al proveedor. El workflow utiliza el prompt `ticket-classification-v1` y el schema `ticket-classification-schema-v1` cargados desde archivos versionados y montados read-only.
+
+La salida contiene exactamente `category`, `priority` y `summary`, utiliza Structured Outputs y vuelve a pasar por un validador determinista antes de considerarse confiable. Las predicciones se registran en `ticket_ai_predictions` mediante la transición `pending → succeeded/failed`, separada de `tickets.status`.
+
+Los fallos del proveedor y las respuestas inválidas se manejan de forma controlada: el ticket original se conserva, no se utiliza una clasificación inválida y no se persisten campos parciales como si fueran una predicción exitosa.
+
+## Cierre de Fase 3 y Gate 3
+
+La regresión final reejecutó los 30 casos originales de Gate 2 sobre el workflow final y obtuvo resultado 30/30. También se comprobaron la clasificación exitosa, el fallo controlado del proveedor, el rechazo determinista de una respuesta inválida, la integridad de estados, la limpieza, la seguridad y la sincronización funcional entre workflow desplegado y exportado.
+
+La evidencia detallada se conserva en `docs/testing/GATE_3.md`. Gate 3 queda aprobado y Fase 3 completada; esta evidencia funcional no constituye una medición formal de accuracy ni un benchmark.
+
+Limitación conocida: si PostgreSQL falla después de crear una prediction `pending` pero antes de completar la escritura terminal, la fila puede permanecer pendiente y el workflow puede responder HTTP 500. El ticket original permanece persistido, no se inventa un estado terminal y la recuperación o los retries pertenecen a una fase posterior.
+
 ## Siguiente paso
 
-Iniciar Fase 3 únicamente mediante una instrucción explícita y comenzar por concretar el proveedor/modelo, el contrato estructurado de salida, las taxonomías y el versionado del prompt. No incorporar todavía Telegram, reglas de Fase 4 ni funcionalidades posteriores.
+Iniciar Fase 4 únicamente mediante una instrucción explícita. Su alcance será reglas de negocio y notificación, sin dar por implementados Telegram, routing, SLA, HITL, retries ni otras funcionalidades posteriores.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- V1 todavía no está completa ni publicada mediante HTTPS; Gate 2 cubre únicamente intake y persistencia inicial.
+- V1 todavía no está completa ni publicada mediante HTTPS; Gate 3 cubre intake, clasificación estructurada y persistencia de predicciones.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- La IA, Telegram, Power BI, Caddy público y CI/CD todavía no están implementados.
-- Proveedor/modelo de IA y dominio/DNS se concretarán en su fase. El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 2 está aprobado.
+- Telegram, reglas de negocio, routing, SLA, HITL, retries, Power BI, Caddy público y CI/CD todavía no están implementados.
+- El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
+- Ningún gate posterior a Gate 3 está aprobado.

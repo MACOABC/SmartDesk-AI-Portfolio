@@ -111,7 +111,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, ticket: { id: $json.id, status: $json.status, created_at: $json.created_at, updated_at: $json.updated_at } } }}",
+        "responseBody": "={{ { success: true, ticket: { id: $('Insert Ticket').first().json.id, status: $('Insert Ticket').first().json.status, created_at: $('Insert Ticket').first().json.created_at, updated_at: $('Insert Ticket').first().json.updated_at }, classification: { status: 'succeeded', category: $json.category, priority: $json.priority, summary: $json.summary } } }}",
         "options": {
           "responseCode": 201
         }
@@ -119,7 +119,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        960,
+        5520,
         -120
       ],
       "id": "39ec4b33-8300-4703-af9f-942aca6134fa",
@@ -141,6 +141,507 @@
       ],
       "id": "04d1604a-e05f-4dc3-966c-349bf1a8d191",
       "name": "Return Persistence Error"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.ticket_ai_predictions (\n    ticket_id,\n    status,\n    category,\n    priority,\n    summary,\n    provider,\n    model,\n    prompt_version,\n    schema_version,\n    error_code\n)\nVALUES ($1, 'pending', NULL, NULL, NULL, 'openai', $2, $3, $4, NULL)\nRETURNING\n    id AS prediction_id,\n    ticket_id,\n    status AS prediction_status,\n    category,\n    priority,\n    summary,\n    provider,\n    model,\n    prompt_version,\n    schema_version,\n    error_code,\n    created_at AS prediction_created_at,\n    updated_at AS prediction_updated_at;",
+        "options": {
+          "queryReplacement": "={{ [ $json.id, 'gpt-5.6-luna', 'ticket-classification-v1', 'ticket-classification-schema-v1' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        960,
+        -120
+      ],
+      "id": "e1f5bfb6-b49b-4d85-bcf0-330d8b50be01",
+      "name": "Insert Prediction Pending",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b15c7f14-85ea-4be8-920a-a1e29b8f6c01",
+              "name": "prompt_version",
+              "value": "ticket-classification-v1",
+              "type": "string"
+            },
+            {
+              "id": "b15c7f14-85ea-4be8-920a-a1e29b8f6c02",
+              "name": "schema_version",
+              "value": "ticket-classification-schema-v1",
+              "type": "string"
+            },
+            {
+              "id": "b15c7f14-85ea-4be8-920a-a1e29b8f6c03",
+              "name": "prompt_path",
+              "value": "/opt/smartdesk/prompts/ticket-classification/v1.md",
+              "type": "string"
+            },
+            {
+              "id": "b15c7f14-85ea-4be8-920a-a1e29b8f6c04",
+              "name": "schema_path",
+              "value": "/opt/smartdesk/prompts/ticket-classification/schema-v1.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1200,
+        -120
+      ],
+      "id": "c916f7a0-8c75-438a-a120-365b21c2f102",
+      "name": "Production Contract Versions and Paths"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $json.prompt_path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        -120
+      ],
+      "id": "915b9da8-3fb6-4466-b195-32af97672603",
+      "name": "Read Production Prompt File",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "prompt_content",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": true,
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        -120
+      ],
+      "id": "5caabf72-17bc-48cf-86c1-1012b4723104",
+      "name": "Extract Production Prompt Text",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $('Production Contract Versions and Paths').first().json.schema_path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        -120
+      ],
+      "id": "d2df4e44-ce5f-4622-bb9e-ac4f47b45305",
+      "name": "Read Production Schema File",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "data",
+        "destinationKey": "schema_content",
+        "options": {
+          "encoding": "utf8",
+          "stripBOM": true,
+          "keepSource": "json"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        -120
+      ],
+      "id": "b95e1a9a-8845-4890-80fd-e31d3cd2d906",
+      "name": "Extract Production Schema Text",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const expectedRequired = ['category', 'priority', 'summary'];\nconst expectedCategories = ['access', 'hardware', 'software', 'network', 'service_request', 'other'];\nconst expectedPriorities = ['low', 'medium', 'high', 'critical'];\nconst isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst sameMembers = (actual, expected) => Array.isArray(actual) && actual.length === expected.length && expected.every((value) => actual.includes(value));\n\nconst versions = $('Production Contract Versions and Paths').first().json;\nconst promptItem = $('Extract Production Prompt Text').first().json;\nconst schemaItem = $('Extract Production Schema Text').first().json;\nconst ticket = $('Insert Ticket').first().json;\nconst pending = $('Insert Prediction Pending').first().json;\nconst normalized = $('Validate and Normalize Ticket').first().json.response.received;\nconst base = {\n  ticket_id: ticket.id,\n  ticket_status: ticket.status,\n  ticket_created_at: ticket.created_at,\n  ticket_updated_at: ticket.updated_at,\n  prediction_id: pending.prediction_id,\n  prediction_created_at: pending.prediction_created_at,\n  prediction_pending_updated_at: pending.prediction_updated_at,\n  provider: pending.provider,\n  model: pending.model,\n  prompt_version: versions.prompt_version,\n  schema_version: versions.schema_version,\n  ticket: normalized,\n};\n\ntry {\n  if (promptItem.error || schemaItem.error) throw new Error('file load failed');\n  const promptContent = promptItem.prompt_content;\n  const schemaContent = schemaItem.schema_content;\n  if (typeof promptContent !== 'string' || promptContent.length === 0 || !promptContent.includes(versions.prompt_version)) throw new Error('prompt mismatch');\n  if (typeof schemaContent !== 'string' || schemaContent.length === 0) throw new Error('schema unavailable');\n  const schema = JSON.parse(schemaContent);\n  if (!isPlainObject(schema) || schema.$id !== versions.schema_version) throw new Error('schema version mismatch');\n  if (schema.type !== 'object' || schema.additionalProperties !== false) throw new Error('schema root mismatch');\n  if (!sameMembers(schema.required, expectedRequired)) throw new Error('required mismatch');\n  if (!isPlainObject(schema.properties) || !sameMembers(Object.keys(schema.properties), expectedRequired)) throw new Error('properties mismatch');\n  if (schema.properties.category.type !== 'string' || !sameMembers(schema.properties.category.enum, expectedCategories)) throw new Error('category mismatch');\n  if (schema.properties.priority.type !== 'string' || !sameMembers(schema.properties.priority.enum, expectedPriorities)) throw new Error('priority mismatch');\n  if (schema.properties.summary.type !== 'string' || schema.properties.summary.minLength !== 1 || schema.properties.summary.maxLength !== 300) throw new Error('summary mismatch');\n  return [{ json: { ...base, contract_valid: true, prompt_content: promptContent, schema } }];\n} catch {\n  return [{ json: { ...base, contract_valid: false, error_code: 'AI_CONTRACT_LOAD_ERROR' } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -120
+      ],
+      "id": "d13f3a04-21b0-44c1-a617-776961473107",
+      "name": "Validate Production Contract",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a7840e50-e05a-4cdc-a9ba-20a0cd785108",
+              "leftValue": "={{ $json.contract_valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2640,
+        -120
+      ],
+      "id": "7e676310-b783-4afd-8463-3e346131e109",
+      "name": "Is Production Contract Valid?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst ticketData = [\n  '<untrusted_ticket_data>',\n  'AREA:',\n  input.ticket.requester_area,\n  '',\n  'TITLE:',\n  input.ticket.title,\n  '',\n  'DESCRIPTION:',\n  input.ticket.description,\n  '</untrusted_ticket_data>',\n].join('\\n');\n\nreturn [{\n  json: {\n    ticket_id: input.ticket_id,\n    prediction_id: input.prediction_id,\n    provider: input.provider,\n    requested_model: 'gpt-5.6-luna',\n    prompt_version: input.prompt_version,\n    schema_version: input.schema_version,\n    schema: input.schema,\n    started_at_ms: Date.now(),\n    request_body: {\n      model: 'gpt-5.6-luna',\n      instructions: input.prompt_content,\n      input: [{ role: 'user', content: [{ type: 'input_text', text: ticketData }] }],\n      text: { format: { type: 'json_schema', name: input.schema_version, schema: input.schema, strict: true } },\n      reasoning: { effort: 'none' },\n      store: false,\n      max_output_tokens: 300,\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        -200
+      ],
+      "id": "fdf54c48-cb48-4e29-aa57-120cd286e10a",
+      "name": "Build Production AI Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) throw new Error('AI_REQUEST_COUNT_INVALID');\nconst item = items[0].json;\nif (!item.request_body || item.request_body.model !== item.requested_model) throw new Error('AI_REQUEST_INVALID');\nreturn [{ json: { ...item, http_request_item_count: 1 } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        -200
+      ],
+      "id": "ebea5398-63d1-4181-a34d-a2386d61b50b",
+      "name": "Assert Production Single Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.request_body }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3360,
+        -200
+      ],
+      "id": "6d907601-c856-41aa-a7a5-6036c3c33b0c",
+      "name": "OpenAI Production Responses",
+      "credentials": {
+        "openAiApi": {
+          "id": "7SpeiXGRZPZTByV6",
+          "name": "OpenAI account"
+        }
+      },
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $('Assert Production Single Request').first().json;\nreturn [{ json: { ticket_id: request.ticket_id, prediction_id: request.prediction_id, error_code: 'AI_PROVIDER_ERROR' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        40
+      ],
+      "id": "44bdf1f0-f30e-4918-a75e-20118121820d",
+      "name": "Build Production Provider Failure",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst request = $('Assert Production Single Request').first().json;\nconst base = {\n  ticket_id: request.ticket_id,\n  prediction_id: request.prediction_id,\n  provider: request.provider,\n  requested_model: request.requested_model,\n  reported_model: response.model ?? null,\n  prompt_version: request.prompt_version,\n  schema_version: request.schema_version,\n  schema: request.schema,\n  response_status: response.status ?? null,\n  input_tokens: response.usage?.input_tokens ?? null,\n  cached_input_tokens: response.usage?.input_tokens_details?.cached_tokens ?? null,\n  output_tokens: response.usage?.output_tokens ?? null,\n  total_tokens: response.usage?.total_tokens ?? null,\n  latency_ms: Date.now() - request.started_at_ms,\n};\nif (response.status !== 'completed' || response.error) return [{ json: { ...base, valid: false, error_code: 'AI_PROVIDER_ERROR' } }];\nconst outputTexts = Array.isArray(response.output)\n  ? response.output.filter((item) => item?.type === 'message' && Array.isArray(item.content)).flatMap((item) => item.content).filter((part) => part?.type === 'output_text' && typeof part.text === 'string').map((part) => part.text)\n  : [];\nif (outputTexts.length !== 1 || outputTexts[0].length === 0) return [{ json: { ...base, valid: false, error_code: 'AI_RESPONSE_INVALID' } }];\nreturn [{ json: { ...base, ai_response: outputTexts[0] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        -200
+      ],
+      "id": "e2ef797e-9b8d-4be3-98d9-1202e006f90e",
+      "name": "Extract Production Classification",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nif (input.error_code) return [{ json: input }];\nconst invalid = () => ({ json: { ...input, ai_response: undefined, valid: false, error_code: 'AI_RESPONSE_INVALID' } });\nlet candidate;\ntry { candidate = JSON.parse(input.ai_response); } catch { return [invalid()]; }\nif (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) return [invalid()];\nconst keys = Object.keys(candidate);\nconst expectedKeys = ['category', 'priority', 'summary'];\nif (keys.length !== expectedKeys.length || !expectedKeys.every((key) => keys.includes(key))) return [invalid()];\nconst schema = input.schema;\nif (typeof candidate.category !== 'string' || !schema.properties.category.enum.includes(candidate.category)) return [invalid()];\nif (typeof candidate.priority !== 'string' || !schema.properties.priority.enum.includes(candidate.priority)) return [invalid()];\nif (typeof candidate.summary !== 'string') return [invalid()];\nconst summaryLength = candidate.summary.trim().length;\nif (summaryLength < schema.properties.summary.minLength || summaryLength > schema.properties.summary.maxLength) return [invalid()];\nreturn [{ json: { ...input, ai_response: undefined, valid: true, category: candidate.category, priority: candidate.priority, summary: candidate.summary } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        -200
+      ],
+      "id": "bd6ad221-cd99-47e7-bb59-55d2683c7810",
+      "name": "Validate Production Classification",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd1910b5-c7b7-4350-ab15-d1ef78968811",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4080,
+        -200
+      ],
+      "id": "fa69b5f5-2964-429b-b24d-f73c026bb712",
+      "name": "Is Production Classification Valid?"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.ticket_ai_predictions\n    SET\n        status = 'succeeded',\n        category = $1,\n        priority = $2,\n        summary = $3,\n        error_code = NULL,\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $4\n      AND ticket_id = $5\n      AND status = 'pending'\n    RETURNING id, ticket_id, status, category, priority, summary, error_code\n)\nSELECT\n    (SELECT count(*) FROM updated)::integer AS terminal_update_rows,\n    (SELECT id FROM updated) AS prediction_id,\n    (SELECT ticket_id FROM updated) AS ticket_id,\n    (SELECT status FROM updated) AS prediction_status,\n    (SELECT category FROM updated) AS category,\n    (SELECT priority FROM updated) AS priority,\n    (SELECT summary FROM updated) AS summary,\n    (SELECT error_code FROM updated) AS error_code;",
+        "options": {
+          "queryReplacement": "={{ [ $json.category, $json.priority, $json.summary, $json.prediction_id, $json.ticket_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4320,
+        -280
+      ],
+      "id": "1e87bd92-ee80-4465-8f47-999357249813",
+      "name": "Update Production Prediction Succeeded",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.ticket_ai_predictions\n    SET\n        status = 'failed',\n        category = NULL,\n        priority = NULL,\n        summary = NULL,\n        error_code = $1,\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $2\n      AND ticket_id = $3\n      AND status = 'pending'\n    RETURNING id, ticket_id, status, category, priority, summary, error_code\n)\nSELECT\n    (SELECT count(*) FROM updated)::integer AS terminal_update_rows,\n    (SELECT id FROM updated) AS prediction_id,\n    (SELECT ticket_id FROM updated) AS ticket_id,\n    (SELECT status FROM updated) AS prediction_status,\n    (SELECT category FROM updated) AS category,\n    (SELECT priority FROM updated) AS priority,\n    (SELECT summary FROM updated) AS summary,\n    (SELECT error_code FROM updated) AS error_code;",
+        "options": {
+          "queryReplacement": "={{ [ $json.error_code, $json.prediction_id, $json.ticket_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4320,
+        40
+      ],
+      "id": "1a464129-06ec-46de-8a03-f26992121114",
+      "name": "Update Production Prediction Failed",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b0eb7b14-cd84-4bbc-b34d-7ea1029aac15",
+              "leftValue": "={{ $json.terminal_update_rows }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4560,
+        -280
+      ],
+      "id": "d8f68793-9525-4721-8184-930194d23216",
+      "name": "Is Production Success Update Exact?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ec592b63-c6c0-4f3c-8668-4ff418de0117",
+              "leftValue": "={{ $json.terminal_update_rows }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4560,
+        40
+      ],
+      "id": "35af684f-6294-4512-a0c8-253851942118",
+      "name": "Is Production Failed Update Exact?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, ticket: { id: $('Insert Ticket').first().json.id, status: $('Insert Ticket').first().json.status, created_at: $('Insert Ticket').first().json.created_at, updated_at: $('Insert Ticket').first().json.updated_at }, classification: { status: 'failed' } } }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4800,
+        40
+      ],
+      "id": "afec23ec-b33d-4728-9277-4db550a08c19",
+      "name": "Return Created Ticket Classification Failed"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'AI_INTERNAL_ERROR', message: 'Ticket created but classification could not be completed' }, ticket: { id: $('Insert Ticket').first().json.id, status: $('Insert Ticket').first().json.status, created_at: $('Insert Ticket').first().json.created_at, updated_at: $('Insert Ticket').first().json.updated_at } } }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4800,
+        200
+      ],
+      "id": "bc22ffed-9a62-44c8-9b49-c50dbe26111a",
+      "name": "Return Classification Internal Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const pending = $('Insert Prediction Pending').first().json;\nreturn [{ json: { ticket_id: pending.ticket_id, prediction_id: pending.prediction_id, error_code: 'AI_INTERNAL_ERROR' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        200
+      ],
+      "id": "bfbdecc4-2c9b-48bf-9ad8-26fe98f10c1b",
+      "name": "Build Production Internal Failure"
     },
     {
       "parameters": {},
@@ -680,7 +1181,7 @@
       "main": [
         [
           {
-            "node": "Return Created Ticket",
+            "node": "Insert Prediction Pending",
             "type": "main",
             "index": 0
           }
@@ -688,6 +1189,324 @@
         [
           {
             "node": "Return Persistence Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Prediction Pending": {
+      "main": [
+        [
+          {
+            "node": "Production Contract Versions and Paths",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Classification Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Production Contract Versions and Paths": {
+      "main": [
+        [
+          {
+            "node": "Read Production Prompt File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Production Prompt File": {
+      "main": [
+        [
+          {
+            "node": "Extract Production Prompt Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Production Prompt Text": {
+      "main": [
+        [
+          {
+            "node": "Read Production Schema File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Production Schema File": {
+      "main": [
+        [
+          {
+            "node": "Extract Production Schema Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Production Schema Text": {
+      "main": [
+        [
+          {
+            "node": "Validate Production Contract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Production Contract": {
+      "main": [
+        [
+          {
+            "node": "Is Production Contract Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Production Contract Valid?": {
+      "main": [
+        [
+          {
+            "node": "Build Production AI Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Production Prediction Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Production AI Request": {
+      "main": [
+        [
+          {
+            "node": "Assert Production Single Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Production Single Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Production Responses",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Production Responses": {
+      "main": [
+        [
+          {
+            "node": "Extract Production Classification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Provider Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Production Provider Failure": {
+      "main": [
+        [
+          {
+            "node": "Update Production Prediction Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Production Classification": {
+      "main": [
+        [
+          {
+            "node": "Validate Production Classification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Production Classification": {
+      "main": [
+        [
+          {
+            "node": "Is Production Classification Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Production Internal Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Production Internal Failure": {
+      "main": [
+        [
+          {
+            "node": "Update Production Prediction Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Production Classification Valid?": {
+      "main": [
+        [
+          {
+            "node": "Update Production Prediction Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Production Prediction Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Production Prediction Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Is Production Success Update Exact?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Classification Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Production Success Update Exact?": {
+      "main": [
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Classification Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Production Prediction Failed": {
+      "main": [
+        [
+          {
+            "node": "Is Production Failed Update Exact?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Classification Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Production Failed Update Exact?": {
+      "main": [
+        [
+          {
+            "node": "Return Created Ticket Classification Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Classification Internal Error",
             "type": "main",
             "index": 0
           }
