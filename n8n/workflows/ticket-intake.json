@@ -336,6 +336,121 @@
       ],
       "id": "954f8e22-56a3-4b8f-933d-66cfc2937626",
       "name": "Assert AI Contract Tests"
+    },
+    {
+      "parameters": {
+        "jsCode": "const validItems = $input.all().filter((item) => item.json.case_id === 'C0' && item.json.contract_valid === true);\n\nif (validItems.length !== 1) {\n  throw new Error('AI_REQUEST_ITEM_COUNT_ERROR');\n}\n\nreturn validItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        640
+      ],
+      "id": "0bf1b718-cc49-4e3d-ad9a-8f2fe6b2c675",
+      "name": "Select Valid Contract C0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) {\n  throw new Error('AI_REQUEST_ITEM_COUNT_ERROR');\n}\n\nconst contract = items[0].json;\nconst promptContent = $('Extract Prompt Text').first().json.prompt_content;\nif (typeof promptContent !== 'string' || promptContent.length === 0) {\n  throw new Error('AI_CONTRACT_LOAD_ERROR');\n}\n\nconst decodeInput = (encoded) => {\n  if (typeof encoded !== 'string' || encoded.length === 0) throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n  return Buffer.from(encoded, 'base64').toString('utf8');\n};\nconst ticket = {\n  requester_area: decodeInput($env.SMARTDESK_AI_REQUESTER_AREA_B64),\n  title: decodeInput($env.SMARTDESK_AI_TITLE_B64),\n  description: decodeInput($env.SMARTDESK_AI_DESCRIPTION_B64),\n};\nif (Object.values(ticket).some((value) => value.trim().length === 0)) {\n  throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n}\n\nconst ticketData = [\n  '<untrusted_ticket_data>',\n  'AREA:',\n  ticket.requester_area,\n  '',\n  'TITLE:',\n  ticket.title,\n  '',\n  'DESCRIPTION:',\n  ticket.description,\n  '</untrusted_ticket_data>',\n].join('\\n');\n\nreturn [{\n  json: {\n    provider: 'openai',\n    requested_model: 'gpt-5.6-luna',\n    prompt_version: contract.prompt_version,\n    schema_version: contract.schema_version,\n    schema: contract.schema,\n    started_at_ms: Date.now(),\n    request_body: {\n      model: 'gpt-5.6-luna',\n      instructions: promptContent,\n      input: [{\n        role: 'user',\n        content: [{ type: 'input_text', text: ticketData }],\n      }],\n      text: {\n        format: {\n          type: 'json_schema',\n          name: contract.schema_version,\n          schema: contract.schema,\n          strict: true,\n        },\n      },\n      reasoning: { effort: 'none' },\n      store: false,\n      max_output_tokens: 300,\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        640
+      ],
+      "id": "8a639b97-949d-446d-94d8-9213ea5227ab",
+      "name": "Build First Real AI Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) {\n  throw new Error('AI_REQUEST_ITEM_COUNT_ERROR');\n}\n\nconst item = items[0];\nconst body = item.json.request_body;\nif (!body || body.model !== 'gpt-5.6-luna' || body.store !== false || body.reasoning?.effort !== 'none') {\n  throw new Error('AI_REQUEST_CONFIGURATION_ERROR');\n}\nif (body.text?.format?.type !== 'json_schema' || body.text.format.strict !== true) {\n  throw new Error('AI_REQUEST_CONFIGURATION_ERROR');\n}\nif (body.text.format.schema?.$id !== item.json.schema_version) {\n  throw new Error('AI_CONTRACT_LOAD_ERROR');\n}\nif (Object.prototype.hasOwnProperty.call(body, 'tools') || Object.prototype.hasOwnProperty.call(body, 'stream')) {\n  throw new Error('AI_REQUEST_CONFIGURATION_ERROR');\n}\n\nreturn [{\n  json: {\n    ...item.json,\n    http_request_item_count: 1,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        640
+      ],
+      "id": "1750f317-75f7-4d23-b526-12bfbc851269",
+      "name": "Assert Single OpenAI Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.request_body }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2640,
+        640
+      ],
+      "id": "387f5cbc-987e-48c3-83b5-b63f79d16649",
+      "name": "OpenAI Responses",
+      "credentials": {
+        "openAiApi": {
+          "id": "7SpeiXGRZPZTByV6",
+          "name": "OpenAI account"
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst request = $('Assert Single OpenAI Request').first().json;\nconst latencyMs = Date.now() - request.started_at_ms;\n\nif (response.status !== 'completed' || response.error) {\n  throw new Error('AI_PROVIDER_FAILURE');\n}\n\nconst outputTexts = Array.isArray(response.output)\n  ? response.output\n      .filter((item) => item?.type === 'message' && Array.isArray(item.content))\n      .flatMap((item) => item.content)\n      .filter((part) => part?.type === 'output_text' && typeof part.text === 'string')\n      .map((part) => part.text)\n  : [];\n\nif (outputTexts.length !== 1 || outputTexts[0].length === 0) {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\ntry {\n  JSON.parse(outputTexts[0]);\n} catch {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\nreturn [{\n  json: {\n    provider: request.provider,\n    requested_model: request.requested_model,\n    reported_model: response.model ?? null,\n    prompt_version: request.prompt_version,\n    schema_version: request.schema_version,\n    schema: request.schema,\n    ai_response: outputTexts[0],\n    response_status: response.status,\n    structured_output: true,\n    input_tokens: response.usage?.input_tokens ?? null,\n    output_tokens: response.usage?.output_tokens ?? null,\n    total_tokens: response.usage?.total_tokens ?? null,\n    latency_ms: latencyMs,\n    http_request_item_count: request.http_request_item_count,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        640
+      ],
+      "id": "4be9028c-3ae9-4fe3-b781-958e2f77ed62",
+      "name": "Extract OpenAI Classification"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst invalid = () => ({\n  json: {\n    provider: input.provider,\n    requested_model: input.requested_model,\n    reported_model: input.reported_model,\n    prompt_version: input.prompt_version,\n    schema_version: input.schema_version,\n    response_status: input.response_status,\n    structured_output: input.structured_output,\n    valid: false,\n    error_code: 'AI_RESPONSE_INVALID',\n    input_tokens: input.input_tokens,\n    output_tokens: input.output_tokens,\n    total_tokens: input.total_tokens,\n    latency_ms: input.latency_ms,\n    http_request_item_count: input.http_request_item_count,\n  },\n});\n\nlet candidate = input.ai_response;\nif (typeof candidate === 'string') {\n  try {\n    candidate = JSON.parse(candidate);\n  } catch {\n    return [invalid()];\n  }\n}\n\nif (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) return [invalid()];\nconst keys = Object.keys(candidate);\nconst expectedKeys = ['category', 'priority', 'summary'];\nif (keys.length !== expectedKeys.length || !expectedKeys.every((key) => keys.includes(key))) return [invalid()];\n\nconst schema = input.schema;\nif (typeof candidate.category !== 'string' || !schema.properties.category.enum.includes(candidate.category)) return [invalid()];\nif (typeof candidate.priority !== 'string' || !schema.properties.priority.enum.includes(candidate.priority)) return [invalid()];\nif (typeof candidate.summary !== 'string') return [invalid()];\nconst summaryLength = candidate.summary.trim().length;\nif (summaryLength < schema.properties.summary.minLength || summaryLength > schema.properties.summary.maxLength) return [invalid()];\n\nreturn [{\n  json: {\n    provider: input.provider,\n    requested_model: input.requested_model,\n    reported_model: input.reported_model,\n    prompt_version: input.prompt_version,\n    schema_version: input.schema_version,\n    response_status: input.response_status,\n    structured_output: input.structured_output,\n    valid: true,\n    data: candidate,\n    input_tokens: input.input_tokens,\n    output_tokens: input.output_tokens,\n    total_tokens: input.total_tokens,\n    latency_ms: input.latency_ms,\n    http_request_item_count: input.http_request_item_count,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        640
+      ],
+      "id": "65d008e5-04da-4076-b9bf-6dd73c9c08d7",
+      "name": "Validate Real AI Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1 || items[0].json.valid !== true) {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\nconst result = items[0].json;\nreturn [{\n  json: {\n    provider: result.provider,\n    requested_model: result.requested_model,\n    reported_model: result.reported_model,\n    prompt_version: result.prompt_version,\n    schema_version: result.schema_version,\n    category: result.data.category,\n    priority: result.data.priority,\n    summary: result.data.summary,\n    structured_output: 'PASS',\n    deterministic_validator: 'PASS',\n    response_status: result.response_status,\n    input_tokens: result.input_tokens,\n    output_tokens: result.output_tokens,\n    total_tokens: result.total_tokens,\n    latency_ms: result.latency_ms,\n    http_request_item_count: result.http_request_item_count,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        640
+      ],
+      "id": "0080ab86-b73e-4af6-872e-cb024baeb385",
+      "name": "Assert First Real AI Call"
     }
   ],
   "connections": {
@@ -481,6 +596,11 @@
             "node": "Build Simulated AI Cases",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Select Valid Contract C0",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -506,12 +626,80 @@
           }
         ]
       ]
+    },
+    "Select Valid Contract C0": {
+      "main": [
+        [
+          {
+            "node": "Build First Real AI Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build First Real AI Request": {
+      "main": [
+        [
+          {
+            "node": "Assert Single OpenAI Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Single OpenAI Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Responses": {
+      "main": [
+        [
+          {
+            "node": "Extract OpenAI Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract OpenAI Classification": {
+      "main": [
+        [
+          {
+            "node": "Validate Real AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Real AI Response": {
+      "main": [
+        [
+          {
+            "node": "Assert First Real AI Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
   "active": true,
-  "versionId": "fc2c5433-a6bc-418d-b5ad-0b69d7707569",
+  "versionId": "b034cc2d-04bc-47fd-8210-08865405785e",
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": false
   }
 }
