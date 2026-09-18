@@ -352,12 +352,107 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nif (items.length !== 1) {\n  throw new Error('AI_REQUEST_ITEM_COUNT_ERROR');\n}\n\nconst contract = items[0].json;\nconst promptContent = $('Extract Prompt Text').first().json.prompt_content;\nif (typeof promptContent !== 'string' || promptContent.length === 0) {\n  throw new Error('AI_CONTRACT_LOAD_ERROR');\n}\n\nconst decodeInput = (encoded) => {\n  if (typeof encoded !== 'string' || encoded.length === 0) throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n  return Buffer.from(encoded, 'base64').toString('utf8');\n};\nconst ticket = {\n  requester_area: decodeInput($env.SMARTDESK_AI_REQUESTER_AREA_B64),\n  title: decodeInput($env.SMARTDESK_AI_TITLE_B64),\n  description: decodeInput($env.SMARTDESK_AI_DESCRIPTION_B64),\n};\nif (Object.values(ticket).some((value) => value.trim().length === 0)) {\n  throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n}\n\nconst ticketData = [\n  '<untrusted_ticket_data>',\n  'AREA:',\n  ticket.requester_area,\n  '',\n  'TITLE:',\n  ticket.title,\n  '',\n  'DESCRIPTION:',\n  ticket.description,\n  '</untrusted_ticket_data>',\n].join('\\n');\n\nreturn [{\n  json: {\n    provider: 'openai',\n    requested_model: 'gpt-5.6-luna',\n    prompt_version: contract.prompt_version,\n    schema_version: contract.schema_version,\n    schema: contract.schema,\n    started_at_ms: Date.now(),\n    request_body: {\n      model: 'gpt-5.6-luna',\n      instructions: promptContent,\n      input: [{\n        role: 'user',\n        content: [{ type: 'input_text', text: ticketData }],\n      }],\n      text: {\n        format: {\n          type: 'json_schema',\n          name: contract.schema_version,\n          schema: contract.schema,\n          strict: true,\n        },\n      },\n      reasoning: { effort: 'none' },\n      store: false,\n      max_output_tokens: 300,\n    },\n  },\n}];"
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) throw new Error('AI_PERSISTENCE_INPUT_ERROR');\n\nconst decodeInput = (encoded) => {\n  if (typeof encoded !== 'string' || encoded.length === 0) throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n  return Buffer.from(encoded, 'base64').toString('utf8');\n};\n\nconst testMode = decodeInput($env.SMARTDESK_AI_PERSISTENCE_MODE_B64);\nif (!['success', 'failed'].includes(testMode)) throw new Error('AI_PERSISTENCE_INPUT_ERROR');\n\nconst ticket = {\n  requester_email: decodeInput($env.SMARTDESK_AI_REQUESTER_EMAIL_B64),\n  requester_area: decodeInput($env.SMARTDESK_AI_REQUESTER_AREA_B64),\n  title: decodeInput($env.SMARTDESK_AI_TITLE_B64),\n  description: decodeInput($env.SMARTDESK_AI_DESCRIPTION_B64),\n};\nif (Object.values(ticket).some((value) => value.trim().length === 0)) throw new Error('AI_TEST_INPUT_UNAVAILABLE');\n\nconst contract = items[0].json;\nreturn [{\n  json: {\n    test_mode: testMode,\n    ticket,\n    provider: 'openai',\n    model: 'gpt-5.6-luna',\n    prompt_version: contract.prompt_version,\n    schema_version: contract.schema_version,\n    schema: contract.schema,\n  },\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         2160,
+        640
+      ],
+      "id": "765189a8-c843-49e4-9a8f-f8ee3c932076",
+      "name": "Build Persistence Test Input"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH inserted_ticket AS (\n    INSERT INTO public.tickets (\n        requester_email,\n        requester_area,\n        title,\n        description\n    )\n    VALUES ($1, $2, $3, $4)\n    RETURNING id, status, created_at, updated_at\n),\ninserted_prediction AS (\n    INSERT INTO public.ticket_ai_predictions (\n        ticket_id,\n        status,\n        category,\n        priority,\n        summary,\n        provider,\n        model,\n        prompt_version,\n        schema_version,\n        error_code\n    )\n    SELECT\n        id,\n        'pending',\n        NULL,\n        NULL,\n        NULL,\n        $5,\n        $6,\n        $7,\n        $8,\n        NULL\n    FROM inserted_ticket\n    RETURNING id, ticket_id, status, category, priority, summary, provider, model, prompt_version, schema_version, error_code, created_at, updated_at\n)\nSELECT\n    t.id AS ticket_id,\n    t.status AS ticket_status,\n    t.created_at AS ticket_created_at,\n    t.updated_at AS ticket_updated_at,\n    p.id AS prediction_id,\n    p.status AS prediction_status,\n    p.category,\n    p.priority,\n    p.summary,\n    p.provider,\n    p.model,\n    p.prompt_version,\n    p.schema_version,\n    p.error_code,\n    p.created_at AS prediction_created_at,\n    p.updated_at AS prediction_updated_at,\n    $9::text AS test_mode\nFROM inserted_ticket t\nCROSS JOIN inserted_prediction p;",
+        "options": {
+          "queryReplacement": "={{ [ $json.ticket.requester_email, $json.ticket.requester_area, $json.ticket.title, $json.ticket.description, $json.provider, $json.model, $json.prompt_version, $json.schema_version, $json.test_mode ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2400,
+        640
+      ],
+      "id": "405c7227-58d2-45e9-b439-bf4811dbe1c7",
+      "name": "Create Synthetic Pending State",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT\n    p.id AS prediction_id,\n    p.ticket_id,\n    p.status AS prediction_status,\n    p.category,\n    p.priority,\n    p.summary,\n    p.provider,\n    p.model,\n    p.prompt_version,\n    p.schema_version,\n    p.error_code,\n    p.created_at AS prediction_created_at,\n    p.updated_at AS prediction_updated_at,\n    t.status AS ticket_status,\n    $3::text AS test_mode\nFROM public.ticket_ai_predictions p\nJOIN public.tickets t ON t.id = p.ticket_id\nWHERE p.id = $1\n  AND p.ticket_id = $2;",
+        "options": {
+          "queryReplacement": "={{ [ $json.prediction_id, $json.ticket_id, $json.test_mode ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2640,
+        640
+      ],
+      "id": "1da4b2cb-1a28-4f54-8494-2e375436e8a8",
+      "name": "Verify Pending State",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "370fbe73-b58c-42d4-8205-e6eb54bb391c",
+              "leftValue": "={{ $json.test_mode }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2880,
+        640
+      ],
+      "id": "91f04cf2-9470-42cc-87c1-bf5bf44de559",
+      "name": "Is Success Persistence Test?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) throw new Error('AI_PENDING_STATE_INVALID');\n\nconst pending = items[0].json;\nconst context = $('Build Persistence Test Input').first().json;\nconst pendingFieldsAreNull = pending.category === null && pending.priority === null && pending.summary === null && pending.error_code === null;\nconst metadataMatches = pending.provider === context.provider\n  && pending.model === context.model\n  && pending.prompt_version === context.prompt_version\n  && pending.schema_version === context.schema_version;\nif (pending.test_mode !== 'success' || pending.prediction_status !== 'pending' || pending.ticket_status !== 'processing' || !pendingFieldsAreNull || !metadataMatches) {\n  throw new Error('AI_PENDING_STATE_INVALID');\n}\nif (typeof pending.ticket_id !== 'string' || typeof pending.prediction_id !== 'string') throw new Error('AI_PENDING_STATE_INVALID');\n\nconst promptContent = $('Extract Prompt Text').first().json.prompt_content;\nif (typeof promptContent !== 'string' || promptContent.length === 0) throw new Error('AI_CONTRACT_LOAD_ERROR');\n\nconst ticket = context.ticket;\nconst ticketData = [\n  '<untrusted_ticket_data>',\n  'AREA:',\n  ticket.requester_area,\n  '',\n  'TITLE:',\n  ticket.title,\n  '',\n  'DESCRIPTION:',\n  ticket.description,\n  '</untrusted_ticket_data>',\n].join('\\n');\n\nreturn [{\n  json: {\n    ticket_id: pending.ticket_id,\n    prediction_id: pending.prediction_id,\n    ticket_status: pending.ticket_status,\n    prediction_created_at: pending.prediction_created_at,\n    prediction_pending_updated_at: pending.prediction_updated_at,\n    provider: context.provider,\n    requested_model: context.model,\n    prompt_version: context.prompt_version,\n    schema_version: context.schema_version,\n    schema: context.schema,\n    pending_verified_before_openai: true,\n    started_at_ms: Date.now(),\n    request_body: {\n      model: context.model,\n      instructions: promptContent,\n      input: [{\n        role: 'user',\n        content: [{ type: 'input_text', text: ticketData }],\n      }],\n      text: {\n        format: {\n          type: 'json_schema',\n          name: context.schema_version,\n          schema: context.schema,\n          strict: true,\n        },\n      },\n      reasoning: { effort: 'none' },\n      store: false,\n      max_output_tokens: 300,\n    },\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
         640
       ],
       "id": "8a639b97-949d-446d-94d8-9213ea5227ab",
@@ -370,7 +465,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
+        3360,
         640
       ],
       "id": "1750f317-75f7-4d23-b526-12bfbc851269",
@@ -400,7 +495,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        2640,
+        3600,
         640
       ],
       "id": "387f5cbc-987e-48c3-83b5-b63f79d16649",
@@ -415,12 +510,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst request = $('Assert Single OpenAI Request').first().json;\nconst latencyMs = Date.now() - request.started_at_ms;\n\nif (response.status !== 'completed' || response.error) {\n  throw new Error('AI_PROVIDER_FAILURE');\n}\n\nconst outputTexts = Array.isArray(response.output)\n  ? response.output\n      .filter((item) => item?.type === 'message' && Array.isArray(item.content))\n      .flatMap((item) => item.content)\n      .filter((part) => part?.type === 'output_text' && typeof part.text === 'string')\n      .map((part) => part.text)\n  : [];\n\nif (outputTexts.length !== 1 || outputTexts[0].length === 0) {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\ntry {\n  JSON.parse(outputTexts[0]);\n} catch {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\nreturn [{\n  json: {\n    provider: request.provider,\n    requested_model: request.requested_model,\n    reported_model: response.model ?? null,\n    prompt_version: request.prompt_version,\n    schema_version: request.schema_version,\n    schema: request.schema,\n    ai_response: outputTexts[0],\n    response_status: response.status,\n    structured_output: true,\n    input_tokens: response.usage?.input_tokens ?? null,\n    output_tokens: response.usage?.output_tokens ?? null,\n    total_tokens: response.usage?.total_tokens ?? null,\n    latency_ms: latencyMs,\n    http_request_item_count: request.http_request_item_count,\n  },\n}];"
+        "jsCode": "const response = $input.first().json;\nconst request = $('Assert Single OpenAI Request').first().json;\nconst latencyMs = Date.now() - request.started_at_ms;\n\nif (response.status !== 'completed' || response.error) throw new Error('AI_PROVIDER_FAILURE');\n\nconst outputTexts = Array.isArray(response.output)\n  ? response.output\n      .filter((item) => item?.type === 'message' && Array.isArray(item.content))\n      .flatMap((item) => item.content)\n      .filter((part) => part?.type === 'output_text' && typeof part.text === 'string')\n      .map((part) => part.text)\n  : [];\nif (outputTexts.length !== 1 || outputTexts[0].length === 0) throw new Error('AI_RESPONSE_INVALID');\ntry { JSON.parse(outputTexts[0]); } catch { throw new Error('AI_RESPONSE_INVALID'); }\n\nreturn [{\n  json: {\n    ticket_id: request.ticket_id,\n    prediction_id: request.prediction_id,\n    ticket_status: request.ticket_status,\n    prediction_created_at: request.prediction_created_at,\n    prediction_pending_updated_at: request.prediction_pending_updated_at,\n    pending_verified_before_openai: request.pending_verified_before_openai,\n    provider: request.provider,\n    requested_model: request.requested_model,\n    reported_model: response.model ?? null,\n    prompt_version: request.prompt_version,\n    schema_version: request.schema_version,\n    schema: request.schema,\n    ai_response: outputTexts[0],\n    response_status: response.status,\n    structured_output: true,\n    input_tokens: response.usage?.input_tokens ?? null,\n    cached_input_tokens: response.usage?.input_tokens_details?.cached_tokens ?? null,\n    output_tokens: response.usage?.output_tokens ?? null,\n    total_tokens: response.usage?.total_tokens ?? null,\n    latency_ms: latencyMs,\n    http_request_item_count: request.http_request_item_count,\n  },\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2880,
+        3840,
         640
       ],
       "id": "4be9028c-3ae9-4fe3-b781-958e2f77ed62",
@@ -428,12 +523,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst invalid = () => ({\n  json: {\n    provider: input.provider,\n    requested_model: input.requested_model,\n    reported_model: input.reported_model,\n    prompt_version: input.prompt_version,\n    schema_version: input.schema_version,\n    response_status: input.response_status,\n    structured_output: input.structured_output,\n    valid: false,\n    error_code: 'AI_RESPONSE_INVALID',\n    input_tokens: input.input_tokens,\n    output_tokens: input.output_tokens,\n    total_tokens: input.total_tokens,\n    latency_ms: input.latency_ms,\n    http_request_item_count: input.http_request_item_count,\n  },\n});\n\nlet candidate = input.ai_response;\nif (typeof candidate === 'string') {\n  try {\n    candidate = JSON.parse(candidate);\n  } catch {\n    return [invalid()];\n  }\n}\n\nif (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) return [invalid()];\nconst keys = Object.keys(candidate);\nconst expectedKeys = ['category', 'priority', 'summary'];\nif (keys.length !== expectedKeys.length || !expectedKeys.every((key) => keys.includes(key))) return [invalid()];\n\nconst schema = input.schema;\nif (typeof candidate.category !== 'string' || !schema.properties.category.enum.includes(candidate.category)) return [invalid()];\nif (typeof candidate.priority !== 'string' || !schema.properties.priority.enum.includes(candidate.priority)) return [invalid()];\nif (typeof candidate.summary !== 'string') return [invalid()];\nconst summaryLength = candidate.summary.trim().length;\nif (summaryLength < schema.properties.summary.minLength || summaryLength > schema.properties.summary.maxLength) return [invalid()];\n\nreturn [{\n  json: {\n    provider: input.provider,\n    requested_model: input.requested_model,\n    reported_model: input.reported_model,\n    prompt_version: input.prompt_version,\n    schema_version: input.schema_version,\n    response_status: input.response_status,\n    structured_output: input.structured_output,\n    valid: true,\n    data: candidate,\n    input_tokens: input.input_tokens,\n    output_tokens: input.output_tokens,\n    total_tokens: input.total_tokens,\n    latency_ms: input.latency_ms,\n    http_request_item_count: input.http_request_item_count,\n  },\n}];"
+        "jsCode": "const input = $input.first().json;\nconst base = {\n  ticket_id: input.ticket_id,\n  prediction_id: input.prediction_id,\n  ticket_status: input.ticket_status,\n  prediction_created_at: input.prediction_created_at,\n  prediction_pending_updated_at: input.prediction_pending_updated_at,\n  pending_verified_before_openai: input.pending_verified_before_openai,\n  provider: input.provider,\n  requested_model: input.requested_model,\n  reported_model: input.reported_model,\n  prompt_version: input.prompt_version,\n  schema_version: input.schema_version,\n  response_status: input.response_status,\n  structured_output: input.structured_output,\n  input_tokens: input.input_tokens,\n  cached_input_tokens: input.cached_input_tokens,\n  output_tokens: input.output_tokens,\n  total_tokens: input.total_tokens,\n  latency_ms: input.latency_ms,\n  http_request_item_count: input.http_request_item_count,\n};\nconst invalid = () => ({ json: { ...base, valid: false, error_code: 'AI_RESPONSE_INVALID' } });\n\nlet candidate = input.ai_response;\nif (typeof candidate === 'string') {\n  try { candidate = JSON.parse(candidate); } catch { return [invalid()]; }\n}\nif (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) return [invalid()];\nconst keys = Object.keys(candidate);\nconst expectedKeys = ['category', 'priority', 'summary'];\nif (keys.length !== expectedKeys.length || !expectedKeys.every((key) => keys.includes(key))) return [invalid()];\n\nconst schema = input.schema;\nif (typeof candidate.category !== 'string' || !schema.properties.category.enum.includes(candidate.category)) return [invalid()];\nif (typeof candidate.priority !== 'string' || !schema.properties.priority.enum.includes(candidate.priority)) return [invalid()];\nif (typeof candidate.summary !== 'string') return [invalid()];\nconst summaryLength = candidate.summary.trim().length;\nif (summaryLength < schema.properties.summary.minLength || summaryLength > schema.properties.summary.maxLength) return [invalid()];\n\nreturn [{ json: { ...base, valid: true, data: candidate } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3120,
+        4080,
         640
       ],
       "id": "65d008e5-04da-4076-b9bf-6dd73c9c08d7",
@@ -441,16 +536,103 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nif (items.length !== 1 || items[0].json.valid !== true) {\n  throw new Error('AI_RESPONSE_INVALID');\n}\n\nconst result = items[0].json;\nreturn [{\n  json: {\n    provider: result.provider,\n    requested_model: result.requested_model,\n    reported_model: result.reported_model,\n    prompt_version: result.prompt_version,\n    schema_version: result.schema_version,\n    category: result.data.category,\n    priority: result.data.priority,\n    summary: result.data.summary,\n    structured_output: 'PASS',\n    deterministic_validator: 'PASS',\n    response_status: result.response_status,\n    input_tokens: result.input_tokens,\n    output_tokens: result.output_tokens,\n    total_tokens: result.total_tokens,\n    latency_ms: result.latency_ms,\n    http_request_item_count: result.http_request_item_count,\n  },\n}];"
+        "jsCode": "const items = $input.all();\nif (items.length !== 1 || items[0].json.valid !== true) throw new Error('AI_RESPONSE_INVALID');\n\nconst result = items[0].json;\nreturn [{\n  json: {\n    ticket_id: result.ticket_id,\n    prediction_id: result.prediction_id,\n    ticket_status: result.ticket_status,\n    prediction_created_at: result.prediction_created_at,\n    prediction_pending_updated_at: result.prediction_pending_updated_at,\n    pending_verified_before_openai: result.pending_verified_before_openai,\n    provider: result.provider,\n    requested_model: result.requested_model,\n    reported_model: result.reported_model,\n    prompt_version: result.prompt_version,\n    schema_version: result.schema_version,\n    category: result.data.category,\n    priority: result.data.priority,\n    summary: result.data.summary,\n    structured_output: 'PASS',\n    deterministic_validator: 'PASS',\n    response_status: result.response_status,\n    input_tokens: result.input_tokens,\n    cached_input_tokens: result.cached_input_tokens,\n    output_tokens: result.output_tokens,\n    total_tokens: result.total_tokens,\n    latency_ms: result.latency_ms,\n    http_request_item_count: result.http_request_item_count,\n  },\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3360,
+        4320,
         640
       ],
       "id": "0080ab86-b73e-4af6-872e-cb024baeb385",
       "name": "Assert First Real AI Call"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.ticket_ai_predictions\n    SET\n        status = 'succeeded',\n        category = $1,\n        priority = $2,\n        summary = $3,\n        error_code = NULL,\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $4\n      AND ticket_id = $5\n      AND status = 'pending'\n    RETURNING id, ticket_id, status, category, priority, summary, provider, model, prompt_version, schema_version, error_code, created_at, updated_at\n)\nSELECT\n    (SELECT count(*) FROM updated)::integer AS terminal_update_rows,\n    (SELECT id FROM updated) AS prediction_id,\n    (SELECT ticket_id FROM updated) AS ticket_id,\n    (SELECT status FROM updated) AS prediction_status,\n    (SELECT category FROM updated) AS category,\n    (SELECT priority FROM updated) AS priority,\n    (SELECT summary FROM updated) AS summary,\n    (SELECT provider FROM updated) AS provider,\n    (SELECT model FROM updated) AS model,\n    (SELECT prompt_version FROM updated) AS prompt_version,\n    (SELECT schema_version FROM updated) AS schema_version,\n    (SELECT error_code FROM updated) AS error_code,\n    (SELECT created_at FROM updated) AS prediction_created_at,\n    (SELECT updated_at FROM updated) AS prediction_updated_at,\n    (SELECT status FROM public.tickets WHERE id = $5) AS ticket_status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.category, $json.priority, $json.summary, $json.prediction_id, $json.ticket_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4560,
+        640
+      ],
+      "id": "6028da67-a583-443b-8ae4-e00b3263def8",
+      "name": "Update Prediction Succeeded",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst trusted = $('Assert First Real AI Call').first().json;\nif (items.length !== 1) throw new Error('AI_PERSISTENCE_UPDATE_ERROR');\nconst row = items[0].json;\nconst identityMatches = row.prediction_id === trusted.prediction_id && row.ticket_id === trusted.ticket_id;\nconst metadataMatches = row.provider === trusted.provider && row.model === trusted.requested_model && row.prompt_version === trusted.prompt_version && row.schema_version === trusted.schema_version;\nconst resultMatches = row.category === trusted.category && row.priority === trusted.priority && row.summary === trusted.summary;\nconst createdAtPreserved = new Date(row.prediction_created_at).getTime() === new Date(trusted.prediction_created_at).getTime();\nconst updatedExplicitly = new Date(row.prediction_updated_at).getTime() > new Date(row.prediction_created_at).getTime();\nif (Number(row.terminal_update_rows) !== 1 || row.prediction_status !== 'succeeded' || row.error_code !== null || row.ticket_status !== 'processing' || !identityMatches || !metadataMatches || !resultMatches || !createdAtPreserved || !updatedExplicitly) {\n  throw new Error('AI_PERSISTENCE_UPDATE_ERROR');\n}\nreturn [{\n  json: {\n    path: 'success',\n    ticket_created: 'PASS',\n    pending_insert: 'PASS',\n    pending_verified_before_openai: trusted.pending_verified_before_openai ? 'PASS' : 'FAIL',\n    openai_requests: trusted.http_request_item_count,\n    structured_output: trusted.structured_output,\n    validator: trusted.deterministic_validator,\n    terminal_update_rows: Number(row.terminal_update_rows),\n    ticket_id: row.ticket_id,\n    prediction_id: row.prediction_id,\n    final_status: row.prediction_status,\n    category: row.category,\n    priority: row.priority,\n    summary: row.summary,\n    provider: row.provider,\n    model: row.model,\n    prompt_version: row.prompt_version,\n    schema_version: row.schema_version,\n    error_code: row.error_code,\n    ticket_status: row.ticket_status,\n    created_at_preserved: createdAtPreserved,\n    updated_at_explicit: updatedExplicitly,\n    input_tokens: trusted.input_tokens,\n    cached_input_tokens: trusted.cached_input_tokens,\n    output_tokens: trusted.output_tokens,\n    total_tokens: trusted.total_tokens,\n    latency_ms: trusted.latency_ms,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        640
+      ],
+      "id": "bd42ca9b-ed4f-4afc-9d48-af05103f3b72",
+      "name": "Assert Succeeded Persistence"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length !== 1) throw new Error('AI_PENDING_STATE_INVALID');\nconst pending = items[0].json;\nconst context = $('Build Persistence Test Input').first().json;\nconst pendingFieldsAreNull = pending.category === null && pending.priority === null && pending.summary === null && pending.error_code === null;\nconst metadataMatches = pending.provider === context.provider && pending.model === context.model && pending.prompt_version === context.prompt_version && pending.schema_version === context.schema_version;\nif (pending.test_mode !== 'failed' || pending.prediction_status !== 'pending' || pending.ticket_status !== 'processing' || !pendingFieldsAreNull || !metadataMatches) throw new Error('AI_PENDING_STATE_INVALID');\nreturn [{ json: {\n  ticket_id: pending.ticket_id,\n  prediction_id: pending.prediction_id,\n  prediction_created_at: pending.prediction_created_at,\n  provider: pending.provider,\n  model: pending.model,\n  prompt_version: pending.prompt_version,\n  schema_version: pending.schema_version,\n  ticket_status: pending.ticket_status,\n  error_code: 'AI_PROVIDER_ERROR',\n  pending_verified: true,\n  openai_requests: 0,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        920
+      ],
+      "id": "2c07bf6e-341e-4d0f-ad13-dc850854dd5f",
+      "name": "Build Simulated Provider Error"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.ticket_ai_predictions\n    SET\n        status = 'failed',\n        category = NULL,\n        priority = NULL,\n        summary = NULL,\n        error_code = $1,\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $2\n      AND ticket_id = $3\n      AND status = 'pending'\n    RETURNING id, ticket_id, status, category, priority, summary, provider, model, prompt_version, schema_version, error_code, created_at, updated_at\n)\nSELECT\n    (SELECT count(*) FROM updated)::integer AS terminal_update_rows,\n    (SELECT id FROM updated) AS prediction_id,\n    (SELECT ticket_id FROM updated) AS ticket_id,\n    (SELECT status FROM updated) AS prediction_status,\n    (SELECT category FROM updated) AS category,\n    (SELECT priority FROM updated) AS priority,\n    (SELECT summary FROM updated) AS summary,\n    (SELECT provider FROM updated) AS provider,\n    (SELECT model FROM updated) AS model,\n    (SELECT prompt_version FROM updated) AS prompt_version,\n    (SELECT schema_version FROM updated) AS schema_version,\n    (SELECT error_code FROM updated) AS error_code,\n    (SELECT created_at FROM updated) AS prediction_created_at,\n    (SELECT updated_at FROM updated) AS prediction_updated_at,\n    (SELECT status FROM public.tickets WHERE id = $3) AS ticket_status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.error_code, $json.prediction_id, $json.ticket_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        3360,
+        920
+      ],
+      "id": "7fa855af-7698-4822-81af-27474f43ad68",
+      "name": "Update Prediction Failed",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst simulated = $('Build Simulated Provider Error').first().json;\nif (items.length !== 1) throw new Error('AI_PERSISTENCE_UPDATE_ERROR');\nconst row = items[0].json;\nconst identityMatches = row.prediction_id === simulated.prediction_id && row.ticket_id === simulated.ticket_id;\nconst metadataMatches = row.provider === simulated.provider && row.model === simulated.model && row.prompt_version === simulated.prompt_version && row.schema_version === simulated.schema_version;\nconst predictionFieldsNull = row.category === null && row.priority === null && row.summary === null;\nconst createdAtPreserved = new Date(row.prediction_created_at).getTime() === new Date(simulated.prediction_created_at).getTime();\nconst updatedExplicitly = new Date(row.prediction_updated_at).getTime() > new Date(row.prediction_created_at).getTime();\nif (Number(row.terminal_update_rows) !== 1 || row.prediction_status !== 'failed' || row.error_code !== 'AI_PROVIDER_ERROR' || row.ticket_status !== 'processing' || !identityMatches || !metadataMatches || !predictionFieldsNull || !createdAtPreserved || !updatedExplicitly || simulated.openai_requests !== 0) {\n  throw new Error('AI_PERSISTENCE_UPDATE_ERROR');\n}\nreturn [{ json: {\n  path: 'failed',\n  ticket_created: 'PASS',\n  pending_insert: 'PASS',\n  pending_verified: simulated.pending_verified ? 'PASS' : 'FAIL',\n  openai_requests: 0,\n  simulated_error_code: row.error_code,\n  terminal_update_rows: Number(row.terminal_update_rows),\n  ticket_id: row.ticket_id,\n  prediction_id: row.prediction_id,\n  final_status: row.prediction_status,\n  category: row.category,\n  priority: row.priority,\n  summary: row.summary,\n  provider: row.provider,\n  model: row.model,\n  prompt_version: row.prompt_version,\n  schema_version: row.schema_version,\n  error_code: row.error_code,\n  ticket_status: row.ticket_status,\n  prediction_fields_null: predictionFieldsNull ? 'PASS' : 'FAIL',\n  created_at_preserved: createdAtPreserved,\n  updated_at_explicit: updatedExplicitly,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        920
+      ],
+      "id": "3a83e617-3620-4f7a-a38e-a40a315a60d3",
+      "name": "Assert Failed Persistence"
     }
   ],
   "connections": {
@@ -631,7 +813,58 @@
       "main": [
         [
           {
+            "node": "Build Persistence Test Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Persistence Test Input": {
+      "main": [
+        [
+          {
+            "node": "Create Synthetic Pending State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Synthetic Pending State": {
+      "main": [
+        [
+          {
+            "node": "Verify Pending State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Pending State": {
+      "main": [
+        [
+          {
+            "node": "Is Success Persistence Test?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Success Persistence Test?": {
+      "main": [
+        [
+          {
             "node": "Build First Real AI Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Simulated Provider Error",
             "type": "main",
             "index": 0
           }
@@ -692,11 +925,55 @@
           }
         ]
       ]
+    },
+    "Assert First Real AI Call": {
+      "main": [
+        [
+          {
+            "node": "Update Prediction Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Prediction Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Assert Succeeded Persistence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Simulated Provider Error": {
+      "main": [
+        [
+          {
+            "node": "Update Prediction Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Prediction Failed": {
+      "main": [
+        [
+          {
+            "node": "Assert Failed Persistence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
   "active": true,
-  "versionId": "b034cc2d-04bc-47fd-8210-08865405785e",
+  "versionId": "8bce0490-08c4-4629-9a36-65f6303bad40",
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",

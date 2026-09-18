@@ -272,6 +272,97 @@ sin raw provider responses persistidos
 sin execution data versionada
 ```
 
+## Paso 8 — persistencia controlada de predicciones
+
+La rama manual demostró por primera vez la máquina de estados de `public.ticket_ai_predictions` con datos completamente sintéticos:
+
+```text
+ticket
+  ↓
+prediction pending
+  ↓
+IA / fallo controlado
+  ↓
+validator
+  ↓
+succeeded | failed
+```
+
+La identidad se conservó durante todo el flujo mediante `ticket_id` y el `prediction_id` devuelto explícitamente por PostgreSQL. Las actualizaciones terminales utilizaron conjuntamente:
+
+```text
+prediction_id
+ticket_id
+status = pending
+```
+
+De esta forma, una predicción que ya alcanzó un estado terminal no se sobrescribe. El estado del ticket permanece separado del estado de clasificación y `tickets.status` no fue modificado. Un fallo produce una fila terminal coherente con `error_code`, no una predicción parcial.
+
+### SUCCESS path
+
+```text
+ticket_created=PASS
+pending_insert=PASS
+pending_verified_before_openai=PASS
+openai_requests=1
+structured_output=PASS
+validator=PASS
+terminal_update_rows=1
+final_status=succeeded
+
+category=network
+priority=medium
+
+input_tokens=1028
+cached_input_tokens=0
+output_tokens=40
+total_tokens=1068
+workflow_end_to_end_latency_ms=1621
+estimated_cost_usd=0.0002536
+```
+
+La latencia fue medida de extremo a extremo por el workflow, no por OpenAI. El coste estimado se calculó con el `usage` realmente reportado y las tarifas oficiales vigentes durante la prueba. Esta ejecución aislada no constituye un benchmark.
+
+### FAILED path
+
+```text
+ticket_created=PASS
+pending_insert=PASS
+pending_verified=PASS
+openai_requests=0
+simulated_error_code=AI_PROVIDER_ERROR
+terminal_update_rows=1
+final_status=failed
+prediction_fields_null=PASS
+```
+
+Este resultado provino de una simulación local de la transición de persistencia. No se realizó una segunda llamada al proveedor y la rama de fallo no alcanzó el nodo OpenAI.
+
+### Integridad de estados
+
+```text
+succeeded_transition_only_from_pending=PASS
+failed_transition_only_from_pending=PASS
+terminal_update_rows_exactly_one=PASS
+prediction_identity_preserved=PASS
+created_at_preserved=PASS
+updated_at_assigned_explicitly=PASS
+ticket_status_unchanged=PASS
+```
+
+### Limpieza de datos sintéticos
+
+Después de capturar la evidencia se eliminaron exclusivamente las dos predicciones sintéticas por sus UUID y, posteriormente, sus tickets asociados, respetando `ON DELETE RESTRICT`.
+
+```text
+prediction_count_before=0
+prediction_count_after=0
+synthetic_predictions_remaining=0
+synthetic_tickets_remaining=0
+```
+
+También se eliminaron los registros temporales correspondientes a las dos ejecuciones CLI controladas. El export conserva `pinData` vacío y no contiene API key, header `Authorization` manual, passwords, tickets sintéticos, respuestas del proveedor ni datos de ejecución. La petición real mantuvo `store=false`.
+
 ## Regresión mínima de Gate 2
 
 Se ejecutó una regresión mínima de exactamente dos casos; no se repitieron los 30 casos completos de Gate 2:
@@ -284,24 +375,26 @@ No se creó ninguna predicción para el ticket sintético y el conteo de predicc
 ## Workflow
 
 - La rama de pruebas comienza con un `Manual Trigger` y permanece desconectada del webhook productivo.
-- El workflow desplegado y exportado contiene 25 nodos.
+- El workflow desplegado y exportado contiene 34 nodos.
 - El export versionado quedó sincronizado con el workflow publicado.
 - La llamada real utiliza un nodo HTTP Request contra OpenAI Responses API porque permite cargar dinámicamente el schema versionado y controlar `strict`, `store`, usage y errores sin duplicar el contrato.
+- La rama manual inserta y verifica `pending`, conserva `prediction_id` y aplica transiciones terminales condicionadas por `prediction_id`, `ticket_id` y estado `pending`.
 - El workflow contiene únicamente una referencia a la credencial administrada por n8n; no contiene el secreto.
 - El export mantiene `pinData` vacío y no contiene datos de ejecución.
 
 ## Pendiente para cerrar Gate 3
 
-- Implementar la persistencia controlada `pending → succeeded/failed` desde n8n.
-- Integrar de forma controlada el resultado validado con el intake real.
-- Completar el manejo de respuestas inválidas y fallos de persistencia.
-- Ejecutar y documentar la regresión y las pruebas end-to-end finales de Fase 3.
+- Integrar el flujo de clasificación con `POST /webhook/tickets`.
+- Comprobar las rutas success y failure sobre el intake real.
+- Verificar el contrato HTTP cuando la IA falla.
+- Ejecutar la regresión final.
+- Documentar la evidencia end-to-end de Fase 3.
 - Realizar el cierre formal de Gate 3.
 
 ## Límites de esta evidencia
 
 - La rama de IA continúa aislada del webhook productivo.
-- No se persistieron predicciones reales ni simuladas.
+- Las predicciones del Paso 8 fueron persistidas temporalmente para verificar la máquina de estados y eliminadas al finalizar; no permanecen datos sintéticos.
 - La regresión de Gate 2 fue mínima y no acredita la repetición de sus 30 casos.
 - La evidencia versionada no contiene secrets, API keys, tokens, IP pública, datos personales ni datos de ejecución.
 - La batería real es evidencia experimental y no mide formalmente accuracy, rendimiento, disponibilidad ni impacto de producción.
