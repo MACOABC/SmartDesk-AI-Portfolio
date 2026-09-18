@@ -14,7 +14,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | APROBADA. |
 | 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
-| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | SIGUIENTE / NO INICIADA. |
+| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | EN PROGRESO / NO APROBADO. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | Pendiente. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
@@ -68,7 +68,15 @@ Gate 3 fue aprobado el 2026-09-17 después de integrar la clasificación estruct
 
 Aplicar condiciones explícitas según clasificación/prioridad, integrar Telegram y registrar eventos y errores básicos.
 
-Gate 4: casos conocidos activan las ramas previstas, la notificación llega al destino de prueba y queda registrada; un fallo de Telegram conserva la clasificación y registra `notification_failed`. Los fallos de IA conservan el ticket y su estado de error. No introducir un motor de reglas ni reintentos avanzados.
+Gate 4: casos conocidos activan las ramas previstas, la notificación llega al destino de prueba y queda registrada; un fallo de Telegram conserva la clasificación y registra estado `failed` con `TELEGRAM_SEND_FAILED`. Los fallos de IA conservan el ticket y su estado de error. No introducir un motor de reglas ni reintentos avanzados.
+
+La migración de `automation_events`, la regla
+`notify_high_or_critical_v1`, la integración n8n y el manejo de error básico
+están implementados y desplegados. LOW/MEDIUM, IA fallida y el fallo de
+integración Telegram fueron verificados. Gate 4 continúa no aprobado porque el
+despliegue no dispone todavía de credencial ni destino Telegram para demostrar
+la entrega real de HIGH/CRITICAL y la transición a `succeeded`. La evidencia
+está en `docs/testing/GATE_4.md`.
 
 ## Fase 5 — V1 desplegada y release v1.0
 

@@ -69,7 +69,7 @@ La infraestructura disponible es una VM Oracle Cloud ARM64 con Ubuntu 22.04, 2 O
 
 Los fallos de clasificación o notificación deben registrarse sin eliminar el ticket. Los reintentos avanzados se desarrollarán después de V1.
 
-El contrato de clasificación V1 admite exactamente las categorías `access`, `hardware`, `software`, `network`, `service_request` y `other`. Las prioridades permitidas son `low`, `medium`, `high` y `critical`. La salida contiene únicamente `category`, `priority` y `summary`; no incluye `confidence` ni razonamiento. Este contrato está versionado durante la Fase 3, cuya integración todavía está en construcción.
+El contrato de clasificación V1 admite exactamente las categorías `access`, `hardware`, `software`, `network`, `service_request` y `other`. Las prioridades permitidas son `low`, `medium`, `high` y `critical`. La salida contiene únicamente `category`, `priority` y `summary`; no incluye `confidence` ni razonamiento. El contrato y su integración quedaron implementados y aprobados en Fase 3.
 
 ## Datos y trazabilidad
 
@@ -81,9 +81,9 @@ El modelo conceptual empresarial incluye:
 | --- | --- |
 | `tickets` | Entrada original, estado propio del ticket y marcas de tiempo. |
 | `ticket_ai_predictions` | Predicción, proveedor, modelo, versiones del prompt y schema, estado y error, relacionados con el ticket sin sobrescribir su historial. |
-| `automation_events` | Eventos de creación, clasificación y notificación, relacionados por `ticket_id`; metadatos sin secretos. |
+| `automation_events` | Acciones automáticas relacionadas con ticket y predicción; en Fase 4 registra la regla y el resultado de Telegram sin secretos. |
 
-La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla ya fue creada y verificada, pero su uso desde n8n continúa pendiente. La Fase 3 no modifica el lifecycle ni los valores actuales de `tickets.status`.
+La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla y su uso desde n8n fueron creados y verificados. Fase 4 añadió `automation_events` con `pending`, `succeeded`, `failed` y `skipped`, sin modificar el lifecycle ni los valores de `tickets.status`. La entrega Telegram real continúa pendiente de credenciales, por lo que Gate 4 no está aprobado.
 
 ## Tecnologías y justificación
 

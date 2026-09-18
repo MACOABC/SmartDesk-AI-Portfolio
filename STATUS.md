@@ -4,10 +4,11 @@
 - **Gate 1: APROBADO.**
 - **Gate 2: APROBADO.**
 - **Gate 3: APROBADO.**
+- **Gate 4: NO APROBADO; verificación Telegram real pendiente.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
-- **Fase actual: Fase 4 — reglas de negocio + notificación; todavía no implementada.**
+- **Fase actual: Fase 4 — reglas de negocio + notificación; EN PROGRESO.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -160,16 +161,42 @@ La evidencia detallada se conserva en `docs/testing/GATE_3.md`. Gate 3 queda apr
 
 Limitación conocida: si PostgreSQL falla después de crear una prediction `pending` pero antes de completar la escritura terminal, la fila puede permanecer pendiente y el workflow puede responder HTTP 500. El ticket original permanece persistido, no se inventa un estado terminal y la recuperación o los retries pertenecen a una fase posterior.
 
+## Fase 4 — Reglas y notificación Telegram
+
+Fase 4 implementó y desplegó:
+
+- la tabla `automation_events` con FK a ticket y prediction, cuatro estados,
+  restricciones de outcome, índice y unicidad idempotente;
+- la regla determinista `notify_high_or_critical_v1`;
+- LOW/MEDIUM → `skipped`, sin Telegram;
+- HIGH/CRITICAL → `pending` antes del intento Telegram;
+- éxito → `succeeded` y error → `failed / TELEGRAM_SEND_FAILED`;
+- texto plano limitado a ticket, área, título, categoría, prioridad y resumen;
+- HTTP 201 conservado cuando ticket y prediction ya están persistidos;
+- ausencia deliberada de retries y recuperación automática.
+
+El despliegue no tiene una credencial Telegram ni un `TELEGRAM_CHAT_ID` real.
+Por ello se verificaron la decisión, la persistencia, el intento único y la
+rama de error, pero no la recepción real ni la transición a `succeeded`.
+
+La regresión ejecutada sobre el workflow de Fase 4 obtuvo Gate 2 30/30, 13
+clasificaciones estructuradas reales, fallo controlado del proveedor, 19/19
+casos del validador determinista y cero retries. La evidencia completa se
+conserva en `docs/testing/GATE_4.md`.
+
 ## Siguiente paso
 
-Iniciar Fase 4 únicamente mediante una instrucción explícita. Su alcance será reglas de negocio y notificación, sin dar por implementados Telegram, routing, SLA, HITL, retries ni otras funcionalidades posteriores.
+Crear fuera de Git la credencial n8n `SmartDesk Telegram`, asignarla al nodo
+de envío y configurar `TELEGRAM_CHAT_ID`; después repetir un caso HIGH y uno
+CRITICAL, comprobar la recepción real y confirmar eventos `succeeded`. Solo
+entonces puede evaluarse el cierre de Gate 4.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- V1 todavía no está completa ni publicada mediante HTTPS; Gate 3 cubre intake, clasificación estructurada y persistencia de predicciones.
+- V1 todavía no está completa ni publicada mediante HTTPS; Fase 4 está desplegada pero Gate 4 continúa abierto por la verificación Telegram real.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- Telegram, reglas de negocio, routing, SLA, HITL, retries, Power BI, Caddy público y CI/CD todavía no están implementados.
+- La regla y la rama Telegram están implementadas; faltan credencial, destino y entrega real. Routing adicional, SLA, HITL, retries, Power BI, Caddy público y CI/CD no están implementados.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
 - Ningún gate posterior a Gate 3 está aprobado.
