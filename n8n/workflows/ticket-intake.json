@@ -111,7 +111,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, ticket: { id: $('Insert Ticket').first().json.id, status: $('Insert Ticket').first().json.status, created_at: $('Insert Ticket').first().json.created_at, updated_at: $('Insert Ticket').first().json.updated_at }, classification: { status: 'succeeded', category: $json.category, priority: $json.priority, summary: $json.summary } } }}",
+        "responseBody": "={{ { success: true, ticket: { id: $('Insert Ticket').first().json.id, status: $('Insert Ticket').first().json.status, created_at: $('Insert Ticket').first().json.created_at, updated_at: $('Insert Ticket').first().json.updated_at }, classification: { status: 'succeeded', category: $('Update Production Prediction Succeeded').first().json.category, priority: $('Update Production Prediction Succeeded').first().json.priority, summary: $('Update Production Prediction Succeeded').first().json.summary } } }}",
         "options": {
           "responseCode": 201
         }
@@ -607,7 +607,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4800,
+        6720,
         40
       ],
       "id": "afec23ec-b33d-4728-9277-4db550a08c19",
@@ -642,6 +642,230 @@
       ],
       "id": "bfbdecc4-2c9b-48bf-9ad8-26fe98f10c1b",
       "name": "Build Production Internal Failure"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prediction = $input.first().json;\nif (prediction.prediction_status !== 'succeeded') throw new Error('AUTOMATION_REQUIRES_SUCCEEDED_PREDICTION');\nconst allowedPriorities = ['low', 'medium', 'high', 'critical'];\nif (!allowedPriorities.includes(prediction.priority)) throw new Error('AUTOMATION_PRIORITY_INVALID');\nconst ticket = $('Validate and Normalize Ticket').first().json.response.received;\nreturn [{ json: { ticket_id: prediction.ticket_id, prediction_id: prediction.prediction_id, rule_code: 'notify_high_or_critical_v1', event_type: 'telegram_notification', requester_area: ticket.requester_area, title: ticket.title, category: prediction.category, priority: prediction.priority, summary: prediction.summary, should_notify: ['high', 'critical'].includes(prediction.priority) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        -280
+      ],
+      "id": "17d5bb2a-3c2e-4f7c-9fc6-116b169b4dc9",
+      "name": "Build Automation Decision",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7226026d-b5f6-4e8e-8519-f27c0b8fa5f2",
+              "leftValue": "={{ $json.should_notify }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5040,
+        -280
+      ],
+      "id": "ed56fbbf-913e-4dd0-b5e1-46ba3dfb6c25",
+      "name": "Should Send Telegram?"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH inserted AS (\n    INSERT INTO public.automation_events (\n        ticket_id,\n        prediction_id,\n        rule_code,\n        event_type,\n        status,\n        error_code\n    )\n    VALUES ($1, $2, $3, $4, 'skipped', NULL)\n    ON CONFLICT (prediction_id, rule_code, event_type) DO NOTHING\n    RETURNING id, ticket_id, prediction_id, rule_code, event_type, status, error_code\n)\nSELECT\n    (SELECT count(*) FROM inserted)::integer AS event_insert_rows,\n    (SELECT id FROM inserted) AS automation_event_id,\n    (SELECT status FROM inserted) AS automation_event_status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.ticket_id, $json.prediction_id, $json.rule_code, $json.event_type ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5280,
+        -120
+      ],
+      "id": "1a092883-b38f-44d3-8f7a-4f31ca106ae0",
+      "name": "Insert Automation Skipped",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH inserted AS (\n    INSERT INTO public.automation_events (\n        ticket_id,\n        prediction_id,\n        rule_code,\n        event_type,\n        status,\n        error_code\n    )\n    VALUES ($1, $2, $3, $4, 'pending', NULL)\n    ON CONFLICT (prediction_id, rule_code, event_type) DO NOTHING\n    RETURNING id, ticket_id, prediction_id, rule_code, event_type, status, error_code\n)\nSELECT\n    (SELECT count(*) FROM inserted)::integer AS event_insert_rows,\n    (SELECT id FROM inserted) AS automation_event_id,\n    (SELECT ticket_id FROM inserted) AS ticket_id,\n    (SELECT prediction_id FROM inserted) AS prediction_id,\n    (SELECT status FROM inserted) AS automation_event_status;",
+        "options": {
+          "queryReplacement": "={{ [ $json.ticket_id, $json.prediction_id, $json.rule_code, $json.event_type ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5280,
+        -440
+      ],
+      "id": "6c116846-565d-4022-b307-a1840ba505a8",
+      "name": "Insert Automation Pending",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ebaff8d0-ed67-4eb2-a4d2-447a1546dae2",
+              "leftValue": "={{ $json.event_insert_rows }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5520,
+        -440
+      ],
+      "id": "fc3ce99b-933c-4f23-9cfe-d126c0c2c990",
+      "name": "Was Automation Pending Created?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const persisted = $input.first().json;\nif (persisted.event_insert_rows !== 1 || persisted.automation_event_status !== 'pending') throw new Error('AUTOMATION_PENDING_REQUIRED');\nconst decision = $('Build Automation Decision').first().json;\nconst oneLine = (value) => String(value).replace(/[\\u0000-\\u001F\\u007F]+/g, ' ').replace(/\\s+/g, ' ').trim();\nconst heading = decision.priority === 'critical' ? '🚨 SmartDesk AI — CRITICAL' : '⚠️ SmartDesk AI — HIGH';\nconst message = [heading, '', 'Ticket: ' + oneLine(decision.ticket_id), 'Área: ' + oneLine(decision.requester_area), 'Categoría: ' + oneLine(decision.category), 'Prioridad: ' + oneLine(decision.priority), 'Título: ' + oneLine(decision.title), 'Resumen IA: ' + oneLine(decision.summary)].join('\\n');\nreturn [{ json: { automation_event_id: persisted.automation_event_id, ticket_id: decision.ticket_id, prediction_id: decision.prediction_id, message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5760,
+        -440
+      ],
+      "id": "cea27a14-7e31-444a-9cd9-a29df6812d4e",
+      "name": "Build Telegram Notification",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        6000,
+        -440
+      ],
+      "id": "49a88d0c-77ea-4432-b1b1-8ca6d86d1ade",
+      "name": "Send Telegram Notification",
+      "retryOnFail": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "b1509e80-2305-4660-ae98-a111f0848b3a",
+          "name": "SmartDesk Telegram"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.automation_events\n    SET\n        status = 'succeeded',\n        error_code = NULL,\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $1\n      AND prediction_id = $2\n      AND status = 'pending'\n    RETURNING id, status, error_code\n)\nSELECT (SELECT count(*) FROM updated)::integer AS terminal_update_rows;",
+        "options": {
+          "queryReplacement": "={{ [ $('Build Telegram Notification').first().json.automation_event_id, $('Build Telegram Notification').first().json.prediction_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        6240,
+        -520
+      ],
+      "id": "9d1424f3-284d-4b02-997c-012fbd55c219",
+      "name": "Update Automation Succeeded",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n    UPDATE public.automation_events\n    SET\n        status = 'failed',\n        error_code = 'TELEGRAM_SEND_FAILED',\n        updated_at = CURRENT_TIMESTAMP\n    WHERE id = $1\n      AND prediction_id = $2\n      AND status = 'pending'\n    RETURNING id, status, error_code\n)\nSELECT (SELECT count(*) FROM updated)::integer AS terminal_update_rows;",
+        "options": {
+          "queryReplacement": "={{ [ $('Build Telegram Notification').first().json.automation_event_id, $('Build Telegram Notification').first().json.prediction_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        6240,
+        -360
+      ],
+      "id": "bb4d9d99-2887-4970-aba2-9193857d996f",
+      "name": "Update Automation Failed",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {},
@@ -1463,7 +1687,7 @@
       "main": [
         [
           {
-            "node": "Return Created Ticket",
+            "node": "Build Automation Decision",
             "type": "main",
             "index": 0
           }
@@ -1471,6 +1695,168 @@
         [
           {
             "node": "Return Classification Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Automation Decision": {
+      "main": [
+        [
+          {
+            "node": "Should Send Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Insert Automation Pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert Automation Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Automation Skipped": {
+      "main": [
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Automation Pending": {
+      "main": [
+        [
+          {
+            "node": "Was Automation Pending Created?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Was Automation Pending Created?": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Notification": {
+      "main": [
+        [
+          {
+            "node": "Update Automation Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Automation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Automation Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Automation Failed": {
+      "main": [
+        [
+          {
+            "node": "Return Created Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Created Ticket",
             "type": "main",
             "index": 0
           }
