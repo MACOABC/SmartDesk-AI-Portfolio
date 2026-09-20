@@ -12,7 +12,7 @@ Gate 7 = NOT YET PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = IN PROGRESS
-Current subphase = Phase 7B complete; live smoke and formal evaluation pending
+Current subphase = Phase 7B.2 smoke PASS; Phase 7C formal evaluation pending
 ```
 
 - **Gate 0: APROBADO.**
@@ -31,7 +31,7 @@ Current subphase = Phase 7B complete; live smoke and formal evaluation pending
 - **SmartDesk AI V1: COMPLETA.**
 - **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
 - **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
-- **Phase 7B — harness, scoring offline, contabilidad de caché y protocolo reproducible: IMPLEMENTADA; no hubo llamadas API ni ejecución del test.**
+- **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; test congelado no ejecutado.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -327,21 +327,30 @@ Phase 7B implementó localmente, desde el commit
 - documentación en `eval/README.md` y `docs/PHASE_7.md`.
 
 La suite local, incluida la corrección de accounting de caché, terminó con
-35/35 tests PASS y el CLI de preflight fue probado
-sobre cinco casos `dev` con valores monetarios marcados exclusivamente para
-validación. No se proporcionó API key, no se creó un run real, no se llamó a
-OpenAI y no se ejecutó `test.jsonl`. Su SHA-256 permaneció intacto.
+35/35 tests PASS.
+
+## Phase 7B.2 — Smoke live controlado
+
+El run `smoke-dev-20260920T190351Z` ejecutó una sola vez los tres primeros
+casos `dev` con límites 3 casos / 9 llamadas / USD 0.02. Hubo tres llamadas,
+todas HTTP 200 al primer intento, sin retries. El modelo solicitado y devuelto
+fue `gpt-5.6-luna`; usage y costes fueron completos y el scoring offline sin
+API key reprodujo los resultados. La evidencia saneada quedó versionada en
+`eval/runs/smoke-dev-20260920T190351Z/`.
+
+Dos prioridades `medium` fueron predichas como `high`; se conserva como
+observación del smoke y no motivó repetición ni ajuste. Las métricas de tres
+casos son **integration smoke / non-authoritative** y no constituyen métricas
+oficiales del proyecto. `test.jsonl` no fue enviado al modelo y su SHA-256
+permaneció intacto.
 
 Phase 7 sigue IN PROGRESS y Gate 7 NOT YET PASS porque aún no existen métricas
 reales del modelo ni análisis de errores sobre la corrida formal.
 
 ## Siguiente paso
 
-Decidir y autorizar una única corrida live inicial de tres casos `dev`, después
-de verificar precios oficiales vigentes, preflight, presupuesto y API key
-externa a Git. Su fin será validar la integración y los artefactos, no medir
-accuracy. Phase 7C y la corrida formal del test congelado permanecen pendientes
-y no deben iniciarse automáticamente.
+Solicitar, por separado, autorización para Phase 7C y una única corrida formal
+del test congelado. No debe iniciarse automáticamente.
 
 ## Límites actuales
 

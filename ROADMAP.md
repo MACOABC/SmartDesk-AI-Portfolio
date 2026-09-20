@@ -123,11 +123,11 @@ versionados la política, schema, 30 casos `dev`, 120 casos de test congelado,
 manifiesto y validación local. Phase 7B añadió runner, Structured Outputs,
 retries/HITL productivos, guardrails de presupuesto, contabilidad explícita de
 input ordinario/lectura/escritura de caché, artefactos incrementales y scoring
-completamente offline. Todo se validó con fakes; no se llamó a la API
-oficial ni se generaron métricas reales del modelo.
+completamente offline. Phase 7B.2 validó el flujo live con un único smoke sobre
+tres casos `dev`, tres respuestas HTTP 200 y recomputación offline idéntica.
+Sus resultados son de integración y no métricas oficiales del modelo.
 
-El trabajo restante debe validar una integración live mínima sobre `dev` solo
-si se autoriza con precios y presupuesto vigentes, y después ejecutar el test
+El trabajo restante requiere autorización separada para ejecutar el test
 congelado una sola vez bajo protocolo formal, documentando resultados y análisis
 de errores. Solo esa evidencia podrá evaluarse contra Gate 7.
 

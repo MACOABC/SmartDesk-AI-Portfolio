@@ -3,8 +3,9 @@
 ## Estado
 
 Phase 7 permanece **IN PROGRESS** y Gate 7 **NOT YET PASS**. Phase 7A creó el
-dataset sintético versionado. Phase 7B implementó el harness y scoring offline,
-pero no realizó llamadas reales ni ejecutó el test congelado.
+dataset sintético versionado. Phase 7B implementó el harness y scoring offline;
+Phase 7B.2 completó un smoke live controlado sobre tres casos `dev`. El test
+congelado no se ejecutó.
 
 ## Baseline y contrato
 
@@ -72,12 +73,40 @@ output, ausencia e inconsistencia de contadores, coste, límites, aislamiento de
 ground truth, run parcial, matrices, denominadores, exact match y recomputación
 de scoring sin red/API key.
 
-No se generó evidencia de accuracy, latencia de proveedor, coste real ni
-calibración. Esas mediciones pertenecen a una corrida posterior autorizada.
+## Phase 7B.2 — Smoke live de integración
+
+El run `smoke-dev-20260920T190351Z`, sobre el commit
+`e5619c6ecdde6f7755fc58a8e763830a05356801`, ejecutó una sola vez los tres
+primeros casos `dev`: `SD-EVAL-DEV-001`, `SD-EVAL-DEV-002` y
+`SD-EVAL-DEV-003`. Los guardrails fueron `max_cases=3`, `max_api_calls=9` y
+`max_cost_usd=0.02`; el preflight estimó una cota de USD 0.0114585.
+
+Las tres llamadas recibieron HTTP 200 y finalizaron en el primer intento, sin
+retries. Responses API devolvió `gpt-5.6-luna` y usage completo: 1362 tokens
+de input ordinario, 0 cached read, 0 cache write, 181 output y 1543 totales.
+El coste recalculado offline fue USD 0.0004896. El scorer ejecutado nuevamente
+sin API key reprodujo exactamente los artefactos derivados.
+
+Como observación no autoritativa, las tres categorías `access` coincidieron;
+una prioridad `medium` coincidió y dos fueron predichas como `high`. Ningún
+caso activó HITL. Estos resultados son exclusivamente **integration smoke /
+non-authoritative**: tres casos no miden rendimiento, no fijan una baseline y
+no aprueban Gate 7.
+
+La evidencia saneada se conserva en
+`eval/runs/smoke-dev-20260920T190351Z/`. SHA-256:
+
+- `attempts.jsonl`: `c6ff6f7fea80e741e36bd7ad931722d0863562d818179b9e175711386b32e7ec`;
+- `cost.json`: `40732a97ef6482a3a03b7e7afd15c2ed4a78693d0906021e0a5a19248ba3dbf5`;
+- `manifest.json`: `847a1a8dc186af69ad5465934467e0935805f93bf23d8b70406829ac57d4bc18`;
+- `metrics.json`: `8c06297ccef1f6cda920992ea835711f4cd740239dad4a8740baf5be44017e8e`;
+- `predictions.jsonl`: `e2c0e4ed67b16ef55b2769f01c5dd82dc9caf2426aca6a87ff6deba671c41791`.
+
+El digest del conjunto, calculado sobre líneas `filename:sha256` ordenadas, es
+`97edcac38b63f6dc4b356d58b3d9da0217790d380720a0332a4f1ecb392ade7f`.
 
 ## Próxima decisión
 
-Antes de una evaluación formal conviene una sola corrida live de tres casos
-`dev`, con precios oficiales verificados, preflight y presupuesto explícito.
-Su objetivo sería validar autenticación, forma real de Responses API, usage y
-artefactos, no estimar accuracy. No se ejecutó durante Phase 7B.
+El smoke confirma que el harness está técnicamente listo para solicitar una
+autorización separada de Phase 7C: una única corrida formal del test congelado.
+Phase 7C no está autorizada ni iniciada por esta evidencia.

@@ -1,0 +1,119 @@
+{
+  "run_id": "smoke-dev-20260920T190351Z",
+  "status": "completed",
+  "timestamp_started": "2026-09-20T19:03:52.566634Z",
+  "timestamp_finished": "2026-09-20T19:03:59.563734Z",
+  "git_commit": "e5619c6ecdde6f7755fc58a8e763830a05356801",
+  "dataset": {
+    "path": "eval/datasets/v1/dev.jsonl",
+    "version": "1.0.0",
+    "sha256": "87f9cde82195e5879eb53d993923c867a65753c42eb4237a335a2d90cbec0f20",
+    "split": "dev",
+    "file_record_count": 30
+  },
+  "contract": {
+    "prompt_path": "prompts/ticket-classification/v2.md",
+    "prompt_version": "ticket-classification-v2",
+    "prompt_sha256": "f2b9774b0e6596732302549d5c6a8f4205c6598212d746e641766d81db49a6b7",
+    "schema_path": "prompts/ticket-classification/schema-v2.json",
+    "schema_version": "ticket-classification-schema-v2",
+    "schema_sha256": "6a8066bf4066cccbe573806c0803b29a650d52ca8e5158ab143cd2ab973accde",
+    "categories": [
+      "access",
+      "hardware",
+      "software",
+      "network",
+      "service_request",
+      "other"
+    ],
+    "priorities": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ]
+  },
+  "provider": "openai",
+  "endpoint": "https://api.openai.com/v1/responses",
+  "requested_model": "gpt-5.6-luna",
+  "returned_model_if_available": [
+    "gpt-5.6-luna"
+  ],
+  "request_configuration": {
+    "store": false,
+    "reasoning": {
+      "effort": "none"
+    },
+    "structured_output": {
+      "type": "json_schema",
+      "strict": true
+    },
+    "max_output_tokens": 450,
+    "timeout_seconds": 60
+  },
+  "retry_policy": {
+    "max_attempts": 3,
+    "backoff_seconds_before_attempts": [
+      0,
+      2,
+      4
+    ],
+    "transient_http_statuses": [
+      408,
+      425,
+      429,
+      500,
+      502,
+      503,
+      504
+    ],
+    "network_timeout_status_zero_transient": true
+  },
+  "hitl_policy": {
+    "rule": "confidence < 0.75",
+    "threshold": 0.75,
+    "confidence_semantics": "operational uncalibrated score; not a probability"
+  },
+  "pricing": {
+    "source_or_version": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    "verification_date": "2026-09-20",
+    "currency": "USD",
+    "unit": "per 1,000,000 tokens",
+    "input_usd": 0.2,
+    "cached_read_usd": 0.02,
+    "cache_write_usd": 0.25,
+    "output_usd": 1.2,
+    "formula": "(regular_input*input_price + cached_read*cached_read_price + cache_write*cache_write_price + output*output_price) / 1,000,000; regular_input=input-cached_read-cache_write"
+  },
+  "guardrails": {
+    "max_cases": 3,
+    "max_api_calls": 9,
+    "max_cost_usd": 0.02,
+    "frozen_test_requires_explicit_flag": true
+  },
+  "preflight": {
+    "method": "UTF-8 request bytes + 512 framing tokens, 450 output tokens, maximum of regular-input/cache-write price, bounded by max_api_calls",
+    "selected_cases": 3,
+    "maximum_possible_attempts": 9,
+    "calls_in_cost_upper_bound": 9,
+    "input_token_upper_bound_min": 2913,
+    "input_token_upper_bound_max": 2958,
+    "estimated_max_cost_usd": 0.0114585,
+    "approved_max_cost_usd": 0.02
+  },
+  "execution": {
+    "selected_case_count": 3,
+    "attempted_case_count": 3,
+    "successful_classification_count": 3,
+    "errored_case_count": 0,
+    "api_calls_made": 3,
+    "termination": "completed",
+    "conservative_budget_reserved_usd": 0.0038195
+  },
+  "runtime": {
+    "python": "3.12.10",
+    "implementation": "CPython",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "external_dependencies": []
+  }
+}

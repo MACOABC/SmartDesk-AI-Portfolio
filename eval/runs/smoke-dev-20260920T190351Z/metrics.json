@@ -1,0 +1,281 @@
+{
+  "generated_at": "2026-09-20T19:04:52.488666Z",
+  "run_id": "smoke-dev-20260920T190351Z",
+  "denominators": {
+    "dataset_cases": 3,
+    "attempted_cases": 3,
+    "valid_classifications": 3,
+    "errored_cases": 0,
+    "classification_accuracy": "correct predictions / valid classifications",
+    "operational_error_rate": "errored cases / attempted cases",
+    "hitl_rates": "valid classifications",
+    "error_escape_rate": "incorrect auto-resolved predictions / auto-resolved predictions"
+  },
+  "category": {
+    "denominator_valid_classifications": 3,
+    "correct": 3,
+    "accuracy": 1.0,
+    "macro_f1": 0.16666666666666666,
+    "per_class": {
+      "access": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 3,
+        "predicted": 3,
+        "true_positive": 3
+      },
+      "hardware": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      },
+      "software": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      },
+      "network": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      },
+      "service_request": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      },
+      "other": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      }
+    },
+    "confusion_matrix": {
+      "row_labels_expected": [
+        "access",
+        "hardware",
+        "software",
+        "network",
+        "service_request",
+        "other"
+      ],
+      "column_labels_predicted": [
+        "access",
+        "hardware",
+        "software",
+        "network",
+        "service_request",
+        "other"
+      ],
+      "values": [
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "priority": {
+    "denominator_valid_classifications": 3,
+    "correct": 1,
+    "accuracy": 0.3333333333333333,
+    "macro_f1": 0.125,
+    "per_class": {
+      "low": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      },
+      "medium": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 3,
+        "predicted": 1,
+        "true_positive": 1
+      },
+      "high": {
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 2,
+        "true_positive": 0
+      },
+      "critical": {
+        "precision": null,
+        "recall": null,
+        "f1": 0.0,
+        "support": 0,
+        "predicted": 0,
+        "true_positive": 0
+      }
+    },
+    "confusion_matrix": {
+      "row_labels_expected": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "column_labels_predicted": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "values": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "exact_match": {
+    "correct": 1,
+    "denominator_valid_classifications": 3,
+    "rate": 0.3333333333333333
+  },
+  "hitl": {
+    "reviewed_cases": 0,
+    "auto_resolved_cases": 3,
+    "review_rate": 0.0,
+    "auto_coverage": 1.0,
+    "accuracy_auto_resolved": 0.3333333333333333,
+    "accuracy_hitl_subset": null,
+    "error_escape_count": 2,
+    "error_escape_rate": 0.6666666666666666
+  },
+  "reliability": {
+    "dataset_cases": 3,
+    "attempted_cases": 3,
+    "successful_classifications": 3,
+    "errored_cases": 0,
+    "error_rate": 0.0,
+    "api_attempts": 3,
+    "retry_count": 0,
+    "first_attempt_successes": 3,
+    "eventually_successful_after_retry": 0,
+    "retry_exhausted": 0,
+    "unattempted_dataset_cases": 0
+  },
+  "latency_ms": {
+    "definition": "end-to-end case time in the harness, including API attempts, validation and retry backoff",
+    "sample_count": 3,
+    "mean": 2262.6799666666666,
+    "p50": 1910.5115,
+    "p95": 2999.76971,
+    "min": 1756.73,
+    "max": 3120.7984
+  },
+  "tokens_and_cost": {
+    "input_tokens": 1362,
+    "input_tokens_missing_records": 0,
+    "regular_input_tokens": 1362,
+    "regular_input_tokens_missing_records": 0,
+    "cached_tokens": 0,
+    "cached_tokens_missing_records": 0,
+    "cache_write_tokens": 0,
+    "cache_write_tokens_missing_records": 0,
+    "output_tokens": 181,
+    "output_tokens_missing_records": 0,
+    "total_tokens": 1543,
+    "total_tokens_missing_records": 0,
+    "cost_source": "offline recomputation from raw token counters and manifest pricing",
+    "usage_accounting_status_counts": {
+      "complete": 3,
+      "incomplete": 0,
+      "invalid": 0
+    },
+    "known_cost_usd": 0.0004896,
+    "cost_complete": true,
+    "records_missing_cost": 0,
+    "total_cost_usd": 0.0004896,
+    "average_cost_per_attempted_ticket_usd": 0.0001632,
+    "average_cost_per_valid_classification_usd": 0.0001632
+  }
+}
