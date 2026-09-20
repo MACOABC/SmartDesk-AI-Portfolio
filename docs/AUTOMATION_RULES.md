@@ -57,6 +57,10 @@ credenciales, token, chat_id y metadatos internos.
 El token se referencia mediante una credencial telegramApi administrada por
 n8n. El destino se inyecta como TELEGRAM_CHAT_ID desde configuración externa;
 el export contiene solo la expresión y .env.example solo un placeholder.
+Como n8n 2 bloquea por defecto el acceso de las expresiones a variables de
+entorno, Compose establece `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` para que la
+expresión aprobada pueda resolver el destino. El valor continúa únicamente en
+el `.env` privado y no forma parte del workflow ni del repositorio.
 
 ## Errores y límites V1
 
@@ -73,10 +77,10 @@ V1 no incorpora SLA, escalamiento, HITL, reglas por categoría, asignación,
 colas, deduplicación de tickets, monitoreo avanzado ni recuperación de eventos
 pendientes.
 
-## Configuración pendiente del despliegue
+## Configuración del despliegue
 
-El despliegue inspeccionado no dispone todavía de una credencial Telegram ni
-de un TELEGRAM_CHAT_ID real. El workflow, la persistencia y la rama de error
-están desplegados, pero la entrega real y la transición a succeeded no pueden
-aprobarse hasta crear la credencial, asignarla al nodo Send Telegram
-Notification y configurar el destino fuera de Git.
+El despliegue usa la credencial n8n `SmartDesk Telegram` y un
+`TELEGRAM_CHAT_ID` suministrado desde el `.env` privado del servidor. La
+entrega real y las transiciones a `succeeded` para HIGH y CRITICAL fueron
+verificadas durante el cierre de Gate 4; la evidencia saneada se conserva en
+`docs/testing/GATE_4.md`.
