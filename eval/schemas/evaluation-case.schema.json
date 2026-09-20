@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "smartdesk-evaluation-case-v1",
+  "title": "SmartDesk AI evaluation case v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "split",
+    "area",
+    "title",
+    "description",
+    "expected_category",
+    "expected_priority",
+    "difficulty",
+    "scenario_type",
+    "ground_truth_notes"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^SD-EVAL-(DEV|TEST)-[0-9]{3}$"
+    },
+    "split": {
+      "type": "string",
+      "enum": ["dev", "test"]
+    },
+    "area": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 150
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 5000
+    },
+    "expected_category": {
+      "type": "string",
+      "enum": ["access", "hardware", "software", "network", "service_request", "other"]
+    },
+    "expected_priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"]
+    },
+    "scenario_type": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "category_boundary",
+        "priority_boundary",
+        "typo",
+        "abbreviation",
+        "natural_language",
+        "irrelevant_context",
+        "long_form",
+        "short_valid",
+        "sparse_semantics",
+        "prompt_injection",
+        "mixed_symptoms"
+      ]
+    },
+    "ground_truth_notes": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 500
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "dataset_version": "1.0.0",
+  "status": "frozen",
+  "created_at": "2026-09-20",
+  "labeling_policy_version": "labeling-policy-v1",
+  "based_on_commit": "f03f2ca136868486b6d4e8180a562d1ba448119c",
+  "source": "synthetic_deliberate_authoring",
+  "contains_personal_data": false,
+  "ground_truth_generated_by_evaluated_model": false,
+  "production_contract": {
+    "prompt_version": "ticket-classification-v2",
+    "schema_version": "ticket-classification-schema-v2",
+    "provider": "openai",
+    "model": "gpt-5.6-luna"
+  },
+  "frozen_test": true,
+  "files": {
+    "dev": {
+      "path": "dev.jsonl",
+      "records": 30,
+      "sha256": "d6cfdadfce00cd97aeb57e9ebf3e3699b68dc1bbdad0671d3dea89d8687ddec7"
+    },
+    "test": {
+      "path": "test.jsonl",
+      "records": 120,
+      "sha256": "bb93304a71283e8cce797de41c2d99a6ee0d74a9e495d58f43afc75491681dfd"
+    }
+  },
+  "totals": {
+    "dev": 30,
+    "test": 120,
+    "all": 150
+  },
+  "distributions": {
+    "dev": {
+      "expected_category": {
+        "access": 5,
+        "hardware": 5,
+        "network": 5,
+        "other": 5,
+        "service_request": 5,
+        "software": 5
+      },
+      "expected_priority": {
+        "critical": 5,
+        "high": 7,
+        "low": 8,
+        "medium": 10
+      },
+      "difficulty": {
+        "easy": 21,
+        "hard": 1,
+        "medium": 8
+      },
+      "scenario_type": {
+        "category_boundary": 6,
+        "normal": 19,
+        "priority_boundary": 4,
+        "sparse_semantics": 1
+      }
+    },
+    "test": {
+      "expected_category": {
+        "access": 20,
+        "hardware": 20,
+        "network": 20,
+        "other": 20,
+        "service_request": 20,
+        "software": 20
+      },
+      "expected_priority": {
+        "critical": 16,
+        "high": 29,
+        "low": 35,
+        "medium": 40
+      },
+      "difficulty": {
+        "easy": 34,
+        "hard": 35,
+        "medium": 51
+      },
+      "scenario_type": {
+        "abbreviation": 9,
+        "category_boundary": 16,
+        "irrelevant_context": 8,
+        "long_form": 2,
+        "mixed_symptoms": 7,
+        "natural_language": 6,
+        "normal": 36,
+        "priority_boundary": 13,
+        "prompt_injection": 6,
+        "short_valid": 5,
+        "sparse_semantics": 6,
+        "typo": 6
+      }
+    }
+  },
+  "integrity": {
+    "hash_algorithm": "sha256",
+    "similarity_algorithm": "normalized token Jaccard",
+    "similarity_rejection_threshold": 0.88
+  }
+}
