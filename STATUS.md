@@ -8,9 +8,11 @@ Gate 3 = PASS
 Gate 4 = PASS
 Gate 5 = PASS
 Gate 6 = PASS
+Gate 7 = NOT YET PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
-Current phase = Phase 7
+Phase 7 = IN PROGRESS
+Current subphase = Phase 7A complete; evaluation execution pending
 ```
 
 - **Gate 0: APROBADO.**
@@ -27,7 +29,8 @@ Current phase = Phase 7
 - **Fase 5 — V1 completa, desplegada y probada end-to-end: COMPLETADA.**
 - **Fase 6 — Reliability + HITL + SLA: COMPLETADA.**
 - **SmartDesk AI V1: COMPLETA.**
-- **Fase actual: Phase 7 — dataset sintético y evaluación de IA; no iniciada.**
+- **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
+- **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -275,17 +278,43 @@ La matriz final dejó cero estados pending y cero duplicados lógicos. La
 evidencia completa está en `docs/testing/GATE_6.md`. Gate 6 queda aprobado y
 Phase 6 completada. `v1.0` permanece en el commit probado de V1.
 
+## Phase 7A — Dataset sintético y base de evaluación
+
+Phase 7A se implementó localmente a partir del commit base
+`f03f2ca136868486b6d4e8180a562d1ba448119c`, sin llamadas a la API oficial y
+sin cambios en el comportamiento productivo:
+
+- política versionada `labeling-policy-v1`, con reglas de desempate para las
+  seis categorías y cuatro prioridades productivas;
+- schema JSON de caso individual alineado con
+  `ticket-classification-schema-v2`;
+- 30 casos `dev` y 120 casos de test congelado, sintéticos y sin datos
+  personales reales;
+- test balanceado con 20 casos por categoría y cobertura explícita de bordes,
+  typos, abreviaturas, lenguaje natural, ruido, entradas breves, semántica
+  escasa, prompt injection y síntomas mixtos;
+- manifiesto `1.0.0` con commit base, contrato productivo, distribuciones y
+  hashes SHA-256;
+- validador Python sin dependencias externas y seis tests locales: baseline
+  válido más rechazo de ID duplicado, categoría inválida, prioridad inválida,
+  JSONL roto y hash inconsistente.
+
+La validación local terminó en PASS para el artefacto de datos y 6/6 tests.
+Esto no constituye una evaluación del modelo, no acredita accuracy, latencia,
+costo ni calibración, y no aprueba Gate 7. Phase 7 permanece IN PROGRESS.
+
 ## Siguiente paso
 
-Phase 7: crear y versionar el dataset sintético y ejecutar la evaluación
-cuantitativa de IA, incluido el análisis del threshold HITL. No se ha
-implementado ninguna funcionalidad de Phase 7 durante este cierre.
+Phase 7B: diseñar el runner contra el contrato productivo, validarlo primero
+con `dev` y, solo después de revisar costo y protocolo, ejecutar una medición
+formal única sobre el test congelado. Debe reportar métricas reales de categoría,
+prioridad, latencia, errores y comportamiento del threshold HITL.
 
 ## Límites actuales
 
 - V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
-- La evaluación con dataset, SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF no están implementados.
+- El dataset de evaluación está implementado y congelado, pero la ejecución contra el modelo, sus métricas y el análisis de errores todavía no se han realizado. SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF tampoco están implementados.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 6 está aprobado; las fases 7–10 permanecen pendientes.
+- Ningún gate posterior a Gate 6 está aprobado; Phase 7 está en curso y las fases 8–10 permanecen pendientes.

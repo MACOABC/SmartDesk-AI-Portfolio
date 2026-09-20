@@ -17,7 +17,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
-| 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
+| 7 | Dataset sintético y evaluación de IA. | Gate 7. | EN CURSO / Gate no aprobado. |
 | 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | Pendiente. |
 | 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
@@ -115,6 +115,18 @@ breach y escalamiento idempotentes, restart, regresión y seguridad.
 
 La evidencia saneada está en `docs/testing/GATE_6.md`. Phase 6 queda completa;
 la fase actual pasa a Phase 7. El tag `v1.0` no fue modificado.
+
+## Phase 7 — Dataset sintético y evaluación de IA
+
+Phase 7 está **IN PROGRESS** y Gate 7 permanece **NOT YET PASS**. La subfase 7A
+dejó versionados la política de etiquetado, el schema, 30 casos `dev`, 120 casos
+de test congelado, el manifiesto con hashes y la validación local reproducible.
+No se llamó a la API oficial ni se generaron métricas del modelo.
+
+El trabajo restante debe implementar el runner, validarlo con `dev`, fijar el
+protocolo y costo de la corrida, ejecutar el test congelado una sola vez y
+documentar resultados y análisis de errores. Solo esa evidencia podrá evaluarse
+contra los criterios de Gate 7.
 
 ## Fases posteriores a V1
 
