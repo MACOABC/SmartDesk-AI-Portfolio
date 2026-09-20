@@ -190,6 +190,17 @@ CASES = {
     ],
 }
 
+# Five deliberately selected cases per category give dev coverage across all
+# scenario types without deriving the split from model results.
+DEV_INDEXES = {
+    "access": {5, 8, 15, 17, 18},
+    "hardware": {2, 5, 13, 16, 17},
+    "software": {4, 5, 7, 16, 18},
+    "network": {2, 8, 10, 13, 17},
+    "service_request": {2, 5, 14, 16, 24},
+    "other": {2, 9, 16, 19, 22},
+}
+
 
 def write_jsonl(path: Path, records: list[dict[str, object]]) -> None:
     content = "\n".join(json.dumps(record, ensure_ascii=False, separators=(",", ":")) for record in records) + "\n"
@@ -211,10 +222,12 @@ def main() -> None:
     dev: list[dict[str, object]] = []
     test: list[dict[str, object]] = []
     for category, items in CASES.items():
-        for item in items[:5]:
-            dev.append({"expected_category": category, **item})
-        for item in items[5:]:
-            test.append({"expected_category": category, **item})
+        selected = DEV_INDEXES[category]
+        if len(selected) != 5 or not selected.issubset(range(25)):
+            raise ValueError(f"Invalid dev indexes for {category}")
+        for index, item in enumerate(items):
+            target = dev if index in selected else test
+            target.append({"expected_category": category, **item})
 
     for split, records in (("dev", dev), ("test", test)):
         for index, record in enumerate(records, start=1):

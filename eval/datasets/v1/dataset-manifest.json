@@ -18,12 +18,12 @@
     "dev": {
       "path": "dev.jsonl",
       "records": 30,
-      "sha256": "d6cfdadfce00cd97aeb57e9ebf3e3699b68dc1bbdad0671d3dea89d8687ddec7"
+      "sha256": "87f9cde82195e5879eb53d993923c867a65753c42eb4237a335a2d90cbec0f20"
     },
     "test": {
       "path": "test.jsonl",
       "records": 120,
-      "sha256": "bb93304a71283e8cce797de41c2d99a6ee0d74a9e495d58f43afc75491681dfd"
+      "sha256": "461a27c60c2c9d6f971e54a2fadc54dedd84f19f53f557ed3560735508ad76f6"
     }
   },
   "totals": {
@@ -42,21 +42,29 @@
         "software": 5
       },
       "expected_priority": {
-        "critical": 5,
-        "high": 7,
+        "critical": 3,
+        "high": 5,
         "low": 8,
-        "medium": 10
+        "medium": 14
       },
       "difficulty": {
-        "easy": 21,
-        "hard": 1,
-        "medium": 8
+        "easy": 7,
+        "hard": 12,
+        "medium": 11
       },
       "scenario_type": {
-        "category_boundary": 6,
-        "normal": 19,
-        "priority_boundary": 4,
-        "sparse_semantics": 1
+        "abbreviation": 3,
+        "category_boundary": 3,
+        "irrelevant_context": 2,
+        "long_form": 1,
+        "mixed_symptoms": 2,
+        "natural_language": 4,
+        "normal": 3,
+        "priority_boundary": 2,
+        "prompt_injection": 2,
+        "short_valid": 4,
+        "sparse_semantics": 2,
+        "typo": 2
       }
     },
     "test": {
@@ -69,29 +77,29 @@
         "software": 20
       },
       "expected_priority": {
-        "critical": 16,
-        "high": 29,
+        "critical": 18,
+        "high": 31,
         "low": 35,
-        "medium": 40
+        "medium": 36
       },
       "difficulty": {
-        "easy": 34,
-        "hard": 35,
-        "medium": 51
+        "easy": 48,
+        "hard": 24,
+        "medium": 48
       },
       "scenario_type": {
-        "abbreviation": 9,
-        "category_boundary": 16,
-        "irrelevant_context": 8,
-        "long_form": 2,
-        "mixed_symptoms": 7,
-        "natural_language": 6,
-        "normal": 36,
-        "priority_boundary": 13,
-        "prompt_injection": 6,
-        "short_valid": 5,
-        "sparse_semantics": 6,
-        "typo": 6
+        "abbreviation": 6,
+        "category_boundary": 19,
+        "irrelevant_context": 6,
+        "long_form": 1,
+        "mixed_symptoms": 5,
+        "natural_language": 2,
+        "normal": 52,
+        "priority_boundary": 15,
+        "prompt_injection": 4,
+        "short_valid": 1,
+        "sparse_semantics": 5,
+        "typo": 4
       }
     }
   },
