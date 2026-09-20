@@ -12,7 +12,7 @@ Gate 7 = NOT YET PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = IN PROGRESS
-Current subphase = Phase 7A complete; evaluation execution pending
+Current subphase = Phase 7B complete; live smoke and formal evaluation pending
 ```
 
 - **Gate 0: APROBADO.**
@@ -31,6 +31,7 @@ Current subphase = Phase 7A complete; evaluation execution pending
 - **SmartDesk AI V1: COMPLETA.**
 - **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
 - **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
+- **Phase 7B — harness, scoring offline y protocolo reproducible: IMPLEMENTADA; no hubo llamadas API ni ejecución del test.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -303,12 +304,40 @@ La validación local terminó en PASS para el artefacto de datos y 6/6 tests.
 Esto no constituye una evaluación del modelo, no acredita accuracy, latencia,
 costo ni calibración, y no aprueba Gate 7. Phase 7 permanece IN PROGRESS.
 
+## Phase 7B — Harness y scoring offline
+
+Phase 7B implementó localmente, desde el commit
+`f486fe20b330430800f223c928febab1ac7303f6`:
+
+- runner que carga y hashea el prompt/schema productivos, construye el mismo
+  request de Responses API y excluye todo ground truth del input;
+- Structured Outputs estricto, validación determinista y routing HITL idéntico
+  a producción (`confidence < 0.75`);
+- tres intentos máximos, backoff 2 s/4 s y elegibilidad transitoria idéntica a
+  Phase 6;
+- manifest de run, escritura incremental de predicciones/intentos y protección
+  contra sobrescritura;
+- precios y límites obligatorios, estimación conservadora antes del run y
+  guardrails por casos, llamadas y coste;
+- scoring completamente offline de calidad, HITL, reliability, latencia,
+  tokens y coste, con denominadores auditables;
+- documentación en `eval/README.md` y `docs/PHASE_7.md`.
+
+La suite local terminó con 23/23 tests PASS y el CLI de preflight fue probado
+sobre cinco casos `dev` con valores monetarios marcados exclusivamente para
+validación. No se proporcionó API key, no se creó un run real, no se llamó a
+OpenAI y no se ejecutó `test.jsonl`. Su SHA-256 permaneció intacto.
+
+Phase 7 sigue IN PROGRESS y Gate 7 NOT YET PASS porque aún no existen métricas
+reales del modelo ni análisis de errores sobre la corrida formal.
+
 ## Siguiente paso
 
-Phase 7B: diseñar el runner contra el contrato productivo, validarlo primero
-con `dev` y, solo después de revisar costo y protocolo, ejecutar una medición
-formal única sobre el test congelado. Debe reportar métricas reales de categoría,
-prioridad, latencia, errores y comportamiento del threshold HITL.
+Decidir y autorizar una única corrida live inicial de tres casos `dev`, después
+de verificar precios oficiales vigentes, preflight, presupuesto y API key
+externa a Git. Su fin será validar la integración y los artefactos, no medir
+accuracy. Phase 7C y la corrida formal del test congelado permanecen pendientes
+y no deben iniciarse automáticamente.
 
 ## Límites actuales
 

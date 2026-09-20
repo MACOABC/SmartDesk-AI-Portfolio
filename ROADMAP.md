@@ -118,15 +118,17 @@ la fase actual pasa a Phase 7. El tag `v1.0` no fue modificado.
 
 ## Phase 7 — Dataset sintético y evaluación de IA
 
-Phase 7 está **IN PROGRESS** y Gate 7 permanece **NOT YET PASS**. La subfase 7A
-dejó versionados la política de etiquetado, el schema, 30 casos `dev`, 120 casos
-de test congelado, el manifiesto con hashes y la validación local reproducible.
-No se llamó a la API oficial ni se generaron métricas del modelo.
+Phase 7 está **IN PROGRESS** y Gate 7 permanece **NOT YET PASS**. Phase 7A dejó
+versionados la política, schema, 30 casos `dev`, 120 casos de test congelado,
+manifiesto y validación local. Phase 7B añadió runner, Structured Outputs,
+retries/HITL productivos, guardrails de presupuesto, artefactos incrementales y
+scoring completamente offline. Todo se validó con fakes; no se llamó a la API
+oficial ni se generaron métricas reales del modelo.
 
-El trabajo restante debe implementar el runner, validarlo con `dev`, fijar el
-protocolo y costo de la corrida, ejecutar el test congelado una sola vez y
-documentar resultados y análisis de errores. Solo esa evidencia podrá evaluarse
-contra los criterios de Gate 7.
+El trabajo restante debe validar una integración live mínima sobre `dev` solo
+si se autoriza con precios y presupuesto vigentes, y después ejecutar el test
+congelado una sola vez bajo protocolo formal, documentando resultados y análisis
+de errores. Solo esa evidencia podrá evaluarse contra Gate 7.
 
 ## Fases posteriores a V1
 
