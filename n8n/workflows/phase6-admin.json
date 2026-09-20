@@ -1,0 +1,854 @@
+{
+  "name": "SmartDesk - Phase 6 Admin Operations",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin/reviews/decide",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -240
+      ],
+      "id": "96ec518a-024b-47e8-b8fb-26523bb5643d",
+      "name": "Receive Review Decision",
+      "webhookId": "5ed1b0aa-48ea-414e-8a87-4cec4ba9de07"
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $input.first().json;\nconst configured = $env.SMARTDESK_ADMIN_TOKEN;\nconst supplied = request.headers?.['x-smartdesk-admin-token'];\nconst authorized = typeof configured === 'string' && configured.length >= 32 && typeof supplied === 'string' && supplied === configured;\nreturn [{ json: { authorized, body: request.body !== null && typeof request.body === 'object' && !Array.isArray(request.body) ? request.body : {} } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -240
+      ],
+      "id": "bf565182-2b21-431e-8be1-bfc4855cfca5",
+      "name": "Authenticate Review Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f84c980b-19da-4dd4-a7fc-c82db6a19834",
+              "leftValue": "={{ $json.authorized }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        -240
+      ],
+      "id": "3929c11e-8abb-410f-b4f8-bf99138a1dc1",
+      "name": "Is Review Request Authorized?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'UNAUTHORIZED', message: 'Administrative authentication required' } } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        -80
+      ],
+      "id": "684b6f5e-6a30-4c5b-93e0-b5ece7ab4647",
+      "name": "Return Review Unauthorized"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst errors = [];\nconst uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;\nif (typeof body.review_id !== 'string' || !uuid.test(body.review_id)) errors.push('review_id');\nif (!['approve', 'override'].includes(body.action)) errors.push('action');\nif (typeof body.reviewer !== 'string' || body.reviewer.trim().length < 1 || body.reviewer.length > 100) errors.push('reviewer');\nif (body.action === 'override') {\n  if (!['access', 'hardware', 'software', 'network', 'service_request', 'other'].includes(body.category)) errors.push('category');\n  if (!['low', 'medium', 'high', 'critical'].includes(body.priority)) errors.push('priority');\n}\nif (body.summary !== undefined && body.summary !== null && (typeof body.summary !== 'string' || body.summary.trim().length < 1 || body.summary.length > 300)) errors.push('summary');\nif (body.comment !== undefined && body.comment !== null && (typeof body.comment !== 'string' || body.comment.length > 1000)) errors.push('comment');\nreturn [{ json: { valid: errors.length === 0, errors, review_id: body.review_id ?? null, action: body.action ?? null, category: body.category ?? null, priority: body.priority ?? null, summary: body.summary ?? null, reviewer: typeof body.reviewer === 'string' ? body.reviewer.trim() : null, comment: body.comment ?? null } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -320
+      ],
+      "id": "fd1d84af-ffbc-4593-b444-3716e760fba4",
+      "name": "Validate Review Decision",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6cfd4585-0b81-49f8-8500-f9d6470a1240",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        -320
+      ],
+      "id": "c6b8c2f8-1c35-4f14-87be-2cfec752b815",
+      "name": "Is Review Decision Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'REVIEW_REQUEST_INVALID', fields: $json.errors } } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        -160
+      ],
+      "id": "2d2c9b09-8b52-4b70-b93e-3f66501e401d",
+      "name": "Return Review Validation Error"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.decide_ticket_review($1::uuid, $2::text, $3::text, $4::text, $5::text, $6::text, $7::text);",
+        "options": {
+          "queryReplacement": "={{ [ $json.review_id, $json.action, $json.category, $json.priority, $json.summary, $json.reviewer, $json.comment ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1200,
+        -400
+      ],
+      "id": "fec218fd-6883-4a6b-9560-648c572e0359",
+      "name": "Decide Review",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae93c98f-fe6f-42c5-a812-491698f44f62",
+              "leftValue": "={{ $json.processed && $json.action_created && $json.automation_event_status === 'pending' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1440,
+        -400
+      ],
+      "id": "057a8cb3-6488-4939-8196-dde5892a0061",
+      "name": "Should Send Reviewed Telegram?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const outcome = $('Decide Review').first().json;\nconst oneLine = (value) => String(value).replace(/[\\u0000-\\u001F\\u007F]+/g, ' ').replace(/\\s+/g, ' ').trim();\nconst heading = outcome.priority === 'critical' ? '🚨 SmartDesk AI — CRITICAL (revisado)' : '⚠️ SmartDesk AI — HIGH (revisado)';\nconst message = [heading, '', 'Ticket: ' + oneLine(outcome.ticket_id), 'Área: ' + oneLine(outcome.requester_area), 'Categoría final: ' + oneLine(outcome.category), 'Prioridad final: ' + oneLine(outcome.priority), 'Título: ' + oneLine(outcome.title), 'Resumen final: ' + oneLine(outcome.summary), 'Revisión: ' + oneLine(outcome.review_status)].join('\\n');\nreturn [{ json: { automation_event_id: outcome.automation_event_id, prediction_id: outcome.prediction_id, message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -480
+      ],
+      "id": "a00a9b73-199a-4d63-8897-70be6076f543",
+      "name": "Build Reviewed Telegram Notification",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        -480
+      ],
+      "id": "77eb4b8b-86a4-4749-8885-30c07b8d9942",
+      "name": "Send Reviewed Telegram Notification",
+      "retryOnFail": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "VEfmIcvoGSTdQhCK",
+          "name": "SmartDesk Telegram"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n  UPDATE public.automation_events SET status = 'succeeded', error_code = NULL, updated_at = CURRENT_TIMESTAMP\n  WHERE id = $1 AND prediction_id = $2 AND status = 'pending' RETURNING id\n) SELECT (SELECT count(*) FROM updated)::integer AS terminal_update_rows;",
+        "options": {
+          "queryReplacement": "={{ [ $('Build Reviewed Telegram Notification').first().json.automation_event_id, $('Build Reviewed Telegram Notification').first().json.prediction_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2160,
+        -560
+      ],
+      "id": "86a27c16-6f06-45b2-bd59-4ccd59dacae0",
+      "name": "Update Reviewed Automation Succeeded",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated AS (\n  UPDATE public.automation_events SET status = 'failed', error_code = 'TELEGRAM_SEND_FAILED', updated_at = CURRENT_TIMESTAMP\n  WHERE id = $1 AND prediction_id = $2 AND status = 'pending' RETURNING id\n) SELECT (SELECT count(*) FROM updated)::integer AS terminal_update_rows;",
+        "options": {
+          "queryReplacement": "={{ [ $('Build Reviewed Telegram Notification').first().json.automation_event_id, $('Build Reviewed Telegram Notification').first().json.prediction_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2160,
+        -400
+      ],
+      "id": "d5683486-7341-41d0-9595-5f5ea6978f92",
+      "name": "Update Reviewed Automation Failed",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, idempotent_replay: !$('Decide Review').first().json.processed, review: { id: $('Decide Review').first().json.review_id, status: $('Decide Review').first().json.review_status }, decision: { id: $('Decide Review').first().json.decision_id, category: $('Decide Review').first().json.category, priority: $('Decide Review').first().json.priority, summary: $('Decide Review').first().json.summary }, sla: { policy_version: 'sla-demo-v1', due_at: $('Decide Review').first().json.sla_due_at } } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2400,
+        -320
+      ],
+      "id": "17a09e6d-2eb8-4782-ba3e-65fbebfa2be9",
+      "name": "Return Review Decision"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'REVIEW_PROCESSING_ERROR', message: 'Review decision could not be processed' } } }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        -160
+      ],
+      "id": "fd40b8d3-7f24-425a-a8fd-0ce463fdcf8d",
+      "name": "Return Review Internal Error"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin/tickets/resolve",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        240
+      ],
+      "id": "ad46bd8e-d2d8-4458-bcdc-972ee136bc12",
+      "name": "Receive Ticket Resolution",
+      "webhookId": "ece618ba-03cd-4865-9f13-8d2538d561b8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $input.first().json;\nconst configured = $env.SMARTDESK_ADMIN_TOKEN;\nconst supplied = request.headers?.['x-smartdesk-admin-token'];\nconst authorized = typeof configured === 'string' && configured.length >= 32 && typeof supplied === 'string' && supplied === configured;\nreturn [{ json: { authorized, body: request.body !== null && typeof request.body === 'object' && !Array.isArray(request.body) ? request.body : {} } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        240
+      ],
+      "id": "03099612-032e-4858-8a58-76c0aada3815",
+      "name": "Authenticate Resolution Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "33f83542-7173-4c73-a117-16d9889230e7",
+              "leftValue": "={{ $json.authorized }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        240
+      ],
+      "id": "73c04b70-d70a-4a6d-971f-d3e56ed58f20",
+      "name": "Is Resolution Request Authorized?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'UNAUTHORIZED', message: 'Administrative authentication required' } } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        400
+      ],
+      "id": "0855dbc9-cb14-44d2-94c4-a6e77d41580f",
+      "name": "Return Resolution Unauthorized"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst errors = [];\nconst uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;\nif (typeof body.ticket_id !== 'string' || !uuid.test(body.ticket_id)) errors.push('ticket_id');\nif (typeof body.resolved_by !== 'string' || body.resolved_by.trim().length < 1 || body.resolved_by.length > 100) errors.push('resolved_by');\nreturn [{ json: { valid: errors.length === 0, errors, ticket_id: body.ticket_id ?? null, resolved_by: typeof body.resolved_by === 'string' ? body.resolved_by.trim() : null } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        160
+      ],
+      "id": "7b903fe3-79a3-464e-bb7d-60a607e2404a",
+      "name": "Validate Resolution",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9282b57b-7401-4a73-8f7c-e50b68d7a807",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        160
+      ],
+      "id": "5b34c626-fab3-46e9-966f-221680c55d4e",
+      "name": "Is Resolution Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'RESOLUTION_REQUEST_INVALID', fields: $json.errors } } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        320
+      ],
+      "id": "89a7cbf6-3f10-44a0-bc65-066d66f083b9",
+      "name": "Return Resolution Validation Error"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.resolve_ticket($1::uuid, $2::text);",
+        "options": {
+          "queryReplacement": "={{ [ $json.ticket_id, $json.resolved_by ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1200,
+        80
+      ],
+      "id": "549d5514-d002-4abe-9640-0f82716718b5",
+      "name": "Resolve Ticket",
+      "credentials": {
+        "postgres": {
+          "id": "48d095ec-fbd2-49b1-95de-8710f93df5d0",
+          "name": "SmartDesk PostgreSQL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, idempotent_replay: !$json.changed, ticket: { id: $json.ticket_id, status: $json.ticket_status }, sla: { status: $json.sla_status, resolved_at: $json.resolved_at } } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        80
+      ],
+      "id": "0e5cbe58-2651-436f-932f-584456a88774",
+      "name": "Return Resolution"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error: { code: 'RESOLUTION_PROCESSING_ERROR', message: 'Ticket resolution could not be processed' } } }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        240
+      ],
+      "id": "14eb8a07-2801-4aca-a5ab-5768ce5fbf8e",
+      "name": "Return Resolution Internal Error"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Review Decision": {
+      "main": [
+        [
+          {
+            "node": "Authenticate Review Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate Review Request": {
+      "main": [
+        [
+          {
+            "node": "Is Review Request Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Review Request Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Validate Review Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Review Decision": {
+      "main": [
+        [
+          {
+            "node": "Is Review Decision Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Review Decision Valid?": {
+      "main": [
+        [
+          {
+            "node": "Decide Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Review": {
+      "main": [
+        [
+          {
+            "node": "Should Send Reviewed Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Reviewed Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Build Reviewed Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reviewed Telegram Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Reviewed Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reviewed Telegram Notification": {
+      "main": [
+        [
+          {
+            "node": "Update Reviewed Automation Succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Reviewed Automation Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Reviewed Automation Succeeded": {
+      "main": [
+        [
+          {
+            "node": "Return Review Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Reviewed Automation Failed": {
+      "main": [
+        [
+          {
+            "node": "Return Review Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Review Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Ticket Resolution": {
+      "main": [
+        [
+          {
+            "node": "Authenticate Resolution Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate Resolution Request": {
+      "main": [
+        [
+          {
+            "node": "Is Resolution Request Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Resolution Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Resolution Request Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Validate Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Resolution Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Resolution": {
+      "main": [
+        [
+          {
+            "node": "Is Resolution Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Resolution Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Resolution Valid?": {
+      "main": [
+        [
+          {
+            "node": "Resolve Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Resolution Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Ticket": {
+      "main": [
+        [
+          {
+            "node": "Return Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Resolution Internal Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": false
+  },
+  "versionId": "d92f8bcd-612a-4f73-ae7b-baa4153ada1e",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "phase6-admin-operations",
+  "tags": []
+}
