@@ -95,8 +95,21 @@ La respuesta es deliberadamente genérica: no incluye SQL, stack traces, host, b
 - La credencial PostgreSQL es administrada por n8n. El workflow versionado conserva únicamente la referencia técnica necesaria, no el secreto.
 - PostgreSQL opera en la red interna de Docker y no publica su puerto al host.
 - Los secretos y la configuración real permanecen fuera de Git.
-- El artefacto versionado conserva `active: false`; su activación es una responsabilidad del despliegue.
+- La publicación/activación efectiva de los workflows es responsabilidad del despliegue y se verifica después de cada import.
 
-## Fuera de alcance
+## Evolución en Phase 6
 
-La Fase 2 no incorpora IA, clasificación, categoría, prioridad, resumen ni notificaciones. Esas capacidades pertenecen a fases posteriores y no deben interpretarse como implementadas.
+El contrato HTTP de entrada no cambió. Después de persistir el ticket, el
+workflow Phase 6 usa el contrato IA v2 y puede responder:
+
+- HTTP 201 con `classification.status=succeeded`, decisión IA y SLA cuando no
+  requiere revisión;
+- HTTP 202 con `classification.status=review_pending` y `review.id`, sin
+  decisión, SLA ni acción empresarial todavía;
+- HTTP 201 con `classification.status=failed`, `error_code`, `failure_kind` y
+  número de intentos cuando la clasificación no puede completarse.
+
+La respuesta successful incluye `confidence` únicamente como señal operacional
+no calibrada. Los procedimientos administrativos de review y resolución se
+documentan en `docs/PHASE_6.md`; no forman parte de la superficie pública de
+Caddy.

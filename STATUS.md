@@ -7,8 +7,10 @@ Gate 2 = PASS
 Gate 3 = PASS
 Gate 4 = PASS
 Gate 5 = PASS
-Phase 5 = COMPLETE
+Gate 6 = PASS
 SmartDesk AI V1 = COMPLETE
+Phase 6 = COMPLETE
+Current phase = Phase 7
 ```
 
 - **Gate 0: APROBADO.**
@@ -17,13 +19,15 @@ SmartDesk AI V1 = COMPLETE
 - **Gate 3: APROBADO.**
 - **Gate 4: APROBADO.**
 - **Gate 5: APROBADO.**
+- **Gate 6: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
 - **Fase 4 — reglas de negocio + notificación: COMPLETADA.**
 - **Fase 5 — V1 completa, desplegada y probada end-to-end: COMPLETADA.**
+- **Fase 6 — Reliability + HITL + SLA: COMPLETADA.**
 - **SmartDesk AI V1: COMPLETA.**
-- **Fase actual: V1 cerrada; Fase 6 pendiente y no iniciada.**
+- **Fase actual: Phase 7 — dataset sintético y evaluación de IA; no iniciada.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -31,7 +35,7 @@ SmartDesk AI V1 = COMPLETE
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA, la notificación Telegram y el cierre end-to-end de V1. Gates 0–5 cuentan con aprobación explícita.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA, la notificación Telegram, el cierre end-to-end de V1 y Phase 6. Gates 0–6 cuentan con aprobación explícita.
 
 ## Infraestructura aprobada
 
@@ -250,19 +254,38 @@ Gate 5 queda aprobado, Fase 5 completada y SmartDesk AI V1 completada. El tag
 Git local `v1.0` apunta al tested/release commit anterior, no al commit
 documental posterior.
 
+## Fase 6 — Reliability, HITL y SLA
+
+Phase 6 se implementó y probó sobre el commit funcional
+`ba9fd7b1d32c837a30afc1d35d05a018492e4392`:
+
+- contrato IA v2 con `confidence`, `review_required` y `review_reason`;
+- tres intentos máximos de OpenAI, backoff 2 s/4 s y retry solo para errores
+  transitorios definidos;
+- predicción original, review humana y decisión final en entidades separadas;
+- approve/override idempotentes y endpoints admin solo por loopback+túnel SSH,
+  protegidos con token externo a Git;
+- política `sla-demo-v1`, cálculo desde `tickets.created_at`, resolución,
+  breach, scheduler cada cinco minutos y escalamiento único;
+- recovery de predictions y eventos Phase 6 stale sin reenvío externo ciego;
+- migración `004`, bootstrap `001→004`, workflows admin/scheduler, despliegue,
+  regresión y seguridad verificados en OCI ARM64.
+
+La matriz final dejó cero estados pending y cero duplicados lógicos. La
+evidencia completa está en `docs/testing/GATE_6.md`. Gate 6 queda aprobado y
+Phase 6 completada. `v1.0` permanece en el commit probado de V1.
+
 ## Siguiente paso
 
-Fase 6 permanece pendiente y no iniciada. Cualquier trabajo de confiabilidad,
-reintentos, recuperación, HITL o SLA requiere autorización y criterios de gate
-propios; este cierre no implementa esas capacidades ni avanza fases posteriores.
-
-Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
+Phase 7: crear y versionar el dataset sintético y ejecutar la evaluación
+cuantitativa de IA, incluido el análisis del threshold HITL. No se ha
+implementado ninguna funcionalidad de Phase 7 durante este cierre.
 
 ## Límites actuales
 
-- V1 dispone de ingress HTTPS restringido y matriz E2E aprobada, pero no acredita accuracy, rendimiento, disponibilidad, SLA, ahorro o impacto empresarial.
-- Reintentos avanzados, recuperación automática, HITL, evaluación con dataset, SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups ensayados, alta disponibilidad, rate limiting y WAF no están implementados.
-- La VM única sigue siendo un punto único de fallo; permanece el riesgo documentado de una prediction `pending` si PostgreSQL falla entre su creación y actualización terminal.
+- V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
+- La evaluación con dataset, SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF no están implementados.
+- La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 5 está aprobado; las fases 6–10 permanecen pendientes.
+- Ningún gate posterior a Gate 6 está aprobado; las fases 7–10 permanecen pendientes.

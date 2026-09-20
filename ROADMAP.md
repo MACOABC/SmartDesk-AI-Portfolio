@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3, Gate 4 y Gate 5 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3, Gate 4, Gate 5 y Gate 6 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -16,7 +16,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
-| 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
+| 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
 | 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | Pendiente. |
@@ -101,7 +101,20 @@ fallos controlados de IA y Telegram, correlación SQL, ausencia de duplicados y
 pendientes, redeploy con persistencia, HTTPS y regresión de exposición. La
 evidencia saneada se conserva en `docs/testing/GATE_5.md`. El tag local `v1.0`
 apunta al commit probado, no al commit documental de cierre. Fase 5 y
-SmartDesk AI V1 quedan completados; las fases 6–10 permanecen pendientes.
+SmartDesk AI V1 quedan completados; después del cierre descrito a continuación,
+las fases 7–10 permanecen pendientes.
+
+## Fase 6 — Reliability, HITL y SLA
+
+Gate 6 fue aprobado el 2026-09-20 sobre el commit funcional desplegado
+`ba9fd7b1d32c837a30afc1d35d05a018492e4392`. Se verificaron retries selectivos
+y limitados, errores permanentes sin retry, recuperación de estados stale,
+review pending/approve/override, preservación de la predicción original,
+decisión final separada, SLA versionado desde `tickets.created_at`, resolución,
+breach y escalamiento idempotentes, restart, regresión y seguridad.
+
+La evidencia saneada está en `docs/testing/GATE_6.md`. Phase 6 queda completa;
+la fase actual pasa a Phase 7. El tag `v1.0` no fue modificado.
 
 ## Fases posteriores a V1
 

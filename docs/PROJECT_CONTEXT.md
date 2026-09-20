@@ -41,6 +41,11 @@ PostgreSQL → consultas SQL → Power BI [posterior a V1]
 
 La persistencia precede a la llamada a la IA para conservar la solicitud si falla un servicio externo. Una respuesta de IA inválida no pasa a las reglas de negocio.
 
+Phase 6 extiende ese flujo con retry selectivo de IA, señal HITL, revisión
+humana, decisión operacional final separada, SLA y escalamiento. Una prediction
+que requiere review no produce decisión, SLA ni acción hasta ser approved u
+overridden. El scheduler reclama deadlines vencidos de forma idempotente.
+
 Despliegue previsto:
 
 ```text
@@ -81,9 +86,20 @@ El modelo conceptual empresarial incluye:
 | --- | --- |
 | `tickets` | Entrada original, estado propio del ticket y marcas de tiempo. |
 | `ticket_ai_predictions` | Predicción, proveedor, modelo, versiones del prompt y schema, estado y error, relacionados con el ticket sin sobrescribir su historial. |
-| `automation_events` | Acciones automáticas relacionadas con ticket y predicción; en Fase 4 registra la regla y el resultado de Telegram sin secretos. |
+| `ticket_reviews` | Estado y resultado trazable de approve/override humano. |
+| `ticket_decisions` | Clasificación operacional final, separada de la predicción original. |
+| `sla_policies` | Política SLA interna y versionada por prioridad. |
+| `ticket_sla` | Deadline, estado, resolución y breach relacionados con la decisión final. |
+| `sla_breaches` | Breach único y resultado de su escalamiento. |
+| `automation_events` | Acciones automáticas relacionadas con prediction/decision/breach, sin secretos. |
 
 La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla y su uso desde n8n fueron creados y verificados. Fase 4 añadió `automation_events` con `pending`, `succeeded`, `failed` y `skipped`, sin modificar el lifecycle ni los valores de `tickets.status`. HIGH y CRITICAL fueron entregados realmente por Telegram y Gate 4 quedó aprobado.
+
+Phase 6 añadió el contrato `ticket-classification-v2`, trazabilidad de intentos
+y `confidence` como señal operacional no calibrada. PostgreSQL materializa de
+forma transaccional la review o la decisión+SLA+evento. Las restricciones
+únicas impiden reviews, decisiones, breaches y acciones duplicadas para el
+mismo evento lógico interno.
 
 ## Tecnologías y justificación
 
@@ -106,7 +122,11 @@ La clasificación de IA tiene persistencia separada con los estados `pending`, `
 
 V1 excluye portal completo, autenticación corporativa, asignación inteligente, resolución automática, RAG, embeddings, base vectorial, chatbot, ML propio, backend personalizado, microservicios, Redis, Kafka y Kubernetes.
 
-Después de V1 se abordarán confiabilidad, reintentos, revisión humana, SLA, evaluación de IA, SQL analítico, Power BI, CI/CD, monitoreo, backups y hardening adicional según `../ROADMAP.md`. La detección de duplicados y otras extensiones se considerarán por su valor, sin comprometerlas como requisitos de V1. Portainer no forma parte del producto.
+Después de V1 se completaron confiabilidad, reintentos selectivos, revisión
+humana y SLA en Phase 6. Permanecen evaluación de IA, SQL analítico, Power BI,
+CI/CD, monitoreo, backups y hardening adicional según `../ROADMAP.md`. La
+detección de tickets duplicados y otras extensiones se considerarán por su
+valor. Portainer no forma parte del producto.
 
 ## Calidad, seguridad y evidencia
 
@@ -114,8 +134,8 @@ Después de V1 se abordarán confiabilidad, reintentos, revisión humana, SLA, e
 - Secretos externos a Git; `.env.example` solo con valores ficticios. Datos sintéticos en pruebas, demos y capturas.
 - PostgreSQL privado y n8n sin exposición pública directa en `5678`; administración protegida y publicación mediante HTTPS.
 - Pruebas de contratos, JSON inválido, fallos externos, persistencia, reglas e integración completa, con resultados comprobables.
-- Evaluación futura con dataset sintético etiquetado: accuracy de categoría y prioridad, matrices de confusión, latencia, errores y tickets procesados. Tasa de revisión humana solo cuando exista ese mecanismo.
-- Análisis por categoría, prioridad, área, estado y tiempo. SLA y tiempos de resolución solo cuando existan los procesos y datos correspondientes.
+- Evaluación futura con dataset sintético etiquetado: accuracy de categoría y prioridad, matrices de confusión, latencia, errores, tickets procesados y tasa de revisión humana.
+- Análisis por categoría, prioridad, área, estado, tiempo, SLA y resolución; el dashboard permanece para Phase 8.
 - No se afirmarán ahorros, precisión, disponibilidad ni impacto sin mediciones ejecutadas y reproducibles.
 
 La VM única es un punto único de fallo aceptado inicialmente. Deben contemplarse errores de IA, abuso del webhook, instrucciones maliciosas dentro de tickets, filtración de secretos, consumo de disco e incompatibilidades ARM64. Sus controles se incorporarán en la fase correspondiente, sin declarar resuelto lo que aún no se haya validado.
