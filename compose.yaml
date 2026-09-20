@@ -15,6 +15,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
+      - ./db/apply-migrations.sh:/docker-entrypoint-initdb.d/20-apply-migrations.sh:ro
+      - ./db/migrations:/opt/smartdesk/migrations:ro
     networks:
       - database
     healthcheck:
@@ -46,6 +48,7 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_RESTRICT_FILE_ACCESS_TO: /opt/smartdesk/prompts/ticket-classification
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      SMARTDESK_ADMIN_TOKEN: ${SMARTDESK_ADMIN_TOKEN:?SMARTDESK_ADMIN_TOKEN must be set}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:?GENERIC_TIMEZONE must be set}
       TZ: ${TZ:?TZ must be set}
     ports:

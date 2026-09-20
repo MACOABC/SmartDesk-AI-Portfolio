@@ -1,4 +1,4 @@
-# SmartDesk AI — Deployment V1
+# SmartDesk AI — Deployment
 
 ## Entrada pública
 
@@ -87,6 +87,41 @@ ejecución que no se ejecutaron nodos OpenAI, Telegram ni persistencia.
 
 La administración continúa mediante un túnel SSH hacia
 `127.0.0.1:5678`; no se publica la interfaz mediante Caddy.
+
+## Operaciones de Phase 6
+
+Además del workflow de intake, Phase 6 despliega:
+
+```text
+n8n/workflows/phase6-admin.json
+n8n/workflows/phase6-sla-scheduler.json
+```
+
+Antes de importar los workflows sobre una instalación existente:
+
+1. crear `SMARTDESK_ADMIN_TOKEN` en `.env` con un valor aleatorio de al menos
+   32 caracteres, sin imprimirlo ni versionarlo;
+2. aplicar `db/migrations/004_phase6_reliability_hitl_sla.sql` como el rol
+   `smartdesk_app` sobre `smartdesk_db`;
+3. copiar los prompts v2 y los tres exports;
+4. importar/actualizar los workflows con n8n y activarlos;
+5. recrear únicamente n8n para cargar la nueva variable y registrar triggers.
+
+Un bootstrap con volumen PostgreSQL nuevo ejecuta `db/apply-migrations.sh`
+desde `/docker-entrypoint-initdb.d` y aplica `001` a `004` en orden. Este
+mecanismo no vuelve a ejecutar migraciones sobre un volumen existente.
+
+Los endpoints HITL y resolución se consumen únicamente desde la VM o a través
+del túnel SSH:
+
+```text
+POST http://127.0.0.1:5678/webhook/admin/reviews/decide
+POST http://127.0.0.1:5678/webhook/admin/tickets/resolve
+```
+
+Ambos exigen `X-SmartDesk-Admin-Token`. Caddy continúa admitiendo públicamente
+solo `POST /webhook/tickets`, por lo que esas rutas administrativas reciben
+404 desde Internet.
 
 ## Trazabilidad del deployment
 
