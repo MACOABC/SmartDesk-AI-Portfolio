@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3, Gate 4, Gate 5 y Gate 6 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gates 0–7 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -17,8 +17,8 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
-| 7 | Dataset sintético y evaluación de IA. | Gate 7. | EN CURSO / Gate no aprobado. |
-| 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |
+| 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
+| 8 | SQL analítico y Power BI. | Gate 8. | NOT STARTED. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | Pendiente. |
 | 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
 
@@ -113,16 +113,17 @@ review pending/approve/override, preservación de la predicción original,
 decisión final separada, SLA versionado desde `tickets.created_at`, resolución,
 breach y escalamiento idempotentes, restart, regresión y seguridad.
 
-La evidencia saneada está en `docs/testing/GATE_6.md`. Phase 6 queda completa;
-la fase actual pasa a Phase 7. El tag `v1.0` no fue modificado.
+La evidencia saneada está en `docs/testing/GATE_6.md`. Phase 6 quedó completa
+y, en ese momento, la fase activa pasó a Phase 7. El tag `v1.0` no fue
+modificado.
 
 ## Phase 7 — Dataset sintético y evaluación de IA
 
-Phase 7 está **IN PROGRESS** y Gate 7 permanece **NOT YET PASS**. Phase 7A dejó
-versionados la política, schema, 30 casos `dev`, 120 casos de test congelado,
-manifiesto y validación local. Phase 7B añadió runner, Structured Outputs,
-retries/HITL productivos, guardrails de presupuesto, contabilidad explícita de
-input ordinario/lectura/escritura de caché, artefactos incrementales y scoring
+Phase 7 está **COMPLETE** y Gate 7 **PASS**. Phase 7A dejó versionados la
+política, schema, 30 casos `dev`, 120 casos de test congelado, manifiesto y
+validación local. Phase 7B añadió runner, Structured Outputs, retries/HITL
+productivos, guardrails de presupuesto, contabilidad explícita de input
+ordinario/lectura/escritura de caché, artefactos incrementales y scoring
 completamente offline. Phase 7B.2 validó el flujo live con un único smoke sobre
 tres casos `dev`, tres respuestas HTTP 200 y recomputación offline idéntica.
 Sus resultados son de integración y no métricas oficiales del modelo.
@@ -134,9 +135,16 @@ threshold HITL productivo no derivó casos a revisión y dejó 39 error escapes;
 la evidencia, coste y análisis reproducible están documentados en
 `docs/PHASE_7.md`.
 
-El trabajo restante es la revisión formal de esta evidencia y la decisión de
-Gate 7. Phase 7 permanece EN CURSO, Gate 7 no está aprobado y Phase 8 no debe
-iniciarse automáticamente.
+El usuario aprobó formalmente Gate 7 el 2026-09-20. La aprobación confirma que
+los objetivos de evaluación de categoría, prioridad, HITL, latencia, coste,
+fallos y reproducibilidad offline fueron satisfechos, sin ajustes post-test del
+contrato ni del threshold productivo. Los hallazgos de calidad permanecen
+documentados y no invalidan la medición.
+
+## Phase 8 — SQL analítico y Power BI
+
+Phase 8 es la fase actual y permanece **NOT STARTED**. Este cierre documental
+no define su diseño, no implementa funcionalidad y no anticipa Gate 8.
 
 ## Fases posteriores a V1
 

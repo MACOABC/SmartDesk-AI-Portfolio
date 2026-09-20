@@ -8,11 +8,12 @@ Gate 3 = PASS
 Gate 4 = PASS
 Gate 5 = PASS
 Gate 6 = PASS
-Gate 7 = NOT YET PASS
+Gate 7 = PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
-Phase 7 = IN PROGRESS
-Current subphase = Phase 7C official run complete; awaiting Gate 7 review
+Phase 7 = COMPLETE
+Current phase = Phase 8
+Phase 8 = NOT STARTED
 ```
 
 - **Gate 0: APROBADO.**
@@ -22,6 +23,7 @@ Current subphase = Phase 7C official run complete; awaiting Gate 7 review
 - **Gate 4: APROBADO.**
 - **Gate 5: APROBADO.**
 - **Gate 6: APROBADO.**
+- **Gate 7: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
@@ -29,10 +31,11 @@ Current subphase = Phase 7C official run complete; awaiting Gate 7 review
 - **Fase 5 — V1 completa, desplegada y probada end-to-end: COMPLETADA.**
 - **Fase 6 — Reliability + HITL + SLA: COMPLETADA.**
 - **SmartDesk AI V1: COMPLETA.**
-- **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
-- **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
+- **Phase 7 — dataset sintético y evaluación de IA: COMPLETADA.**
+- **Fase actual: Phase 8 — SQL analítico y Power BI; NOT STARTED.**
+- **Phase 7A — dataset sintético, política y validación local: COMPLETADA.**
 - **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
-- **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 pendiente de revisión.**
+- **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 aprobado.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -302,8 +305,9 @@ sin cambios en el comportamiento productivo:
   JSONL roto y hash inconsistente.
 
 La validación local terminó en PASS para el artefacto de datos y 6/6 tests.
-Esto no constituye una evaluación del modelo, no acredita accuracy, latencia,
-costo ni calibración, y no aprueba Gate 7. Phase 7 permanece IN PROGRESS.
+Por sí sola no constituyó una evaluación del modelo ni acreditó accuracy,
+latencia, costo o calibración; en ese punto Phase 7 permanecía IN PROGRESS y
+Gate 7 todavía no estaba aprobado.
 
 ## Phase 7B — Harness y scoring offline
 
@@ -361,20 +365,23 @@ API key y con red bloqueada reprodujo exactamente métricas y coste, salvo su
 timestamp de generación. La evidencia y el análisis están en
 `eval/runs/official-test-v1-20260920T210544Z/` y `docs/PHASE_7.md`.
 
-Phase 7 permanece IN PROGRESS y Gate 7 NOT YET PASS hasta completar la revisión
-formal. El run no autoriza ajustes sobre el mismo frozen test ni iniciar Phase
-8.
+El usuario aprobó formalmente Gate 7 el 2026-09-20. Phase 7 queda COMPLETE y
+Gate 7 PASS: los objetivos de categoría, prioridad, HITL, latencia, coste,
+análisis de fallos y reproducibilidad offline fueron satisfechos. Los hallazgos
+de calidad documentados no invalidan la evaluación. No se modificaron después
+del test el dataset, prompt, schema, modelo, configuración ni threshold HITL.
 
 ## Siguiente paso
 
-Revisar formalmente la evidencia cuantitativa y el análisis de errores de
-Phase 7C para decidir Gate 7. No iniciar Phase 8 automáticamente.
+Phase 8 es la fase actual, pero permanece NOT STARTED. Su diseño e
+implementación requieren una instrucción posterior y no forman parte de este
+cierre documental.
 
 ## Límites actuales
 
 - V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
-- El dataset v1 y su corrida oficial están preservados, pero Gate 7 sigue pendiente de revisión; el confidence observado no discriminó los errores con el threshold productivo. SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF tampoco están implementados.
+- El dataset v1 y su corrida oficial están preservados; Gate 7 está aprobado. El confidence observado no discriminó los errores con el threshold productivo. SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF todavía no están implementados.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 6 está aprobado; Phase 7 está en curso y las fases 8–10 permanecen pendientes.
+- Ningún gate posterior a Gate 7 está aprobado; Phase 8 está NOT STARTED y las fases 8–10 permanecen pendientes.

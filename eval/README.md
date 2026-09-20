@@ -4,8 +4,8 @@ Este directorio contiene el dataset y el harness reproducible para evaluar el
 clasificador de SmartDesk AI sin modificar el producto. Phase 7A creó el corpus
 y Phase 7B implementó runner, scoring offline y guardrails. No se realizaron
 llamadas reales durante 7B; 7B.2 validó el smoke live y 7C completó la única
-corrida oficial autorizada del frozen test v1. Phase 7 continúa **IN PROGRESS**
-y Gate 7 permanece **NOT YET PASS** hasta su revisión formal.
+corrida oficial autorizada del frozen test v1. Phase 7 está **COMPLETE** y Gate
+7 **PASS** después de la aprobación formal del usuario el 2026-09-20.
 
 ## Contrato evaluado
 
@@ -247,7 +247,8 @@ operacional.
 El run oficial conservado obtuvo 120/120 clasificaciones válidas, category
 accuracy 89.17%, priority accuracy 76.67% y exact match 67.50%. No hubo
 retries ni errores operacionales. El threshold HITL productivo no envió casos
-a revisión y dejó 39 error escapes; este hallazgo requiere revisión antes de
-Gate 7. El scoring offline reprodujo métricas y coste sin clave ni red. El
-detalle, matrices, análisis secundario, hashes y limitaciones están en
-`docs/PHASE_7.md`. La ejecución no cierra Gate 7 por sí sola.
+a revisión y dejó 39 error escapes; el hallazgo queda documentado como una
+limitación de calidad. El scoring offline reprodujo métricas y coste sin clave
+ni red. El detalle, matrices, análisis secundario, hashes y limitaciones están
+en `docs/PHASE_7.md`. Gate 7 fue aprobado formalmente; Phase 8 permanece NOT
+STARTED.

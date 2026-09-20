@@ -2,11 +2,12 @@
 
 ## Estado
 
-Phase 7 permanece **IN PROGRESS** y Gate 7 **NOT YET PASS**. Phase 7A creó el
-dataset sintético versionado. Phase 7B implementó el harness y scoring offline;
-Phase 7B.2 completó un smoke live controlado sobre tres casos `dev`; Phase 7C
-completó la única corrida oficial autorizada del test congelado v1. Sus
-resultados están preservados y pendientes de revisión formal de Gate 7.
+Phase 7 está **COMPLETE** y Gate 7 **PASS**. Phase 7A creó el dataset sintético
+versionado. Phase 7B implementó el harness y scoring offline; Phase 7B.2
+completó un smoke live controlado sobre tres casos `dev`; Phase 7C completó la
+única corrida oficial autorizada del test congelado v1. El usuario aprobó
+formalmente Gate 7 el 2026-09-20 después de revisar la integridad,
+reproducibilidad, métricas y limitaciones documentadas.
 
 ## Baseline y contrato
 
@@ -236,7 +237,15 @@ El digest del conjunto, calculado como en el smoke sobre líneas
 `filename:sha256` ordenadas, es
 `83c278ae1046643dde5a5efcec22009444b58c9d6691c9a4e5dc91a4d4f0ca45`.
 
-## Próxima decisión
+## Cierre formal
 
-Revisar formalmente la evidencia de Phase 7C y decidir Gate 7. La ejecución no
-aprueba el gate por sí sola. Phase 8 no está iniciada ni autorizada.
+Gate 7 queda **PASS** y Phase 7 **COMPLETE**. La aprobación reconoce que la
+evaluación oficial se ejecutó una sola vez sobre 120/120 casos, con evidencia
+completa y reproducible, sin modificar después del test el dataset, prompt,
+schema, modelo, configuración ni threshold HITL productivo. Las limitaciones
+observadas —sobreestimación de prioridad, confusión de asuntos no TI con
+`hardware` y confidence no calibrado— permanecen como hallazgos documentados y
+no invalidan la evaluación.
+
+La fase actual pasa administrativamente a Phase 8, que permanece **NOT
+STARTED**. Este cierre no incluye diseño ni implementación de Phase 8.
