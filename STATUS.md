@@ -187,18 +187,46 @@ validador determinista 19/19. La evidencia completa, la limpieza y los límites
 se conservan en `docs/testing/GATE_4.md`. Gate 4 queda aprobado y Fase 4
 completada.
 
+## Fase 5 — Ingress HTTPS seguro
+
+Fase 5 está en curso. El 2026-09-19 se desplegó Caddy 2.11.4 como tercer
+servicio de Compose para terminar TLS y publicar únicamente
+`POST /webhook/tickets`:
+
+- DNS público verificado contra la IP reservada de la VM;
+- certificado Let's Encrypt válido para el hostname productivo;
+- redirección HTTP 308 hacia HTTPS;
+- `/`, `/home`, `/login`, `/rest/*`, `/api/*`, `/workflows/*` y
+  `/executions/*` respondieron 404 desde Internet;
+- un método GET sobre `/webhook/tickets` respondió 404;
+- n8n conservó `127.0.0.1:5678` y su administración respondió por loopback;
+- PostgreSQL conservó el mismo contenedor healthy, sin puerto publicado;
+- Caddy pertenece únicamente a la red `app` y no puede alcanzar la red
+  interna `database`;
+- desde el exterior, 80 y 443 estuvieron abiertos y 5678, 5432 y 9000
+  permanecieron cerrados.
+
+La prueba de routing permitida envió un único `POST {}`. Respondió HTTP 400 y
+la ejecución 170 recorrió solamente recepción, validación, decisión y respuesta
+de error. No ejecutó inserción de ticket, OpenAI, Telegram ni automatización;
+los conteos de tickets, predictions y automation events permanecieron en cero.
+
+Esta comprobación acredita únicamente infraestructura y routing. Gate 5 sigue
+pendiente y no se creó la release `v1.0`.
+
 ## Siguiente paso
 
-Iniciar el diseño y la ejecución de Fase 5 según `ROADMAP.md`: completar el
-despliegue V1 end-to-end y evaluar Gate 5. Este cierre no implementó ninguna
-funcionalidad de Fase 5.
+Ejecutar la matriz E2E final definida para Gate 5 sobre el commit candidato,
+incluidas persistencia, clasificación, reglas, Telegram, fallos controlados,
+reinicio y reproducibilidad. Solo después de aprobar toda la matriz podrá
+crearse `v1.0`.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- V1 todavía no está completa ni publicada mediante HTTPS; Fase 5 no ha comenzado.
+- V1 ya dispone de ingress HTTPS restringido, pero la matriz E2E final de Gate 5 todavía no se ha ejecutado.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- La regla y Telegram están implementados y verificados. Routing adicional, SLA, HITL, retries, Power BI, Caddy público y CI/CD no están implementados.
+- La regla y Telegram están implementados y verificados. SLA, HITL, retries, Power BI y CI/CD no están implementados.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
 - Ningún gate posterior a Gate 4 está aprobado.

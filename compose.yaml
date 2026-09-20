@@ -40,6 +40,8 @@ services:
       N8N_HOST: ${N8N_HOST:?N8N_HOST must be set}
       N8N_PORT: ${N8N_PORT:?N8N_PORT must be set}
       N8N_PROTOCOL: ${N8N_PROTOCOL:?N8N_PROTOCOL must be set}
+      N8N_WEBHOOK_URL: https://${SMARTDESK_HOST:?SMARTDESK_HOST must be set}/
+      N8N_PROXY_HOPS: "1"
       N8N_SECURE_COOKIE: "false"
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_RESTRICT_FILE_ACCESS_TO: /opt/smartdesk/prompts/ticket-classification
@@ -65,9 +67,36 @@ services:
       start_period: 30s
     stop_grace_period: 30s
 
+  caddy:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    environment:
+      SMARTDESK_HOST: ${SMARTDESK_HOST:?SMARTDESK_HOST must be set}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app
+    depends_on:
+      n8n:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    stop_grace_period: 30s
+
 volumes:
   postgres_data:
   n8n_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   app:

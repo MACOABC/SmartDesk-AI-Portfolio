@@ -1,0 +1,16 @@
+{$SMARTDESK_HOST} {
+	header -Server
+
+	@ticket_webhook {
+		method POST
+		path /webhook/tickets
+	}
+
+	handle @ticket_webhook {
+		reverse_proxy n8n:5678
+	}
+
+	handle {
+		respond 404
+	}
+}

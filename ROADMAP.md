@@ -15,7 +15,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
-| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | ACTUAL / NO INICIADA. |
+| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | ACTUAL / EN CURSO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
 | 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |

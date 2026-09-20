@@ -52,7 +52,7 @@ Internet → HTTPS → Caddy → n8n
 Oracle Cloud ARM64 + Docker Compose
 ```
 
-Caddy y HTTPS se incorporarán al desplegar V1. En Fase 1, el acceso temporal a n8n será mediante localhost y túnel SSH. La base no se publicará al host; los contenedores autorizados accederán por nombre de servicio. Se distinguirán una red de aplicación y una red interna para PostgreSQL.
+Caddy y HTTPS se incorporaron en Fase 5 con una superficie pública limitada al webhook productivo. La administración de n8n permanece en localhost mediante túnel SSH. La base no se publica al host; los contenedores autorizados acceden por nombre de servicio. Se mantienen una red de aplicación y una red interna para PostgreSQL, y Caddy solo pertenece a la primera.
 
 La infraestructura disponible es una VM Oracle Cloud ARM64 con Ubuntu 22.04, 2 OCPU y 12 GB de RAM. Docker y Docker Compose ya están disponibles. La operación continua es un objetivo; no existe todavía una medición de disponibilidad. El estado aprobado de seguridad se mantiene en `../STATUS.md`.
 
@@ -122,6 +122,6 @@ La VM única es un punto único de fallo aceptado inicialmente. Deben contemplar
 
 ## Decisiones pendientes y referencias
 
-Quedan por concretar en su fase: proveedor/modelo de IA, versiones de imágenes, límites de entrada y dominio/DNS para HTTPS. La categoría residual queda fijada como `other` por aprobación del usuario.
+El hostname y DNS de V1 quedaron resueltos al implementar el ingress HTTPS de Fase 5. La categoría residual permanece fijada como `other` por aprobación del usuario.
 
 Este contexto consolida «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». El estado más reciente prevalece sobre las propuestas iniciales. La aprobación de gates y la evidencia disponible se consultan en `../STATUS.md`.
