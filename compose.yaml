@@ -17,8 +17,11 @@ services:
       - ./db/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
       - ./db/apply-migrations.sh:/docker-entrypoint-initdb.d/20-apply-migrations.sh:ro
       - ./db/migrations:/opt/smartdesk/migrations:ro
+    ports:
+      - "127.0.0.1:5432:5432"
     networks:
       - database
+      - bi_access
     healthcheck:
       test: ["CMD-SHELL", "pg_isready --username=\"$${POSTGRES_USER}\" --dbname=\"$${POSTGRES_DB}\""]
       interval: 10s
@@ -105,3 +108,4 @@ networks:
   app:
   database:
     internal: true
+  bi_access:
