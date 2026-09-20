@@ -5,8 +5,12 @@
 ```text
 Phase 8.1 = PASS
 Phase 8.2 = PASS
-Phase 8.3–8.7 = NOT STARTED
-Gate 8 = NOT STARTED
+Phase 8.3 = PASS
+Phase 8.4 = PASS
+Phase 8.5 = PASS
+Phase 8.6 = PARTIAL
+Phase 8.7 = PARTIAL
+Gate 8 = NOT YET PASS
 ```
 
 La auditoría 8.1 se ejecutó el 2026-09-20 contra el repositorio local y la
@@ -355,3 +359,119 @@ que mezclen la evaluación experimental de Gate 7 con datos operacionales.
   modificar `public` ni seleccionar predictions arbitrariamente.
 - **Checkpoint 8.2: PASS.** Las cuatro vistas, exclusiones y definiciones KPI
   tienen fuentes físicas y denominadores demostrados.
+
+## Implementación y validación
+
+### Checkpoint 8.3 — PASS
+
+La migración `005_phase8_analytics_views.sql` creó `analytics` y las cuatro
+vistas contratadas. Se aplicó como `smartdesk_app`; no alteró tablas, columnas,
+constraints ni datos de `public`.
+
+El `pg_dump --schema-only --schema=public` textual cambió de orden porque las
+nuevas vistas introdujeron dependencias externas y PostgreSQL 17 genera tokens
+`\restrict` aleatorios. Para comparar estructura y no ruido de serialización,
+ambos snapshots se restauraron en bases temporales aisladas, se volvieron a
+exportar sin `analytics`, se eliminaron los tokens aleatorios y se compararon.
+Los dos artefactos canónicos produjeron:
+
+```text
+sha256 = ee6a31fb0a361f5d7b45d731c9b90728bb917a07148c72bcffca2617effbf477
+diff = empty
+```
+
+Las bases temporales se eliminaron al terminar.
+
+Una prueba adicional creó una base temporal limpia, aplicó en orden las
+migraciones `001→005` y confirmó cuatro vistas analytics. La base temporal se
+eliminó al finalizar.
+
+### Checkpoint 8.4 — PASS
+
+`sql/analytics/gate8_checks.sql` validó:
+
+| Prueba | Resultado |
+| --- | --- |
+| Ticket grain | 13 filas = 13 tickets distintos |
+| Ticket coverage | 13 analytics = 13 public |
+| Prediction grain | 13 filas = 13 predictions distintas |
+| Prediction coverage | 13 analytics = 13 public |
+| HITL grain/coverage | 2 = 2, PK única |
+| Automation grain/coverage | 12 = 12, PK única |
+| Orphans | 0 en predictions, reviews y events |
+| Columnas PII prohibidas | 0 |
+| Resolution time negativo | 0 |
+| Violaciones de NULL semantics | 0 |
+
+Referencias SQL actuales:
+
+```text
+Total Tickets = 13
+Resolved Tickets = 1
+SLA Assigned = 5
+SLA Breached = 3
+SLA Breach Rate = 0.600000
+Prediction Attempts = 13
+Successful Predictions = 9
+Failed Predictions = 4
+Prediction Success Rate = 0.692308
+Persisted / Completed / Pending Reviews = 2 / 2 / 0
+Override Rate = 0.500000
+Automation succeeded / failed / skipped = 6 / 1 / 5
+```
+
+### Checkpoint 8.5 — PASS
+
+Se creó `smartdesk_bi_reader` con login y password generado fuera del
+repositorio. El secreto reside únicamente en la configuración privada del
+despliegue, con modo 0600. El rol es `NOSUPERUSER`, `NOCREATEDB`,
+`NOCREATEROLE`, `NOINHERIT`, `NOREPLICATION` y `NOBYPASSRLS`; recibe solo
+CONNECT, USAGE de `analytics` y SELECT sobre las cuatro vistas.
+
+Pruebas reales mediante login del rol:
+
+```text
+analytics SELECT = PASS
+direct public SELECT = permission denied
+UPDATE public = permission denied
+INSERT public = permission denied
+DELETE public = permission denied
+CREATE in analytics = permission denied
+```
+
+PostgreSQL publica únicamente `127.0.0.1:5432`. Conserva la red interna
+`database` y añade `bi_access`, una red puente exclusiva del servicio
+PostgreSQL necesaria para materializar el bind de loopback. La prueba externa
+de TCP/5432 devolvió `False`. Un túnel local en el puerto 15432 abrió
+correctamente y completó un handshake real del protocolo PostgreSQL.
+
+Durante la inspección de Docker, una salida demasiado amplia mostró tres
+contraseñas de base de datos. Se rotaron inmediatamente bootstrap, n8n y
+SmartDesk; se actualizó también la credencial PostgreSQL cifrada de n8n, se
+recrearon los contenedores afectados y se verificaron tres logins, modo 0600 y
+salud de PostgreSQL/n8n/Caddy. No se expusieron claves SSH, OpenAI, Telegram ni
+el token administrativo.
+
+## Power BI — Checkpoint 8.6 PARTIAL
+
+Power BI Desktop no estaba instalado en el entorno disponible. No se creó un
+`.pbit` falso ni se afirmó refresh. Se prepararon:
+
+- `powerbi/README.md`: túnel, conexión Import, Power Query, refresh,
+  reconciliación, seguridad y límites;
+- `powerbi/MODEL.md`: relaciones 1:N, dirección de filtro, tipos y páginas;
+- `powerbi/DAX.md`: medidas justificadas y valores SQL de referencia.
+
+El modelo propuesto relaciona `FactTickets` 1:N con predictions, reviews y
+automation events mediante `ticket_id`, con filtro simple desde tickets. No
+introduce many-to-many ni relaciones entre facts.
+
+Pendiente manual real: construir `SmartDeskAI.pbit`, ejecutar refresh, validar
+relaciones/visuales/filtros y reconciliar cards en Power BI Desktop.
+
+## Evidencia Gate 8 — Checkpoint 8.7 PARTIAL
+
+La matriz ejecutable está en `docs/testing/GATE_8.md`. Gate 8 continúa **NOT
+YET PASS** porque G8-17, G8-18 y G8-19 requieren Power BI Desktop real. No se
+añadieron datos demo: las filas actuales bastan para validación técnica, pero
+no deben usarse en screenshots públicos.

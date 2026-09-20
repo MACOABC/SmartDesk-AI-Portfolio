@@ -18,7 +18,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
-| 8 | SQL analítico y Power BI. | Gate 8. | NOT STARTED. |
+| 8 | SQL analítico y Power BI. | Gate 8. | IN PROGRESS / NOT YET PASS. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | Pendiente. |
 | 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
 
@@ -143,8 +143,9 @@ documentados y no invalidan la medición.
 
 ## Phase 8 — SQL analítico y Power BI
 
-Phase 8 es la fase actual y permanece **NOT STARTED**. Este cierre documental
-no define su diseño, no implementa funcionalidad y no anticipa Gate 8.
+Phase 8 es la fase actual y está **IN PROGRESS**. La capa SQL, validaciones,
+acceso BI y túnel están implementados; el refresh, relaciones y reconciliación
+en Power BI Desktop siguen pendientes antes de aprobar Gate 8.
 
 ## Fases posteriores a V1
 
