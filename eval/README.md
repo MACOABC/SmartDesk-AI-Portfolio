@@ -26,6 +26,7 @@ eval/
 │   ├── test.jsonl
 │   └── dataset-manifest.json
 ├── schemas/evaluation-case.schema.json
+├── scripts/build_dataset_v1.py
 ├── scripts/validate_dataset.py
 ├── tests/test_validate_dataset.py
 └── runs/.gitkeep
@@ -48,6 +49,11 @@ El validador comprueba schema, campos obligatorios, enums contra el contrato
 productivo, IDs y splits, unicidad global, duplicados de contenido, similitud
 excesiva, conteos 30/120, distribución exacta de 20 casos de test por
 categoría, coherencia del manifiesto y hashes SHA-256.
+
+`build_dataset_v1.py` conserva la autoría explícita y permite comprobar que los
+JSONL y el manifiesto se materializan de forma determinista. No debe editarse
+ni usarse para cambiar el test `v1` congelado: cualquier cambio de caso, split,
+política o etiqueta exige una nueva versión del dataset.
 
 ## Protocolo de uso
 
