@@ -8,6 +8,7 @@ import json
 import math
 import statistics
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +58,62 @@ def percentile(values: list[float], quantile: float) -> float | None:
     if lower == upper:
         return ordered[lower]
     return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
+
+
+def pricing_values(manifest: dict[str, Any]) -> dict[str, Decimal]:
+    pricing = manifest.get("pricing")
+    if not isinstance(pricing, dict):
+        raise ValueError("Run manifest must include pricing")
+    result: dict[str, Decimal] = {}
+    for key in ("input_usd", "cached_read_usd", "cache_write_usd", "output_usd"):
+        value = pricing.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+            raise ValueError(f"Run manifest pricing.{key} must be a non-negative decimal")
+        try:
+            parsed = Decimal(str(value))
+        except InvalidOperation as exc:
+            raise ValueError(f"Run manifest pricing.{key} must be a non-negative decimal") from exc
+        if not parsed.is_finite() or parsed < 0:
+            raise ValueError(f"Run manifest pricing.{key} must be a non-negative decimal")
+        result[key] = parsed
+    return result
+
+
+def recompute_record_cost(
+    record: dict[str, Any], prices: dict[str, Decimal]
+) -> tuple[Decimal | None, str]:
+    fields = (
+        "input_tokens",
+        "regular_input_tokens",
+        "cached_tokens",
+        "cache_write_tokens",
+        "output_tokens",
+        "total_tokens",
+    )
+    values: dict[str, int] = {}
+    for field in fields:
+        value = record.get(field)
+        if value is None:
+            return None, "incomplete"
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            return None, "invalid"
+        values[field] = value
+    if values["total_tokens"] != values["input_tokens"] + values["output_tokens"]:
+        return None, "invalid"
+    if (
+        values["regular_input_tokens"]
+        + values["cached_tokens"]
+        + values["cache_write_tokens"]
+        != values["input_tokens"]
+    ):
+        return None, "invalid"
+    cost = (
+        Decimal(values["regular_input_tokens"]) * prices["input_usd"]
+        + Decimal(values["cached_tokens"]) * prices["cached_read_usd"]
+        + Decimal(values["cache_write_tokens"]) * prices["cache_write_usd"]
+        + Decimal(values["output_tokens"]) * prices["output_usd"]
+    ) / Decimal(1_000_000)
+    return cost, "complete"
 
 
 def classification_metrics(
@@ -163,18 +220,36 @@ def compute_metrics(records: list[dict[str, Any]], manifest: dict[str, Any]) -> 
     eventually_after_retry = sum(1 for record in valid if int(record.get("attempt_count", 0)) > 1)
     retry_exhausted = sum(1 for record in records if record.get("retry_exhausted") is True)
 
-    token_fields = ("input_tokens", "cached_input_tokens", "output_tokens", "total_tokens")
+    token_fields = (
+        "input_tokens",
+        "regular_input_tokens",
+        "cached_tokens",
+        "cache_write_tokens",
+        "output_tokens",
+        "total_tokens",
+    )
     token_summary: dict[str, Any] = {}
     for field in token_fields:
         known = [int(record[field]) for record in records if isinstance(record.get(field), int)]
         token_summary[field] = sum(known)
         token_summary[f"{field}_missing_records"] = attempted_cases - len(known)
 
-    known_costs = [float(record["estimated_or_actual_cost_usd"]) for record in records if isinstance(record.get("estimated_or_actual_cost_usd"), (int, float))]
+    prices = pricing_values(manifest)
+    recomputed = [recompute_record_cost(record, prices) for record in records]
+    known_costs = [cost for cost, status in recomputed if status == "complete" and cost is not None]
     cost_complete = len(known_costs) == attempted_cases
-    known_valid_costs = [float(record["estimated_or_actual_cost_usd"]) for record in valid if isinstance(record.get("estimated_or_actual_cost_usd"), (int, float))]
+    valid_ids = {id(record) for record in valid}
+    known_valid_costs = [
+        cost
+        for record, (cost, status) in zip(records, recomputed)
+        if id(record) in valid_ids and status == "complete" and cost is not None
+    ]
     valid_cost_complete = len(known_valid_costs) == len(valid)
-    known_cost = sum(known_costs)
+    known_cost = sum(known_costs, Decimal("0"))
+    accounting_status_counts = {
+        status: sum(1 for _, observed_status in recomputed if observed_status == status)
+        for status in ("complete", "incomplete", "invalid")
+    }
 
     return {
         "generated_at": utc_now(),
@@ -230,12 +305,14 @@ def compute_metrics(records: list[dict[str, Any]], manifest: dict[str, Any]) -> 
         },
         "tokens_and_cost": {
             **token_summary,
-            "known_cost_usd": known_cost,
+            "cost_source": "offline recomputation from raw token counters and manifest pricing",
+            "usage_accounting_status_counts": accounting_status_counts,
+            "known_cost_usd": float(known_cost),
             "cost_complete": cost_complete,
             "records_missing_cost": attempted_cases - len(known_costs),
-            "total_cost_usd": known_cost if cost_complete else None,
-            "average_cost_per_attempted_ticket_usd": safe_ratio(known_cost, attempted_cases) if cost_complete else None,
-            "average_cost_per_valid_classification_usd": safe_ratio(sum(known_valid_costs), len(valid)) if valid_cost_complete else None,
+            "total_cost_usd": float(known_cost) if cost_complete else None,
+            "average_cost_per_attempted_ticket_usd": float(known_cost / attempted_cases) if cost_complete and attempted_cases else None,
+            "average_cost_per_valid_classification_usd": float(sum(known_valid_costs, Decimal("0")) / len(valid)) if valid_cost_complete and valid else None,
         },
     }
 
@@ -250,7 +327,7 @@ def score_files(predictions_path: Path, manifest_path: Path, output_dir: Path) -
         "pricing": manifest.get("pricing"),
         "preflight": manifest.get("preflight"),
         "observed": metrics["tokens_and_cost"],
-        "note": "Observed cost is complete only when every attempted case contains usage-derived cost.",
+        "note": "Observed cost is recomputed offline and is complete only when every attempted case has internally consistent regular, cached-read, cache-write, output and total token counters.",
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     write_json(output_dir / "metrics.json", metrics)

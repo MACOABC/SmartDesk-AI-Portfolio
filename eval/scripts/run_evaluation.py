@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Callable
@@ -55,8 +55,10 @@ class TransientTransportFailure(Exception):
 class Pricing:
     input_per_million_usd: Decimal
     cached_input_per_million_usd: Decimal
+    cache_write_per_million_usd: Decimal
     output_per_million_usd: Decimal
     source: str
+    verification_date: str
 
 
 @dataclass(frozen=True)
@@ -286,32 +288,102 @@ def validate_classification_response(response: dict[str, Any], contract: Contrac
     }
 
 
-def extract_usage(response: dict[str, Any] | None) -> dict[str, int] | None:
+def empty_usage(status: str) -> dict[str, Any]:
+    return {
+        "usage_accounting_status": status,
+        "input_tokens": None,
+        "regular_input_tokens": None,
+        "cached_tokens": None,
+        "cache_write_tokens": None,
+        "output_tokens": None,
+        "total_tokens": None,
+    }
+
+
+def extract_usage(response: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(response, dict) or not isinstance(response.get("usage"), dict):
-        return None
+        return empty_usage("not_reported")
     usage = response["usage"]
     values = (usage.get("input_tokens"), usage.get("output_tokens"), usage.get("total_tokens"))
     if any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in values):
-        return None
+        return empty_usage("invalid")
+    if usage["total_tokens"] != usage["input_tokens"] + usage["output_tokens"]:
+        result = empty_usage("invalid")
+        result.update(
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+        )
+        return result
     details = usage.get("input_tokens_details")
-    cached = details.get("cached_tokens", 0) if isinstance(details, dict) else 0
+    if not isinstance(details, dict) or "cached_tokens" not in details:
+        result = empty_usage("cached_tokens_not_reported")
+        result.update(
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+        )
+        return result
+    cached = details["cached_tokens"]
     if isinstance(cached, bool) or not isinstance(cached, int) or cached < 0 or cached > usage["input_tokens"]:
-        return None
+        result = empty_usage("invalid")
+        result.update(
+            input_tokens=usage["input_tokens"],
+            cached_tokens=cached,
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+        )
+        return result
+    cache_write = details.get("cache_write_tokens")
+    if "cache_write_tokens" not in details:
+        return {
+            "usage_accounting_status": "cache_write_tokens_not_reported",
+            "input_tokens": usage["input_tokens"],
+            "regular_input_tokens": None,
+            "cached_tokens": cached,
+            "cache_write_tokens": None,
+            "output_tokens": usage["output_tokens"],
+            "total_tokens": usage["total_tokens"],
+        }
+    if isinstance(cache_write, bool) or not isinstance(cache_write, int) or cache_write < 0:
+        result = empty_usage("invalid")
+        result.update(
+            input_tokens=usage["input_tokens"],
+            cached_tokens=cached,
+            cache_write_tokens=cache_write,
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+        )
+        return result
+    regular = usage["input_tokens"] - cached - cache_write
+    if regular < 0:
+        result = empty_usage("invalid")
+        result.update(
+            input_tokens=usage["input_tokens"],
+            cached_tokens=cached,
+            cache_write_tokens=cache_write,
+            output_tokens=usage["output_tokens"],
+            total_tokens=usage["total_tokens"],
+        )
+        return result
     return {
+        "usage_accounting_status": "complete",
         "input_tokens": usage["input_tokens"],
-        "cached_input_tokens": cached,
+        "regular_input_tokens": regular,
+        "cached_tokens": cached,
+        "cache_write_tokens": cache_write,
         "output_tokens": usage["output_tokens"],
         "total_tokens": usage["total_tokens"],
     }
 
 
-def usage_cost(usage: dict[str, int] | None, pricing: Pricing) -> Decimal | None:
-    if usage is None:
+def usage_cost(usage: dict[str, Any], pricing: Pricing) -> Decimal | None:
+    if usage.get("usage_accounting_status") != "complete":
         return None
-    uncached = usage["input_tokens"] - usage["cached_input_tokens"]
     return (
-        Decimal(uncached) * pricing.input_per_million_usd
-        + Decimal(usage["cached_input_tokens"]) * pricing.cached_input_per_million_usd
+        Decimal(usage["regular_input_tokens"]) * pricing.input_per_million_usd
+        + Decimal(usage["cached_tokens"]) * pricing.cached_input_per_million_usd
+        + Decimal(usage["cache_write_tokens"]) * pricing.cache_write_per_million_usd
         + Decimal(usage["output_tokens"]) * pricing.output_per_million_usd
     ) / Decimal(1_000_000)
 
@@ -320,8 +392,9 @@ def request_upper_bound(body: dict[str, Any], pricing: Pricing) -> tuple[int, De
     # One token cannot encode less than one byte; adding 512 tokens covers
     # transport/message framing absent from the serialized request body.
     input_token_upper_bound = len(canonical_json(body).encode("utf-8")) + 512
+    conservative_input_price = max(pricing.input_per_million_usd, pricing.cache_write_per_million_usd)
     cost = (
-        Decimal(input_token_upper_bound) * pricing.input_per_million_usd
+        Decimal(input_token_upper_bound) * conservative_input_price
         + Decimal(MAX_OUTPUT_TOKENS) * pricing.output_per_million_usd
     ) / Decimal(1_000_000)
     return input_token_upper_bound, cost
@@ -344,7 +417,7 @@ def build_preflight(cases: list[dict[str, Any]], contract: Contract, pricing: Pr
             f"Conservative preflight ${estimated_max_cost} exceeds max_cost_usd ${limits.max_cost_usd}"
         )
     return {
-        "method": "UTF-8 request bytes + 512 framing tokens, 450 output tokens, uncached input price, bounded by max_api_calls",
+        "method": "UTF-8 request bytes + 512 framing tokens, 450 output tokens, maximum of regular-input/cache-write price, bounded by max_api_calls",
         "selected_cases": len(selected),
         "maximum_possible_attempts": len(selected) * MAX_ATTEMPTS,
         "calls_in_cost_upper_bound": len(used_for_estimate),
@@ -470,10 +543,13 @@ def evaluate_case(
                 "error_code": attempt_error,
                 "response_id": response_id,
                 "returned_model": returned_model,
-                "input_tokens": usage["input_tokens"] if usage else None,
-                "cached_input_tokens": usage["cached_input_tokens"] if usage else None,
-                "output_tokens": usage["output_tokens"] if usage else None,
-                "total_tokens": usage["total_tokens"] if usage else None,
+                "usage_accounting_status": usage["usage_accounting_status"],
+                "input_tokens": usage["input_tokens"],
+                "regular_input_tokens": usage["regular_input_tokens"],
+                "cached_tokens": usage["cached_tokens"],
+                "cache_write_tokens": usage["cache_write_tokens"],
+                "output_tokens": usage["output_tokens"],
+                "total_tokens": usage["total_tokens"],
                 "usage_cost_usd": float(cost) if cost is not None else None,
             }
         )
@@ -481,17 +557,27 @@ def evaluate_case(
             break
 
     case_end_ns = clock_ns()
-    known_usages = [
-        {
-            "input_tokens": attempt["input_tokens"],
-            "cached_input_tokens": attempt["cached_input_tokens"],
-            "output_tokens": attempt["output_tokens"],
-            "total_tokens": attempt["total_tokens"],
-        }
-        for attempt in attempts
-        if attempt["input_tokens"] is not None
-    ]
-    usage_complete = len(known_usages) == len(attempts) and bool(attempts)
+    usage_complete = bool(attempts) and all(
+        attempt["usage_accounting_status"] == "complete" for attempt in attempts
+    )
+    usage_statuses = sorted({attempt["usage_accounting_status"] for attempt in attempts})
+    aggregate_usage_status = (
+        "complete"
+        if usage_complete
+        else "not_available"
+        if not usage_statuses
+        else usage_statuses[0]
+        if len(usage_statuses) == 1
+        else "mixed_incomplete"
+    )
+    def summed_attempt_field(field: str) -> int | None:
+        values = [
+            attempt[field]
+            for attempt in attempts
+            if isinstance(attempt.get(field), int) and not isinstance(attempt.get(field), bool)
+        ]
+        return sum(values) if values else None
+
     known_cost = sum(
         (Decimal(str(attempt["usage_cost_usd"])) for attempt in attempts if attempt["usage_cost_usd"] is not None),
         Decimal("0"),
@@ -525,10 +611,14 @@ def evaluate_case(
         "timestamp_finished": utc_now(),
         "latency_ns": case_end_ns - case_start_ns,
         "latency_ms": (case_end_ns - case_start_ns) / 1_000_000,
-        "input_tokens": sum(usage["input_tokens"] for usage in known_usages) if known_usages else None,
-        "cached_input_tokens": sum(usage["cached_input_tokens"] for usage in known_usages) if known_usages else None,
-        "output_tokens": sum(usage["output_tokens"] for usage in known_usages) if known_usages else None,
-        "total_tokens": sum(usage["total_tokens"] for usage in known_usages) if known_usages else None,
+        "input_tokens": summed_attempt_field("input_tokens"),
+        "regular_input_tokens": summed_attempt_field("regular_input_tokens") if usage_complete else None,
+        "cached_tokens": summed_attempt_field("cached_tokens"),
+        "cache_write_tokens": summed_attempt_field("cache_write_tokens") if usage_complete else None,
+        "output_tokens": summed_attempt_field("output_tokens"),
+        "total_tokens": summed_attempt_field("total_tokens"),
+        "usage_accounting_status": aggregate_usage_status,
+        "attempt_usage_accounting_statuses": usage_statuses,
         "token_usage_complete": usage_complete,
         "known_cost_usd": float(known_cost),
         "estimated_or_actual_cost_usd": float(known_cost) if usage_complete else None,
@@ -598,9 +688,13 @@ def execute_run(
                 "latency_ns": None,
                 "latency_ms": None,
                 "input_tokens": None,
-                "cached_input_tokens": None,
+                "regular_input_tokens": None,
+                "cached_tokens": None,
+                "cache_write_tokens": None,
                 "output_tokens": None,
                 "total_tokens": None,
+                "usage_accounting_status": "not_available",
+                "attempt_usage_accounting_statuses": [],
                 "token_usage_complete": False,
                 "known_cost_usd": 0.0,
                 "estimated_or_actual_cost_usd": None,
@@ -691,8 +785,10 @@ def main() -> int:
     parser.add_argument("--max-cost-usd", default=os.getenv("EVAL_MAX_USD"))
     parser.add_argument("--input-price-per-million-usd", default=os.getenv("EVAL_INPUT_PRICE_PER_1M_USD"))
     parser.add_argument("--cached-input-price-per-million-usd", default=os.getenv("EVAL_CACHED_INPUT_PRICE_PER_1M_USD"))
+    parser.add_argument("--cache-write-price-per-million-usd", default=os.getenv("EVAL_CACHE_WRITE_PRICE_PER_1M_USD"))
     parser.add_argument("--output-price-per-million-usd", default=os.getenv("EVAL_OUTPUT_PRICE_PER_1M_USD"))
     parser.add_argument("--pricing-source", default=os.getenv("EVAL_PRICING_SOURCE"))
+    parser.add_argument("--pricing-verification-date", default=os.getenv("EVAL_PRICING_VERIFICATION_DATE"))
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--allow-frozen-test", action="store_true")
@@ -713,11 +809,18 @@ def main() -> int:
         )
         if not args.pricing_source:
             raise ValueError("pricing_source is required")
+        if not args.pricing_verification_date:
+            raise ValueError("pricing_verification_date is required")
+        verification_date = date.fromisoformat(args.pricing_verification_date)
+        if verification_date.isoformat() != args.pricing_verification_date:
+            raise ValueError("pricing_verification_date must use YYYY-MM-DD")
         pricing = Pricing(
             input_per_million_usd=parse_decimal(args.input_price_per_million_usd, "input price"),
             cached_input_per_million_usd=parse_decimal(args.cached_input_price_per_million_usd, "cached input price"),
+            cache_write_per_million_usd=parse_decimal(args.cache_write_price_per_million_usd, "cache write price"),
             output_per_million_usd=parse_decimal(args.output_price_per_million_usd, "output price"),
             source=args.pricing_source,
+            verification_date=args.pricing_verification_date,
         )
         if pricing.cached_input_per_million_usd > pricing.input_per_million_usd:
             raise ValueError("cached input price cannot exceed regular input price")
@@ -789,12 +892,14 @@ def main() -> int:
         },
         "pricing": {
             "source_or_version": pricing.source,
+            "verification_date": pricing.verification_date,
             "currency": "USD",
             "unit": "per 1,000,000 tokens",
             "input_usd": float(pricing.input_per_million_usd),
-            "cached_input_usd": float(pricing.cached_input_per_million_usd),
+            "cached_read_usd": float(pricing.cached_input_per_million_usd),
+            "cache_write_usd": float(pricing.cache_write_per_million_usd),
             "output_usd": float(pricing.output_per_million_usd),
-            "formula": "((input-cached)*input_price + cached*cached_price + output*output_price) / 1,000,000",
+            "formula": "(regular_input*input_price + cached_read*cached_read_price + cache_write*cache_write_price + output*output_price) / 1,000,000; regular_input=input-cached_read-cache_write",
         },
         "guardrails": {
             "max_cases": limits.max_cases,

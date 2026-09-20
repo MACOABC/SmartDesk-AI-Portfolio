@@ -52,7 +52,9 @@ def prediction(
         "retry_exhausted": retry_exhausted,
         "latency_ms": latency,
         "input_tokens": 100,
-        "cached_input_tokens": 0,
+        "regular_input_tokens": 100,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
         "output_tokens": 20,
         "total_tokens": 120,
         "estimated_or_actual_cost_usd": 0.001,
@@ -65,7 +67,16 @@ class ScoringTests(unittest.TestCase):
             "run_id": "score-test",
             "contract": {"categories": CATEGORIES, "priorities": PRIORITIES},
             "execution": {"selected_case_count": 5},
-            "pricing": {"source_or_version": "unit-test"},
+            "pricing": {
+                "source_or_version": "unit-test",
+                "verification_date": "2026-09-20",
+                "currency": "USD",
+                "unit": "per 1,000,000 tokens",
+                "input_usd": 1.0,
+                "cached_read_usd": 0.5,
+                "cache_write_usd": 1.25,
+                "output_usd": 2.0,
+            },
             "preflight": {"estimated_max_cost_usd": 1.0},
         }
         self.records = [
@@ -107,7 +118,11 @@ class ScoringTests(unittest.TestCase):
         self.assertAlmostEqual(metrics["latency_ms"]["p95"], 38.5)
         self.assertEqual(metrics["tokens_and_cost"]["total_tokens"], 480)
         self.assertTrue(metrics["tokens_and_cost"]["cost_complete"])
-        self.assertEqual(metrics["tokens_and_cost"]["total_cost_usd"], 0.004)
+        self.assertEqual(metrics["tokens_and_cost"]["total_cost_usd"], 0.00056)
+        self.assertEqual(
+            metrics["tokens_and_cost"]["cost_source"],
+            "offline recomputation from raw token counters and manifest pricing",
+        )
 
     def test_offline_scoring_writes_artifacts_without_key_or_network(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -129,13 +144,27 @@ class ScoringTests(unittest.TestCase):
             self.assertTrue((directory / "metrics.json").exists())
             self.assertTrue((directory / "cost.json").exists())
 
-    def test_missing_cost_is_not_invented(self) -> None:
+    def test_stored_cost_is_not_required_for_offline_recomputation(self) -> None:
         records = [dict(self.records[0]), dict(self.records[1])]
         records[1]["estimated_or_actual_cost_usd"] = None
         metrics = scorer.compute_metrics(records, {**self.manifest, "execution": {"selected_case_count": 2}})
+        self.assertTrue(metrics["tokens_and_cost"]["cost_complete"])
+        self.assertEqual(metrics["tokens_and_cost"]["total_cost_usd"], 0.00028)
+
+    def test_absent_cache_write_counter_keeps_offline_cost_incomplete(self) -> None:
+        records = [dict(self.records[0]), dict(self.records[1])]
+        records[1]["cache_write_tokens"] = None
+        metrics = scorer.compute_metrics(records, {**self.manifest, "execution": {"selected_case_count": 2}})
         self.assertFalse(metrics["tokens_and_cost"]["cost_complete"])
         self.assertIsNone(metrics["tokens_and_cost"]["total_cost_usd"])
-        self.assertEqual(metrics["tokens_and_cost"]["known_cost_usd"], 0.001)
+        self.assertEqual(metrics["tokens_and_cost"]["known_cost_usd"], 0.00014)
+        self.assertEqual(metrics["tokens_and_cost"]["usage_accounting_status_counts"]["incomplete"], 1)
+
+    def test_inconsistent_accounting_is_not_priced(self) -> None:
+        records = [dict(self.records[0], regular_input_tokens=90, cached_tokens=20)]
+        metrics = scorer.compute_metrics(records, {**self.manifest, "execution": {"selected_case_count": 1}})
+        self.assertFalse(metrics["tokens_and_cost"]["cost_complete"])
+        self.assertEqual(metrics["tokens_and_cost"]["usage_accounting_status_counts"]["invalid"], 1)
 
     def test_scorer_rejects_cross_run_or_duplicate_evidence(self) -> None:
         cross_run = [dict(self.records[0], run_id="other-run")]

@@ -31,7 +31,7 @@ Current subphase = Phase 7B complete; live smoke and formal evaluation pending
 - **SmartDesk AI V1: COMPLETA.**
 - **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
 - **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
-- **Phase 7B — harness, scoring offline y protocolo reproducible: IMPLEMENTADA; no hubo llamadas API ni ejecución del test.**
+- **Phase 7B — harness, scoring offline, contabilidad de caché y protocolo reproducible: IMPLEMENTADA; no hubo llamadas API ni ejecución del test.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -321,9 +321,13 @@ Phase 7B implementó localmente, desde el commit
   guardrails por casos, llamadas y coste;
 - scoring completamente offline de calidad, HITL, reliability, latencia,
   tokens y coste, con denominadores auditables;
+- contabilidad de coste que distingue input ordinario, lectura de caché,
+  escritura de caché y output; un `cache_write_tokens` ausente queda explícito
+  y no se monetiza como cero;
 - documentación en `eval/README.md` y `docs/PHASE_7.md`.
 
-La suite local terminó con 27/27 tests PASS y el CLI de preflight fue probado
+La suite local, incluida la corrección de accounting de caché, terminó con
+35/35 tests PASS y el CLI de preflight fue probado
 sobre cinco casos `dev` con valores monetarios marcados exclusivamente para
 validación. No se proporcionó API key, no se creó un run real, no se llamó a
 OpenAI y no se ejecutó `test.jsonl`. Su SHA-256 permaneció intacto.

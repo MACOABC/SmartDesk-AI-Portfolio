@@ -37,7 +37,7 @@ def api_response(
     confidence: float = 0.9,
     review_reason: str | None = None,
     text_override: str | None = None,
-    usage: tuple[int, int, int, int] = (100, 10, 20, 120),
+    usage: tuple[int, int, int, int, int] = (100, 10, 5, 20, 120),
 ) -> dict[str, object]:
     classification = {
         "category": category,
@@ -48,7 +48,7 @@ def api_response(
         "review_reason": review_reason if confidence < runner.HITL_THRESHOLD else None,
     }
     text = text_override if text_override is not None else json.dumps(classification)
-    input_tokens, cached_tokens, output_tokens, total_tokens = usage
+    input_tokens, cached_tokens, cache_write_tokens, output_tokens, total_tokens = usage
     return {
         "id": "resp_test",
         "model": "gpt-5.6-luna-2026-09-01",
@@ -57,7 +57,10 @@ def api_response(
         "output": [{"type": "message", "content": [{"type": "output_text", "text": text}]}],
         "usage": {
             "input_tokens": input_tokens,
-            "input_tokens_details": {"cached_tokens": cached_tokens},
+            "input_tokens_details": {
+                "cached_tokens": cached_tokens,
+                "cache_write_tokens": cache_write_tokens,
+            },
             "output_tokens": output_tokens,
             "total_tokens": total_tokens,
         },
@@ -89,7 +92,9 @@ class RunnerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.contract = runner.load_contract()
-        cls.pricing = runner.Pricing(Decimal("1"), Decimal("0.5"), Decimal("2"), "unit-test")
+        cls.pricing = runner.Pricing(
+            Decimal("1"), Decimal("0.5"), Decimal("1.25"), Decimal("2"), "unit-test", "2026-09-20"
+        )
 
     def budget(self, calls: int = 10, usd: str = "10") -> runner.CallBudget:
         return runner.CallBudget(runner.Limits(max_cases=10, max_api_calls=calls, max_cost_usd=Decimal(usd)))
@@ -135,11 +140,59 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(record["latency_ms"], 21.0)
         self.assertEqual(attempts[0]["latency_ms"], 10.0)
         self.assertEqual(record["input_tokens"], 100)
-        self.assertEqual(record["cached_input_tokens"], 10)
+        self.assertEqual(record["regular_input_tokens"], 85)
+        self.assertEqual(record["cached_tokens"], 10)
+        self.assertEqual(record["cache_write_tokens"], 5)
         self.assertEqual(record["total_tokens"], 120)
         self.assertTrue(record["cost_complete"])
-        self.assertAlmostEqual(record["estimated_or_actual_cost_usd"], 0.000135)
+        self.assertAlmostEqual(record["estimated_or_actual_cost_usd"], 0.00013625)
         self.assertEqual(sender.calls[0]["timeout"], 60)
+
+    def test_usage_cost_with_only_uncached_input(self) -> None:
+        usage = runner.extract_usage(api_response(usage=(100, 0, 0, 0, 100)))
+        self.assertEqual(usage["regular_input_tokens"], 100)
+        self.assertEqual(runner.usage_cost(usage, self.pricing), Decimal("0.0001"))
+
+    def test_usage_cost_with_cached_read(self) -> None:
+        usage = runner.extract_usage(api_response(usage=(100, 40, 0, 0, 100)))
+        self.assertEqual(usage["regular_input_tokens"], 60)
+        self.assertEqual(runner.usage_cost(usage, self.pricing), Decimal("0.00008"))
+
+    def test_usage_cost_with_cache_write(self) -> None:
+        usage = runner.extract_usage(api_response(usage=(100, 0, 30, 0, 100)))
+        self.assertEqual(usage["regular_input_tokens"], 70)
+        self.assertEqual(runner.usage_cost(usage, self.pricing), Decimal("0.0001075"))
+
+    def test_usage_cost_with_all_input_classes_and_output(self) -> None:
+        usage = runner.extract_usage(api_response(usage=(100, 20, 30, 20, 120)))
+        self.assertEqual(usage["regular_input_tokens"], 50)
+        self.assertEqual(runner.usage_cost(usage, self.pricing), Decimal("0.0001375"))
+
+    def test_inconsistent_usage_is_invalid_and_has_no_cost(self) -> None:
+        usage = runner.extract_usage(api_response(usage=(100, 80, 30, 20, 120)))
+        self.assertEqual(usage["usage_accounting_status"], "invalid")
+        self.assertIsNone(usage["regular_input_tokens"])
+        self.assertIsNone(runner.usage_cost(usage, self.pricing))
+
+    def test_absent_cache_write_is_recorded_as_not_reported(self) -> None:
+        response = api_response()
+        del response["usage"]["input_tokens_details"]["cache_write_tokens"]  # type: ignore[index]
+        usage = runner.extract_usage(response)
+        self.assertEqual(usage["usage_accounting_status"], "cache_write_tokens_not_reported")
+        self.assertIsNone(usage["cache_write_tokens"])
+        self.assertIsNone(runner.usage_cost(usage, self.pricing))
+        record, attempts = runner.evaluate_case(
+            sample_case(),
+            "run",
+            self.contract,
+            self.pricing,
+            self.budget(),
+            FakeSender(runner.HttpResult(200, response)),
+        )
+        self.assertEqual(record["usage_accounting_status"], "cache_write_tokens_not_reported")
+        self.assertIsNone(record["cache_write_tokens"])
+        self.assertIsNone(record["estimated_or_actual_cost_usd"])
+        self.assertEqual(attempts[0]["usage_accounting_status"], "cache_write_tokens_not_reported")
 
     def test_hitl_rule_is_reproduced_exactly(self) -> None:
         case = sample_case()
@@ -273,7 +326,16 @@ class RunnerTests(unittest.TestCase):
             "timestamp_started": runner.utc_now(),
             "timestamp_finished": None,
             "contract": {"categories": self.contract.categories, "priorities": self.contract.priorities},
-            "pricing": {"source_or_version": "unit-test"},
+            "pricing": {
+                "source_or_version": "unit-test",
+                "verification_date": "2026-09-20",
+                "currency": "USD",
+                "unit": "per 1,000,000 tokens",
+                "input_usd": 1.0,
+                "cached_read_usd": 0.5,
+                "cache_write_usd": 1.25,
+                "output_usd": 2.0,
+            },
             "preflight": {},
             "execution": {"selected_case_count": 2},
         }

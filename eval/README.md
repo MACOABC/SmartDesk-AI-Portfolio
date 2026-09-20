@@ -69,6 +69,14 @@ por defecto que puedan quedar obsoletos. Los valores deben verificarse en la
 fuente oficial de precios de OpenAI inmediatamente antes de una corrida y la
 referencia usada debe quedar en `--pricing-source`.
 
+Referencia verificada el `2026-09-20` para `gpt-5.6-luna`, procesamiento
+Standard, por 1 000 000 de tokens: input ordinario USD 0.20, lectura de caché
+USD 0.02, escritura de caché USD 0.25 y output USD 1.20. La fuente autoritativa
+es la [página del modelo](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
+y la [tabla de precios](https://developers.openai.com/api/docs/pricing). Estos
+valores son referencia documentada, no defaults del CLI; deben volver a
+verificarse antes de cada run.
+
 El preflight no necesita API key ni crea un directorio de run:
 
 ```bash
@@ -79,17 +87,21 @@ python eval/scripts/run_evaluation.py \
   --max-cost-usd MAX_USD_APROBADO \
   --input-price-per-million-usd PRECIO_INPUT_VIGENTE \
   --cached-input-price-per-million-usd PRECIO_CACHED_INPUT_VIGENTE \
+  --cache-write-price-per-million-usd PRECIO_CACHE_WRITE_VIGENTE \
   --output-price-per-million-usd PRECIO_OUTPUT_VIGENTE \
-  --pricing-source FUENTE_Y_FECHA_DE_PRECIOS \
+  --pricing-source FUENTE_O_VERSION_DE_PRECIOS \
+  --pricing-verification-date YYYY-MM-DD \
   --preflight-only
 ```
 
 También se aceptan `EVAL_MAX_CASES`, `EVAL_MAX_API_CALLS`, `EVAL_MAX_USD`,
 `EVAL_INPUT_PRICE_PER_1M_USD`, `EVAL_CACHED_INPUT_PRICE_PER_1M_USD`,
-`EVAL_OUTPUT_PRICE_PER_1M_USD` y `EVAL_PRICING_SOURCE`.
+`EVAL_CACHE_WRITE_PRICE_PER_1M_USD`, `EVAL_OUTPUT_PRICE_PER_1M_USD`,
+`EVAL_PRICING_SOURCE` y `EVAL_PRICING_VERIFICATION_DATE`.
 
 El límite conservador de input es el tamaño UTF-8 del request completo más 512
-tokens de framing. El coste máximo pre-run usa ese input como no cacheado,
+tokens de framing. El coste máximo pre-run usa para todo ese input el mayor
+precio entre input ordinario y escritura de caché,
 `max_output_tokens=450`, hasta tres intentos por caso y nunca más de
 `max_api_calls`. El run se rechaza si esa cota supera `max_cost_usd`. Antes de
 cada request también se reserva su cota; alcanzar el límite detiene el run de
@@ -109,8 +121,10 @@ python eval/scripts/run_evaluation.py \
   --max-cost-usd MAX_USD_APROBADO \
   --input-price-per-million-usd PRECIO_INPUT_VIGENTE \
   --cached-input-price-per-million-usd PRECIO_CACHED_INPUT_VIGENTE \
+  --cache-write-price-per-million-usd PRECIO_CACHE_WRITE_VIGENTE \
   --output-price-per-million-usd PRECIO_OUTPUT_VIGENTE \
-  --pricing-source FUENTE_Y_FECHA_DE_PRECIOS
+  --pricing-source FUENTE_O_VERSION_DE_PRECIOS \
+  --pricing-verification-date YYYY-MM-DD
 ```
 
 El request consume directamente `prompts/ticket-classification/v2.md` y
@@ -151,16 +165,25 @@ antes del primer intento hasta la validación o error final. Incluye todos los
 intentos y los backoffs de 2 s/4 s. `attempts.jsonl` conserva además latencia
 por request.
 
-El coste observado aplica:
+Responses API reporta escritura de caché en
+`usage.input_tokens_details.cache_write_tokens`. El coste observado aplica:
 
 ```text
-((input_tokens - cached_input_tokens) × input_price
- + cached_input_tokens × cached_input_price
+regular_input_tokens = input_tokens - cached_tokens - cache_write_tokens
+
+(regular_input_tokens × input_price
+ + cached_tokens × cached_read_price
+ + cache_write_tokens × cache_write_price
  + output_tokens × output_price) / 1_000_000
 ```
 
-Si falta usage para cualquier intento, el coste total y los promedios que lo
-requieren quedan `null`; se informa el coste conocido sin inventar el faltante.
+Los contadores deben ser enteros no negativos; las tres clases de input deben
+sumar `input_tokens` y `total_tokens` debe ser input más output. Si falta
+`cache_write_tokens`, se registra explícitamente
+`cache_write_tokens_not_reported`, el valor queda `null` y no se interpreta
+como cero. Si falta usage o la contabilidad es inconsistente para cualquier
+intento, el coste total y los promedios que lo requieren quedan `null`; se
+informa solo el coste conocido sin inventar el faltante.
 
 ## Scoring completamente offline
 
@@ -173,7 +196,9 @@ python eval/scripts/score_evaluation.py \
   --manifest eval/runs/RUN_ID/manifest.json
 ```
 
-El scorer calcula accuracy, precision, recall y F1 por clase, macro-F1 y matriz
+El scorer recalcula el coste desde los contadores crudos y los cuatro precios
+del manifest; no confía en el coste previamente escrito en la predicción y no
+usa red. También calcula accuracy, precision, recall y F1 por clase, macro-F1 y matriz
 de confusión para categoría; accuracy, métricas por prioridad y su matriz;
 exact match conjunto; review rate, auto coverage, accuracy de auto-resueltos y
 del subconjunto HITL, y errores que escaparon. También reporta fallos,

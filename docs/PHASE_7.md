@@ -47,12 +47,17 @@ scoring offline.
   permanecen exclusivamente en el registro de evaluación.
 - La latencia por caso incluye requests, validación y backoff. Las latencias de
   intento se conservan aparte.
-- Los precios no tienen defaults. Deben suministrarse con fuente/fecha al
-  momento del run para evitar cifras históricas silenciosas.
+- Los cuatro precios (input ordinario, lectura de caché, escritura de caché y
+  output) no tienen defaults. Deben suministrarse con fuente y fecha de
+  verificación al momento del run para evitar cifras históricas silenciosas.
 - El preflight usa una cota conservadora basada en bytes UTF-8, framing,
   máximo de output y posibles retries.
-- El coste observado usa usage real. Si falta usage, las métricas que exigen
-  coste completo permanecen `null`.
+- El coste observado separa las tres clases mutuamente excluyentes de input
+  reportadas por Responses API. Si `cache_write_tokens` no viene reportado, se
+  conserva como `null` y las métricas que exigen coste completo permanecen
+  `null`; nunca se convierte silenciosamente en cero.
+- El scorer recalcula el coste completamente offline desde contadores crudos y
+  pricing del manifest, y rechaza contabilidad negativa o inconsistente.
 - Los resultados se escriben después de cada intento/caso. Un run parcial
   conserva evidencia y no se sobrescribe.
 - El test requiere un flag adicional explícito y siempre conserva validación
@@ -62,8 +67,10 @@ scoring offline.
 
 La suite cubre happy path, contrato estructurado, JSON/enum inválidos, error
 permanente, red/timeout, retry exitoso, agotamiento, backoff, HITL, latencia,
-tokens, coste, límites, aislamiento de ground truth, run parcial, matrices,
-denominadores, exact match y scoring sin red/API key.
+tokens ordinarios, lectura/escritura de caché, mezcla de las tres clases,
+output, ausencia e inconsistencia de contadores, coste, límites, aislamiento de
+ground truth, run parcial, matrices, denominadores, exact match y recomputación
+de scoring sin red/API key.
 
 No se generó evidencia de accuracy, latencia de proveedor, coste real ni
 calibración. Esas mediciones pertenecen a una corrida posterior autorizada.
