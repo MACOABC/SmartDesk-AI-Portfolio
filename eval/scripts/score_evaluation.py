@@ -120,26 +120,42 @@ def compute_metrics(records: list[dict[str, Any]], manifest: dict[str, Any]) -> 
     if not categories or not priorities:
         raise ValueError("Run manifest must include contract.categories and contract.priorities")
 
+    run_id = manifest.get("run_id")
+    case_ids = [record.get("case_id") for record in records]
+    if len(set(case_ids)) != len(case_ids) or any(
+        not isinstance(case_id, str) or not case_id for case_id in case_ids
+    ):
+        raise ValueError("Prediction case_id values must be unique non-empty strings")
+    if any(record.get("run_id") != run_id for record in records):
+        raise ValueError("Every prediction run_id must match the run manifest")
+
     valid = [record for record in records if record.get("status") == "succeeded"]
     errors = [record for record in records if record.get("status") != "succeeded"]
     for record in valid:
         if record.get("predicted_category") not in categories or record.get("predicted_priority") not in priorities:
             raise ValueError(f"Successful record {record.get('case_id')} has an invalid predicted label")
+        if not isinstance(record.get("hitl_required"), bool):
+            raise ValueError(f"Successful record {record.get('case_id')} must contain boolean hitl_required")
 
     dataset_cases = int(manifest.get("execution", {}).get("selected_case_count", len(records)))
     attempted_cases = len(records)
+    if attempted_cases > dataset_cases:
+        raise ValueError("Predictions contain more attempted cases than the run manifest selected")
+    is_exact = lambda record: (
+        record.get("predicted_category") == record.get("expected_category")
+        and record.get("predicted_priority") == record.get("expected_priority")
+    )
     exact_correct = sum(
         1
         for record in valid
-        if record.get("predicted_category") == record.get("expected_category")
-        and record.get("predicted_priority") == record.get("expected_priority")
+        if is_exact(record)
     )
 
     reviewed = [record for record in valid if record.get("hitl_required") is True]
     auto_resolved = [record for record in valid if record.get("hitl_required") is False]
-    auto_correct = sum(1 for record in auto_resolved if record.get("exact_match") is True)
-    reviewed_correct = sum(1 for record in reviewed if record.get("exact_match") is True)
-    escaped = [record for record in auto_resolved if record.get("exact_match") is False]
+    auto_correct = sum(1 for record in auto_resolved if is_exact(record))
+    reviewed_correct = sum(1 for record in reviewed if is_exact(record))
+    escaped = [record for record in auto_resolved if not is_exact(record)]
 
     latencies = [float(record["latency_ms"]) for record in records if isinstance(record.get("latency_ms"), (int, float))]
     api_attempts = sum(int(record.get("attempt_count", 0)) for record in records)

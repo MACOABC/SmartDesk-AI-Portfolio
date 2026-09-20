@@ -137,6 +137,20 @@ class ScoringTests(unittest.TestCase):
         self.assertIsNone(metrics["tokens_and_cost"]["total_cost_usd"])
         self.assertEqual(metrics["tokens_and_cost"]["known_cost_usd"], 0.001)
 
+    def test_scorer_rejects_cross_run_or_duplicate_evidence(self) -> None:
+        cross_run = [dict(self.records[0], run_id="other-run")]
+        with self.assertRaisesRegex(ValueError, "run_id"):
+            scorer.compute_metrics(cross_run, {**self.manifest, "execution": {"selected_case_count": 1}})
+        duplicate = [dict(self.records[0]), dict(self.records[0])]
+        with self.assertRaisesRegex(ValueError, "case_id"):
+            scorer.compute_metrics(duplicate, {**self.manifest, "execution": {"selected_case_count": 2}})
+
+    def test_hitl_accuracy_is_recomputed_from_labels(self) -> None:
+        tampered = [dict(self.records[0], exact_match=False)]
+        metrics = scorer.compute_metrics(tampered, {**self.manifest, "execution": {"selected_case_count": 1}})
+        self.assertEqual(metrics["exact_match"]["rate"], 1.0)
+        self.assertEqual(metrics["hitl"]["accuracy_auto_resolved"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
