@@ -4,8 +4,9 @@
 
 Phase 7 permanece **IN PROGRESS** y Gate 7 **NOT YET PASS**. Phase 7A creó el
 dataset sintético versionado. Phase 7B implementó el harness y scoring offline;
-Phase 7B.2 completó un smoke live controlado sobre tres casos `dev`. El test
-congelado no se ejecutó.
+Phase 7B.2 completó un smoke live controlado sobre tres casos `dev`; Phase 7C
+completó la única corrida oficial autorizada del test congelado v1. Sus
+resultados están preservados y pendientes de revisión formal de Gate 7.
 
 ## Baseline y contrato
 
@@ -105,8 +106,137 @@ La evidencia saneada se conserva en
 El digest del conjunto, calculado sobre líneas `filename:sha256` ordenadas, es
 `97edcac38b63f6dc4b356d58b3d9da0217790d380720a0332a4f1ecb392ade7f`.
 
+## Phase 7C — Evaluación oficial del frozen test v1
+
+El run `official-test-v1-20260920T210544Z`, iniciado sobre el commit
+`6936e7c3333e04781fad55c1086adeb9323e20db`, procesó una sola vez, en su orden
+original, los 120 casos de `eval/datasets/v1/test.jsonl`. El SHA-256 antes y
+después fue
+`461a27c60c2c9d6f971e54a2fadc54dedd84f19f53f557ed3560735508ad76f6`.
+Los límites fueron 120 casos, 360 llamadas y USD 0.50; el preflight calculó una
+cota conservadora de USD 0.4564095.
+
+Las 120 llamadas recibieron HTTP 200 en el primer intento. No hubo retries,
+casos con error ni casos omitidos. El modelo solicitado y devuelto fue
+`gpt-5.6-luna`; el contrato conservó Structured Outputs estricto,
+`store=false`, `reasoning.effort=none`, 450 tokens máximos de salida, timeout
+de 60 s y routing HITL `confidence < 0.75`.
+
+### Métricas oficiales observadas
+
+| Métrica | Resultado |
+| --- | ---: |
+| Category accuracy | 107/120 = 89.17% |
+| Category macro-F1 | 88.72% |
+| Priority accuracy | 92/120 = 76.67% |
+| Priority macro-F1 | 78.55% |
+| Exact match categoría + prioridad | 81/120 = 67.50% |
+| Operational error rate | 0/120 = 0.00% |
+| Review rate con threshold 0.75 | 0/120 = 0.00% |
+| Automatic coverage | 120/120 = 100.00% |
+| Accuracy auto-resolved | 81/120 = 67.50% |
+| Error escapes | 39/120 = 32.50% |
+
+`confidence` se mantuvo como score operacional no calibrado. Todos los valores
+estuvieron entre 0.93 y 1.00; por ello ningún caso activó HITL con el threshold
+productivo. Esto deja 39 exact matches incorrectos auto-resueltos y constituye
+el principal hallazgo para la revisión de Gate 7. No se ajustó el threshold ni
+ningún componente del contrato después de observar el test.
+
+### Desglose por clase
+
+| Categoría | Precision | Recall | F1 | Soporte |
+| --- | ---: | ---: | ---: | ---: |
+| access | 95.24% | 100.00% | 97.56% | 20 |
+| hardware | 68.97% | 100.00% | 81.63% | 20 |
+| software | 95.24% | 100.00% | 97.56% | 20 |
+| network | 100.00% | 95.00% | 97.44% | 20 |
+| service_request | 89.47% | 85.00% | 87.18% | 20 |
+| other | 100.00% | 55.00% | 70.97% | 20 |
+
+| Prioridad | Precision | Recall | F1 | Soporte |
+| --- | ---: | ---: | ---: | ---: |
+| low | 87.50% | 60.00% | 71.19% | 35 |
+| medium | 63.41% | 72.22% | 67.53% | 36 |
+| high | 77.78% | 90.32% | 83.58% | 31 |
+| critical | 89.47% | 94.44% | 91.89% | 18 |
+
+La matriz de categoría usa filas esperadas y columnas predichas en el orden
+`access, hardware, software, network, service_request, other`:
+
+```text
+20  0  0  0  0  0
+ 0 20  0  0  0  0
+ 0  0 20  0  0  0
+ 0  1  0 19  0  0
+ 0  3  0  0 17  0
+ 1  5  1  0  2 11
+```
+
+La matriz de prioridad usa filas esperadas y columnas predichas en el orden
+`low, medium, high, critical`:
+
+```text
+21 14  0  0
+ 3 26  7  0
+ 0  1 28  2
+ 0  0  1 17
+```
+
+Las confusiones dominantes fueron `other → hardware` (5),
+`service_request → hardware` (3), `other → service_request` (2),
+`low → medium` (14) y `medium → high` (7). Descriptivamente, la prioridad se
+sobrestimó con frecuencia y la categoría residual `other` tuvo el recall más
+bajo. No se identificó un ground truth objetivamente inválido durante esta
+revisión; varios bordes son deliberadamente discutibles y permanecen
+congelados como parte del dataset v1.
+
+### Operación, coste y análisis secundario
+
+La latencia end-to-end fue mean 1831.17 ms, p50 1504.76 ms, p95 4310.11 ms,
+mínimo 1113.99 ms y máximo 6755.68 ms. Responses API reportó 53 709 tokens de
+input ordinario, 0 cached read, 0 cache write, 7 705 output y 61 414 totales.
+La contabilidad fue completa e internamente consistente en 120/120 casos. Con
+precios Standard verificados el 2026-09-20, el coste real recalculado fue USD
+0.0199878; los promedios por ticket intentado y clasificación válida fueron
+ambos USD 0.000166565.
+
+La sensibilidad se calculó offline sin cambiar la política productiva:
+
+| Threshold | Review rate | Auto coverage | Auto accuracy | Error escapes |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.50 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.60 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.70 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.75 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.80 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.85 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.90 | 0.00% | 100.00% | 67.50% | 39/120 (32.50%) |
+| 0.95 | 0.83% | 99.17% | 68.07% | 38/119 (31.93%) |
+
+Por dificultad, exact match fue 70.83% en `easy` (34/48), 60.42% en
+`medium` (29/48) y 75.00% en `hard` (18/24). Por `scenario_type`, los grupos
+con más errores exactos fueron `normal` (15/52), `category_boundary` (6/19),
+`irrelevant_context` (5/6) y `priority_boundary` (4/15). Las tasas de grupos
+muy pequeños, como `natural_language` 2/2 con error, no sustentan conclusiones
+generales.
+
+El scorer se volvió a ejecutar sin API key y con salida de red bloqueada.
+`metrics.json` y `cost.json` se reprodujeron exactamente salvo
+`generated_at`. La evidencia final se conserva en
+`eval/runs/official-test-v1-20260920T210544Z/`. SHA-256:
+
+- `attempts.jsonl`: `30f69c840bc48a20cac672082393bff19a3c3c5a70063887aa969b7c03c41107`;
+- `cost.json`: `7d64fcb7315b423adf15723d935ed2be5af71ee237dd61c1622207681c699ee3`;
+- `manifest.json`: `e59d51c3a85901b0867b9c5ca37430412f18bb2f1182782952b77bb556add903`;
+- `metrics.json`: `f3f9edfb3d214a932af455d16701517875c2896cc6a6d3b6e531e5c7d07180e7`;
+- `predictions.jsonl`: `76e9937265ec0f9bcab9e818621c26b1708566eaeadb6dbc29a64c2288544277`.
+
+El digest del conjunto, calculado como en el smoke sobre líneas
+`filename:sha256` ordenadas, es
+`83c278ae1046643dde5a5efcec22009444b58c9d6691c9a4e5dc91a4d4f0ca45`.
+
 ## Próxima decisión
 
-El smoke confirma que el harness está técnicamente listo para solicitar una
-autorización separada de Phase 7C: una única corrida formal del test congelado.
-Phase 7C no está autorizada ni iniciada por esta evidencia.
+Revisar formalmente la evidencia de Phase 7C y decidir Gate 7. La ejecución no
+aprueba el gate por sí sola. Phase 8 no está iniciada ni autorizada.

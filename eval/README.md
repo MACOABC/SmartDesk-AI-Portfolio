@@ -3,8 +3,9 @@
 Este directorio contiene el dataset y el harness reproducible para evaluar el
 clasificador de SmartDesk AI sin modificar el producto. Phase 7A creó el corpus
 y Phase 7B implementó runner, scoring offline y guardrails. No se realizaron
-llamadas reales durante 7B. Phase 7 continúa **IN PROGRESS** y Gate 7 permanece
-**NOT YET PASS**.
+llamadas reales durante 7B; 7B.2 validó el smoke live y 7C completó la única
+corrida oficial autorizada del frozen test v1. Phase 7 continúa **IN PROGRESS**
+y Gate 7 permanece **NOT YET PASS** hasta su revisión formal.
 
 ## Contrato evaluado
 
@@ -227,19 +228,26 @@ operacional.
 - HITL exactamente cuando `confidence < 0.75`;
 - `confidence` es un score operacional no calibrado, no una probabilidad.
 
-## Protocolo oficial futuro
+## Protocolo oficial ejecutado
 
 1. Verificar Git limpio, commit, contrato y hashes del dataset.
 2. Verificar precios vigentes y registrar fuente/fecha exactas.
 3. Ejecutar y aprobar `validate_dataset.py` y toda la suite local.
 4. Ejecutar primero `--preflight-only` con límites explícitos.
-5. Si se autoriza integración real, realizar una sola corrida pequeña sobre
-   `dev`; no repetirla automáticamente.
+5. Realizar una sola corrida pequeña autorizada sobre `dev`; no repetirla
+   automáticamente.
 6. Revisar artefactos, errores, coste y aislamiento antes del test oficial.
 7. Ejecutar `test` una sola vez, con flag explícito, protocolo y presupuesto
-   aprobados. No usar sus resultados para ajustar el mismo contrato y volver a
-   presentar la misma versión como medición independiente.
+   aprobados. Esta ejecución se completó como
+   `official-test-v1-20260920T210544Z`; no usar sus resultados para ajustar el
+   mismo contrato y volver a presentar la misma versión como medición
+   independiente.
 8. Recalcular métricas offline y verificar nuevamente el SHA-256 sellado.
 
-Phase 7B tampoco ejecutó el modelo ni produjo métricas reales. El harness listo
-no autoriza por sí mismo el cierre de Gate 7.
+El run oficial conservado obtuvo 120/120 clasificaciones válidas, category
+accuracy 89.17%, priority accuracy 76.67% y exact match 67.50%. No hubo
+retries ni errores operacionales. El threshold HITL productivo no envió casos
+a revisión y dejó 39 error escapes; este hallazgo requiere revisión antes de
+Gate 7. El scoring offline reprodujo métricas y coste sin clave ni red. El
+detalle, matrices, análisis secundario, hashes y limitaciones están en
+`docs/PHASE_7.md`. La ejecución no cierra Gate 7 por sí sola.

@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-09-20T21:11:15.719645Z",
+  "run_id": "official-test-v1-20260920T210544Z",
+  "pricing": {
+    "source_or_version": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    "verification_date": "2026-09-20",
+    "currency": "USD",
+    "unit": "per 1,000,000 tokens",
+    "input_usd": 0.2,
+    "cached_read_usd": 0.02,
+    "cache_write_usd": 0.25,
+    "output_usd": 1.2,
+    "formula": "(regular_input*input_price + cached_read*cached_read_price + cache_write*cache_write_price + output*output_price) / 1,000,000; regular_input=input-cached_read-cache_write"
+  },
+  "preflight": {
+    "method": "UTF-8 request bytes + 512 framing tokens, 450 output tokens, maximum of regular-input/cache-write price, bounded by max_api_calls",
+    "selected_cases": 120,
+    "maximum_possible_attempts": 360,
+    "calls_in_cost_upper_bound": 360,
+    "input_token_upper_bound_min": 2807,
+    "input_token_upper_bound_max": 2979,
+    "estimated_max_cost_usd": 0.4564095,
+    "approved_max_cost_usd": 0.5
+  },
+  "observed": {
+    "input_tokens": 53709,
+    "input_tokens_missing_records": 0,
+    "regular_input_tokens": 53709,
+    "regular_input_tokens_missing_records": 0,
+    "cached_tokens": 0,
+    "cached_tokens_missing_records": 0,
+    "cache_write_tokens": 0,
+    "cache_write_tokens_missing_records": 0,
+    "output_tokens": 7705,
+    "output_tokens_missing_records": 0,
+    "total_tokens": 61414,
+    "total_tokens_missing_records": 0,
+    "cost_source": "offline recomputation from raw token counters and manifest pricing",
+    "usage_accounting_status_counts": {
+      "complete": 120,
+      "incomplete": 0,
+      "invalid": 0
+    },
+    "known_cost_usd": 0.0199878,
+    "cost_complete": true,
+    "records_missing_cost": 0,
+    "total_cost_usd": 0.0199878,
+    "average_cost_per_attempted_ticket_usd": 0.000166565,
+    "average_cost_per_valid_classification_usd": 0.000166565
+  },
+  "note": "Observed cost is recomputed offline and is complete only when every attempted case has internally consistent regular, cached-read, cache-write, output and total token counters."
+}

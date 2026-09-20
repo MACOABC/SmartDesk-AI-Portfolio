@@ -127,9 +127,16 @@ completamente offline. Phase 7B.2 validó el flujo live con un único smoke sobr
 tres casos `dev`, tres respuestas HTTP 200 y recomputación offline idéntica.
 Sus resultados son de integración y no métricas oficiales del modelo.
 
-El trabajo restante requiere autorización separada para ejecutar el test
-congelado una sola vez bajo protocolo formal, documentando resultados y análisis
-de errores. Solo esa evidencia podrá evaluarse contra Gate 7.
+Phase 7C ejecutó una sola vez los 120 casos del test congelado v1 bajo el
+protocolo formal: 120/120 clasificaciones válidas, sin retries ni errores,
+category accuracy 89.17%, priority accuracy 76.67% y exact match 67.50%. El
+threshold HITL productivo no derivó casos a revisión y dejó 39 error escapes;
+la evidencia, coste y análisis reproducible están documentados en
+`docs/PHASE_7.md`.
+
+El trabajo restante es la revisión formal de esta evidencia y la decisión de
+Gate 7. Phase 7 permanece EN CURSO, Gate 7 no está aprobado y Phase 8 no debe
+iniciarse automáticamente.
 
 ## Fases posteriores a V1
 

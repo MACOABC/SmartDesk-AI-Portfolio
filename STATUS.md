@@ -12,7 +12,7 @@ Gate 7 = NOT YET PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = IN PROGRESS
-Current subphase = Phase 7B.2 smoke PASS; Phase 7C formal evaluation pending
+Current subphase = Phase 7C official run complete; awaiting Gate 7 review
 ```
 
 - **Gate 0: APROBADO.**
@@ -31,7 +31,8 @@ Current subphase = Phase 7B.2 smoke PASS; Phase 7C formal evaluation pending
 - **SmartDesk AI V1: COMPLETA.**
 - **Fase actual: Phase 7 — dataset sintético y evaluación de IA; IN PROGRESS.**
 - **Phase 7A — dataset sintético, política y validación local: IMPLEMENTADA; Gate 7 todavía no aprobado.**
-- **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; test congelado no ejecutado.**
+- **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
+- **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 pendiente de revisión.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -344,18 +345,35 @@ casos son **integration smoke / non-authoritative** y no constituyen métricas
 oficiales del proyecto. `test.jsonl` no fue enviado al modelo y su SHA-256
 permaneció intacto.
 
-Phase 7 sigue IN PROGRESS y Gate 7 NOT YET PASS porque aún no existen métricas
-reales del modelo ni análisis de errores sobre la corrida formal.
+## Phase 7C — Corrida oficial del frozen test v1
+
+El run `official-test-v1-20260920T210544Z` procesó una sola vez los 120 casos
+congelados, en orden y sin omisiones: 120 clasificaciones válidas, 0 errores,
+120 intentos API, 0 retries y 120 respuestas HTTP 200. Category accuracy fue
+89.17%, priority accuracy 76.67%, exact match 67.50% y category macro-F1
+88.72%. Con HITL productivo `confidence < 0.75`, ningún caso entró a revisión;
+la automatic coverage fue 100% y 39 errores exactos escaparon (32.50%).
+
+La latencia fue mean 1831.17 ms, p50 1504.76 ms y p95 4310.11 ms. El usage
+completo sumó 53 709 tokens de input ordinario, 0 cached read, 0 cache write,
+7 705 output y 61 414 totales; coste real USD 0.0199878. El scoring offline sin
+API key y con red bloqueada reprodujo exactamente métricas y coste, salvo su
+timestamp de generación. La evidencia y el análisis están en
+`eval/runs/official-test-v1-20260920T210544Z/` y `docs/PHASE_7.md`.
+
+Phase 7 permanece IN PROGRESS y Gate 7 NOT YET PASS hasta completar la revisión
+formal. El run no autoriza ajustes sobre el mismo frozen test ni iniciar Phase
+8.
 
 ## Siguiente paso
 
-Solicitar, por separado, autorización para Phase 7C y una única corrida formal
-del test congelado. No debe iniciarse automáticamente.
+Revisar formalmente la evidencia cuantitativa y el análisis de errores de
+Phase 7C para decidir Gate 7. No iniciar Phase 8 automáticamente.
 
 ## Límites actuales
 
 - V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
-- El dataset de evaluación está implementado y congelado, pero la ejecución contra el modelo, sus métricas y el análisis de errores todavía no se han realizado. SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF tampoco están implementados.
+- El dataset v1 y su corrida oficial están preservados, pero Gate 7 sigue pendiente de revisión; el confidence observado no discriminó los errores con el threshold productivo. SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF tampoco están implementados.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
