@@ -1,126 +1,121 @@
-# Evidencia en progreso — Gate 4
+# Evidencia de cierre — Gate 4
 
 ## Estado
 
-- **Fecha local:** 2026-09-17 (ejecuciones registradas en UTC el 2026-09-18).
-- **Gate 4:** **NOT YET PASS**.
-- **Razón:** verificación de entrega Telegram real pendiente por ausencia de
-  credencial telegramApi y TELEGRAM_CHAT_ID configurados.
+- **Fecha local de cierre:** 2026-09-19 (ejecuciones en UTC el 2026-09-20).
+- **Gate 4:** **PASS**.
+- **Fase 4:** **COMPLETE**.
 
-No se declara PASS porque no se recibió una notificación real y, por tanto, no
-se verificó automation_events.status = succeeded contra Telegram.
+La entrega real de Telegram fue verificada para HIGH y CRITICAL. La evidencia
+incluye persistencia SQL, una sola ejecución del nodo por caso, respuesta
+`ok=true` de Telegram Bot API, identificador de mensaje y ausencia de retries.
 
-## Migración y esquema
+## Migración y regla
 
-Se aplicó db/migrations/003_create_automation_events.sql en smartdesk_db.
+`db/migrations/003_create_automation_events.sql` permanece aplicada en
+`smartdesk_db`. La tabla tiene FK a `tickets` y `ticket_ai_predictions`, los
+estados exactos `pending`, `succeeded`, `failed` y `skipped`, restricciones de
+outcome, índice por ticket/fecha y unicidad por
+`(prediction_id, rule_code, event_type)`.
 
-    BEGIN
-    CREATE TABLE
-    CREATE INDEX
-    COMMIT
+La regla `notify_high_or_critical_v1` se mantiene determinista:
 
-La tabla verificada tiene PK UUID, FK ticket_id → tickets(id), FK
-prediction_id → ticket_ai_predictions(id), cuatro estados exactos, semántica
-de error_code, índice por ticket/fecha y unicidad por
-(prediction_id, rule_code, event_type).
+    prediction succeeded + high/critical → pending → Telegram
+    prediction succeeded + low/medium    → skipped
+    prediction failed                    → no regla, evento ni Telegram
 
-Una prueba transaccional aceptó pending, succeeded, failed y skipped; rechazó
-estado inválido, outcome incoherente, ambas FK inválidas y duplicado. Terminó
-con ROLLBACK y synthetic_rows_after_rollback=0.
+## Sincronización y corrección de despliegue
 
-## Workflow desplegado
+La primera repetición de HIGH detectó dos diferencias de configuración, no de
+lógica: n8n bloqueaba el acceso de expresiones a variables de entorno y la
+versión publicada aún referenciaba el ID de credencial anterior, aunque el
+draft ya mostraba `SmartDesk Telegram`.
 
-El workflow publicado pasó de 56 a 65 nodos. La ruta añadida es:
+Se estableció `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`, se publicó la versión
+actual y se reinició únicamente n8n. El workflow activo quedó con la
+credencial `SmartDesk Telegram` y `={{ $env.TELEGRAM_CHAT_ID }}`. El valor del
+destino y el token permanecen fuera de Git. El workflow local y el desplegado
+producen el mismo hash después de normalizar defaults omitidos por la UI y
+posiciones visuales.
 
-    prediction succeeded
-      → notify_high_or_critical_v1
-      → LOW/MEDIUM: insert skipped
-      → HIGH/CRITICAL: insert pending
-          → solo si insert_rows = 1
-          → Telegram, retryOnFail=false
-              → success: update succeeded
-              → error: update failed / TELEGRAM_SEND_FAILED
+## Pruebas funcionales
 
-El fallo al insertar pending y los conflictos de unicidad no alcanzan
-Telegram. Los errores al actualizar el evento después del intento no provocan
-retry y no cambian la respuesta HTTP 201 ya ganada por ticket y predicción.
+Todos los datos fueron sintéticos y se eliminaron después de registrar la
+evidencia.
 
-## Casos funcionales de Phase 4
-
-Todos los datos fueron sintéticos.
-
-| Caso | Resultado | Evidencia |
+| Caso | Resultado | Evidencia objetiva |
 | --- | --- | --- |
-| A — high con entrega real | **NOT TESTED** | Ejecución 119: prioridad high, un solo nodo Telegram y evento failed / TELEGRAM_SEND_FAILED; no había credencial para probar entrega ni succeeded. |
-| B — critical con entrega real | **NOT TESTED** | Ejecución 120: prioridad critical, un solo nodo Telegram y evento failed / TELEGRAM_SEND_FAILED; no había credencial para probar entrega ni succeeded. |
-| C — medium | **PASS** | Ejecución 117: telegram_runs=0, skipped_insert_runs=1, evento único skipped. |
-| D — low | **PASS** | Ejecución 118: telegram_runs=0, skipped_insert_runs=1, evento único skipped. |
-| E — predicción IA fallida | **PASS** | Ejecución 121: HTTP 201, AI_PROVIDER_ERROR, telegram_runs=0, automation_decision_runs=0, 0 eventos y exactamente una prediction. |
-| F — fallo controlado de integración Telegram | **PASS** | Ejecuciones 119 y 120: un intento por ejecución, 0 retries, ticket/prediction intactos y evento failed / TELEGRAM_SEND_FAILED. El proveedor Telegram no fue alcanzado porque faltaba la credencial. |
+| HIGH real | **PASS** | Ejecución 165: HTTP 201; una prediction `succeeded/access/high`; un evento `succeeded` con `error_code IS NULL`; nodo Telegram 1 vez, rama exitosa 1, rama de error 0 y `retryOf IS NULL`. |
+| CRITICAL real | **PASS** | Ejecución 164: HTTP 201; una prediction `succeeded/access/critical`; un evento `succeeded` con `error_code IS NULL`; nodo Telegram 1 vez, rama exitosa 1, rama de error 0 y `retryOf IS NULL`. |
+| MEDIUM | **PASS** | Ejecución 166: HTTP 201; evento único `skipped`; `telegram_runs=0`, `pending_insert_runs=0`. |
+| LOW | **PASS** | Ejecución 167: HTTP 201; evento único `skipped`; `telegram_runs=0`, `pending_insert_runs=0`. |
+| IA failed | **PASS** | Ejecución controlada 168: una prediction `failed / AI_PROVIDER_ERROR`, campos de clasificación nulos, cero eventos, cero reglas, cero llamadas OpenAI y cero Telegram. |
+| Fallo Telegram | **PASS** | Ejecución 163: HTTP 201; una prediction `succeeded/access/high` intacta; un evento `failed / TELEGRAM_SEND_FAILED`; una rama Telegram de error, un update failed, cero update succeeded y `retryOf IS NULL`. |
 
-Para los cuatro niveles el HTTP fue 201 y tickets.status permaneció
-processing. Cada prediction quedó en succeeded con categoría, prioridad y
-summary originales. HIGH y CRITICAL tuvieron exactamente un evento y una
-ejecución del nodo Telegram; LOW y MEDIUM tuvieron exactamente un evento y
-cero ejecuciones Telegram.
+En HIGH y CRITICAL la salida observable de Telegram Bot API fue `ok=true` y
+contenía `message_id`, fecha, chat y texto. El texto devuelto coincidió con el
+mensaje construido. Cada mensaje tuvo exactamente el encabezado y estas seis
+líneas: Ticket, Área, Categoría, Prioridad, Título y Resumen IA.
 
-El control estático del export obtuvo 18/18 comprobaciones: nodo Telegram
-único, retry desactivado, salida de error conectada, campos del mensaje
-permitidos, campos prohibidos ausentes, texto plano, orden pending antes del
-side effect, fallo de insert sin Telegram, transiciones correctas, conflicto
-idempotente y ausencia de updates a tickets.status.
+La comprobación dinámica confirmó ausencia de email, descripción completa,
+raw de OpenAI, prompt, schema, reasoning, nombres de variables sensibles,
+credenciales y patrones de token. No se registraron el texto completo, el
+destino ni identificadores del chat en esta evidencia.
+
+## Fallo secundario y conservación de datos
+
+El fallo controlado ocurrió después de persistir ticket y prediction. SQL
+confirmó exactamente un ticket `processing`, una prediction `succeeded` con
+category, priority y summary conservados, y un evento
+`failed / TELEGRAM_SEND_FAILED`. La ejecución tuvo una llamada de clasificación
+original, un intento Telegram, cero retries y ninguna prediction adicional.
+
+También se conserva la evidencia histórica de las ejecuciones 119 y 120, que
+verificaron la misma rama de error antes de configurar Telegram. No se revocó
+ni alteró el token real para repetir el fallo.
 
 ## Regresión Gate 2
 
-Se reejecutaron los 30 escenarios originales:
+La regresión relevante posterior al despliegue fue **PASS**:
 
-    cases=30
-    passed=30
-    failed=0
-    http_201=13
-    http_400=16
-    http_500_controlled=1
-    openai_requests=13
-    automatic_retries=0
-
-Los 13 casos válidos persistieron ticket, prediction succeeded, metadata
-correcta y evento skipped; los 16 inválidos no alcanzaron OpenAI; el fallo de
-persistencia no creó ticket y devolvió TICKET_PERSISTENCE_ERROR. También
-pasaron normalización, límites, SQL parametrizado, recuperación y solicitudes
-posteriores a reinicios de n8n y PostgreSQL.
-
-Diez ejecuciones duplicadas de la segunda mitad de la batería fueron
-identificadas por email sintético, excluidas del conjunto exacto de 30 y
-eliminadas durante la limpieza.
+- cuatro entradas válidas devolvieron HTTP 201 y persistieron ticket y
+  prediction antes de evaluar la regla;
+- ejecución 169, sin `title`, devolvió HTTP 400, no insertó ticket y ejecutó
+  cero nodos OpenAI y Telegram;
+- se mantuvieron el contrato, la normalización, el SQL parametrizado y las
+  respuestas aprobadas. La batería completa anterior continúa documentada
+  como 30/30 sin modificar sus pruebas.
 
 ## Regresión Gate 3
 
-    real_structured_successes=13
-    prediction_metadata_correct=13
-    provider_failure_controlled=PASS
-    invalid_request_no_ai=PASS
+La regresión relevante posterior al despliegue fue **PASS**:
+
+    structured_successes=4
+    prediction_metadata_correct=4
     deterministic_validator=19/19 PASS
+    controlled_failed_prediction=PASS
+    failed_case_openai_requests=0
     automatic_retries=0
 
-El fallo controlado del proveedor conservó el ticket, dejó una única
-prediction failed / AI_PROVIDER_ERROR, no creó automation_event y no ejecutó
-Telegram. El model id temporal fue restaurado antes de continuar.
+HIGH, CRITICAL, MEDIUM y LOW produjeron salida estructurada válida y una sola
+prediction. La suite determinista aceptó 3 casos válidos, rechazó 16 inválidos
+y volvió a comprobar carga y versión de prompt/schema. El caso failed conservó
+el ticket y no alcanzó la regla de automatización.
 
 ## Limpieza
 
-Después de capturar la evidencia se eliminaron por identificadores y emails
-sintéticos 22 eventos, 23 predicciones y 23 tickets. También se eliminaron las
-45 ejecuciones n8n 117–161: cinco casos Phase 4, treinta casos de regresión y
-diez repeticiones excluidas.
+Se eliminaron por emails sintéticos exactos 6 eventos, 7 predictions y 7
+tickets. También se eliminaron `execution_entity` y `execution_data` para las
+ejecuciones 162–169.
 
     remaining_test_tickets=0
-    remaining_execution_entities=0
-    remaining_execution_data=0
+    remaining_test_execution_entities=0
+    remaining_test_execution_data=0
+    remaining_test_pending_events=0
 
-La migración, el workflow, las credenciales existentes y los datos ajenos a la
-prueba no fueron eliminados.
+No se eliminaron datos ajenos, credenciales, migraciones ni configuración.
 
-## Seguridad y estado final del despliegue
+## Seguridad y deployment
 
     docker_compose_config=PASS
     postgres=healthy
@@ -129,28 +124,17 @@ prueba no fueron eliminados.
     n8n_binding=127.0.0.1:5678
     workflow_active=true
     workflow_nodes=65
-    workflow_functional_diff_count=0
-    source_deployment_hashes_match=true
+    telegram_credential_reference=SmartDesk Telegram
+    telegram_api_live=PASS
+    workflow_functional_equivalence=PASS
 
-El escaneo de archivos versionados y del diff de Phase 4 no encontró claves
-OpenAI, tokens Telegram, URLs PostgreSQL, chat id real ni rutas personales.
-.env.example conserva placeholders y el único IPv4 versionado es loopback. El
-export no contiene Authorization manual, accessToken, pinData, model id
-temporal ni tabla temporal de fallo.
+El escaneo de archivos versionados, diff, workflow, `.env.example` y
+documentación no encontró tokens Telegram, claves OpenAI, passwords
+PostgreSQL, connection strings sensibles, chat ID real, IP innecesarias ni
+rutas personales. `.env` permanece ignorado y no versionado.
 
-La lista de credenciales desplegadas contiene únicamente PostgreSQL y OpenAI;
-no existe credencial Telegram. TELEGRAM_CHAT_ID está vacío en el contenedor.
+## Cierre
 
-## Limitación pendiente
-
-La integración usa la credencial segura de n8n y configuración externa, pero
-no existe una credencial Telegram usable en el despliegue actual. Quedan
-pendientes exactamente:
-
-1. crear SmartDesk Telegram con un token real en n8n y asignarla al nodo;
-2. configurar TELEGRAM_CHAT_ID fuera de Git;
-3. repetir un caso HIGH y uno CRITICAL;
-4. comprobar recepción real y evento succeeded.
-
-Hasta completar esos cuatro puntos, Phase 4 continúa en progreso y Gate 4 no
-está aprobado.
+Todos los criterios obligatorios de Gate 4 cuentan con evidencia real. Gate 4
+queda aprobado y Phase 4 completada. La siguiente fase documental es Phase 5;
+este cierre no implementa ninguna funcionalidad de esa fase.

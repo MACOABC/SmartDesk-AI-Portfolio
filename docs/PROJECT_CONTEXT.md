@@ -83,7 +83,7 @@ El modelo conceptual empresarial incluye:
 | `ticket_ai_predictions` | Predicción, proveedor, modelo, versiones del prompt y schema, estado y error, relacionados con el ticket sin sobrescribir su historial. |
 | `automation_events` | Acciones automáticas relacionadas con ticket y predicción; en Fase 4 registra la regla y el resultado de Telegram sin secretos. |
 
-La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla y su uso desde n8n fueron creados y verificados. Fase 4 añadió `automation_events` con `pending`, `succeeded`, `failed` y `skipped`, sin modificar el lifecycle ni los valores de `tickets.status`. La entrega Telegram real continúa pendiente de credenciales, por lo que Gate 4 no está aprobado.
+La clasificación de IA tiene persistencia separada con los estados `pending`, `succeeded` y `failed`; `error_code` distingue la causa concreta de un fallo. La tabla y su uso desde n8n fueron creados y verificados. Fase 4 añadió `automation_events` con `pending`, `succeeded`, `failed` y `skipped`, sin modificar el lifecycle ni los valores de `tickets.status`. HIGH y CRITICAL fueron entregados realmente por Telegram y Gate 4 quedó aprobado.
 
 ## Tecnologías y justificación
 
@@ -95,7 +95,7 @@ La clasificación de IA tiene persistencia separada con los estados `pending`, `
 | PostgreSQL y SQL | Persistencia, integridad, trazabilidad y consultas. | Base en Fase 1; modelo desde Fase 2. |
 | REST/webhooks | Contrato de entrada desacoplado. | Fase 2. |
 | API de IA | Comprensión semántica, clasificación, prioridad y resumen estructurados. | Fase 3. |
-| Telegram | Validar la integración de notificaciones con una configuración acotada. | Fase 4; email posterior. |
+| Telegram | Validar la integración de notificaciones con una configuración acotada. | Fase 4, completada; email posterior. |
 | Caddy y HTTPS | Proxy inverso y transporte cifrado para la publicación. | Despliegue de V1. |
 | Git y GitHub | Historial, revisión y documentación reproducible. | Desde Fase 1. |
 | Python, si aporta valor | Evaluación del clasificador y análisis del dataset. | Fase 7; no necesario en el flujo V1. |

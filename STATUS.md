@@ -4,11 +4,12 @@
 - **Gate 1: APROBADO.**
 - **Gate 2: APROBADO.**
 - **Gate 3: APROBADO.**
-- **Gate 4: NO APROBADO; verificación Telegram real pendiente.**
+- **Gate 4: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
-- **Fase actual: Fase 4 — reglas de negocio + notificación; EN PROGRESO.**
+- **Fase 4 — reglas de negocio + notificación: COMPLETADA.**
+- **Fase actual: Fase 5 — V1 completa, desplegada y probada end-to-end; NO INICIADA.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -16,7 +17,7 @@
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets y la clasificación mediante IA. Gate 0, Gate 1, Gate 2 y Gate 3 cuentan con aprobación explícita.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA y la notificación Telegram. Gates 0–4 cuentan con aprobación explícita.
 
 ## Infraestructura aprobada
 
@@ -175,28 +176,29 @@ Fase 4 implementó y desplegó:
 - HTTP 201 conservado cuando ticket y prediction ya están persistidos;
 - ausencia deliberada de retries y recuperación automática.
 
-El despliegue no tiene una credencial Telegram ni un `TELEGRAM_CHAT_ID` real.
-Por ello se verificaron la decisión, la persistencia, el intento único y la
-rama de error, pero no la recepción real ni la transición a `succeeded`.
+La credencial n8n `SmartDesk Telegram` y el destino externo quedaron
+configurados sin versionar valores sensibles. Las pruebas reales HIGH y
+CRITICAL recibieron `ok=true` de Telegram Bot API y finalizaron con eventos
+`succeeded`; LOW/MEDIUM, IA fallida y la rama de fallo Telegram conservaron la
+semántica aprobada.
 
-La regresión ejecutada sobre el workflow de Fase 4 obtuvo Gate 2 30/30, 13
-clasificaciones estructuradas reales, fallo controlado del proveedor, 19/19
-casos del validador determinista y cero retries. La evidencia completa se
-conserva en `docs/testing/GATE_4.md`.
+La regresión relevante final mantuvo Gate 2 y Gate 3 en PASS, incluido el
+validador determinista 19/19. La evidencia completa, la limpieza y los límites
+se conservan en `docs/testing/GATE_4.md`. Gate 4 queda aprobado y Fase 4
+completada.
 
 ## Siguiente paso
 
-Crear fuera de Git la credencial n8n `SmartDesk Telegram`, asignarla al nodo
-de envío y configurar `TELEGRAM_CHAT_ID`; después repetir un caso HIGH y uno
-CRITICAL, comprobar la recepción real y confirmar eventos `succeeded`. Solo
-entonces puede evaluarse el cierre de Gate 4.
+Iniciar el diseño y la ejecución de Fase 5 según `ROADMAP.md`: completar el
+despliegue V1 end-to-end y evaluar Gate 5. Este cierre no implementó ninguna
+funcionalidad de Fase 5.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- V1 todavía no está completa ni publicada mediante HTTPS; Fase 4 está desplegada pero Gate 4 continúa abierto por la verificación Telegram real.
+- V1 todavía no está completa ni publicada mediante HTTPS; Fase 5 no ha comenzado.
 - No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- La regla y la rama Telegram están implementadas; faltan credencial, destino y entrega real. Routing adicional, SLA, HITL, retries, Power BI, Caddy público y CI/CD no están implementados.
+- La regla y Telegram están implementados y verificados. Routing adicional, SLA, HITL, retries, Power BI, Caddy público y CI/CD no están implementados.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 3 está aprobado.
+- Ningún gate posterior a Gate 4 está aprobado.

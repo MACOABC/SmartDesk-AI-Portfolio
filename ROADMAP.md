@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2 y Gate 3 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3 y Gate 4 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -14,8 +14,8 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 1 | Repositorio, Docker Compose, PostgreSQL y base de n8n. | Gate 1. | APROBADA. |
 | 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
-| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | EN PROGRESO / NO APROBADO. |
-| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | Pendiente. |
+| 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
+| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | ACTUAL / NO INICIADA. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
 | 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |
@@ -70,13 +70,11 @@ Aplicar condiciones explícitas según clasificación/prioridad, integrar Telegr
 
 Gate 4: casos conocidos activan las ramas previstas, la notificación llega al destino de prueba y queda registrada; un fallo de Telegram conserva la clasificación y registra estado `failed` con `TELEGRAM_SEND_FAILED`. Los fallos de IA conservan el ticket y su estado de error. No introducir un motor de reglas ni reintentos avanzados.
 
-La migración de `automation_events`, la regla
-`notify_high_or_critical_v1`, la integración n8n y el manejo de error básico
-están implementados y desplegados. LOW/MEDIUM, IA fallida y el fallo de
-integración Telegram fueron verificados. Gate 4 continúa no aprobado porque el
-despliegue no dispone todavía de credencial ni destino Telegram para demostrar
-la entrega real de HIGH/CRITICAL y la transición a `succeeded`. La evidencia
-está en `docs/testing/GATE_4.md`.
+Gate 4 fue aprobado el 2026-09-19 después de verificar la entrega Telegram
+real para HIGH y CRITICAL, las transiciones a `succeeded`, LOW/MEDIUM como
+`skipped`, la exclusión de predicciones fallidas, el manejo
+`failed / TELEGRAM_SEND_FAILED`, regresión, seguridad, limpieza y deployment.
+La evidencia saneada se conserva en `docs/testing/GATE_4.md`.
 
 ## Fase 5 — V1 desplegada y release v1.0
 
