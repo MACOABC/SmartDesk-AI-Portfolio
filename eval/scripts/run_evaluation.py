@@ -162,6 +162,9 @@ def validate_versioned_dataset(dataset_path: Path) -> tuple[dict[str, Any], list
     from validate_dataset import validate_dataset
 
     manifest_path = dataset_path.parent / "dataset-manifest.json"
+    frozen_test_path = dataset_path.parent / "test.jsonl"
+    if not frozen_test_path.is_file() or sha256_file(frozen_test_path) != FROZEN_TEST_SHA256:
+        raise ValueError("Frozen test SHA-256 differs from the approved value")
     errors, _ = validate_dataset(dataset_path.parent, manifest_path)
     if errors:
         raise ValueError("Dataset validation failed: " + "; ".join(errors))
@@ -172,8 +175,6 @@ def validate_versioned_dataset(dataset_path: Path) -> tuple[dict[str, Any], list
     actual_hash = sha256_file(dataset_path)
     if matching[0].get("sha256") != actual_hash:
         raise ValueError("Dataset SHA-256 differs from its manifest")
-    if dataset_path.name == "test.jsonl" and actual_hash != FROZEN_TEST_SHA256:
-        raise ValueError("Frozen test SHA-256 differs from the approved value")
     return manifest, load_cases(dataset_path)
 
 

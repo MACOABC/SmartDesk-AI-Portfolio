@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -236,6 +237,17 @@ class RunnerTests(unittest.TestCase):
                 self.pricing,
                 runner.Limits(max_cases=2, max_api_calls=6, max_cost_usd=Decimal("0.000001")),
             )
+
+    def test_every_split_checks_the_independent_frozen_test_hash(self) -> None:
+        dev_path = REPO_ROOT / "eval" / "datasets" / "v1" / "dev.jsonl"
+        real_sha256 = runner.sha256_file
+
+        def altered_test_hash(path: Path) -> str:
+            return "0" * 64 if path.name == "test.jsonl" else real_sha256(path)
+
+        with mock.patch.object(runner, "sha256_file", side_effect=altered_test_hash):
+            with self.assertRaisesRegex(ValueError, "Frozen test SHA-256"):
+                runner.validate_versioned_dataset(dev_path)
 
     def test_partial_run_preserves_artifacts_and_does_not_overwrite(self) -> None:
         first = sample_case("SD-EVAL-DEV-001")
