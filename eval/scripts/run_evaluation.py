@@ -127,7 +127,11 @@ def load_contract() -> Contract:
     schema = json.loads(PRODUCTION_SCHEMA_PATH.read_text(encoding="utf-8"))
     if PROMPT_VERSION not in prompt:
         raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
-    if schema.get("$id") != SCHEMA_VERSION or schema.get("additionalProperties") is not False:
+    if (
+        schema.get("$id") != SCHEMA_VERSION
+        or schema.get("type") != "object"
+        or schema.get("additionalProperties") is not False
+    ):
         raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
     expected_fields = {"category", "priority", "summary", "confidence", "review_required", "review_reason"}
     if set(schema.get("required", [])) != expected_fields or set(schema.get("properties", {})) != expected_fields:
@@ -135,6 +139,20 @@ def load_contract() -> Contract:
     categories = schema["properties"]["category"].get("enum")
     priorities = schema["properties"]["priority"].get("enum")
     if not isinstance(categories, list) or not isinstance(priorities, list):
+        raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
+    properties = schema["properties"]
+    if properties["summary"] != {"type": "string", "minLength": 1, "maxLength": 300}:
+        raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
+    if properties["confidence"] != {"type": "number", "minimum": 0, "maximum": 1}:
+        raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
+    if properties["review_required"] != {"type": "boolean"}:
+        raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
+    review_reason = properties["review_reason"]
+    if (
+        set(review_reason.get("type", [])) != {"string", "null"}
+        or review_reason.get("minLength") != 1
+        or review_reason.get("maxLength") != 500
+    ):
         raise EvaluationFailure("AI_CONTRACT_LOAD_ERROR")
     return Contract(
         prompt=prompt,
@@ -220,7 +238,7 @@ def build_request_body(case: dict[str, Any], contract: Contract) -> dict[str, An
 
 
 def validate_classification_response(response: dict[str, Any], contract: Contract) -> dict[str, Any]:
-    if response.get("status") != "completed" or response.get("error"):
+    if response.get("status") != "completed" or response.get("error") is not None:
         raise EvaluationFailure("AI_PROVIDER_PERMANENT")
     output_texts: list[str] = []
     for item in response.get("output", []) if isinstance(response.get("output"), list) else []:
@@ -681,6 +699,10 @@ def main() -> int:
     args = parser.parse_args()
 
     dataset_path = args.dataset.resolve()
+    try:
+        dataset_path.relative_to(REPO_ROOT / "eval" / "datasets")
+    except ValueError:
+        parser.error("dataset must be inside the versioned eval/datasets directory")
     if dataset_path.name == "test.jsonl" and not args.allow_frozen_test:
         parser.error("test.jsonl is sealed; --allow-frozen-test is required for a future official run")
     try:
@@ -697,6 +719,8 @@ def main() -> int:
             output_per_million_usd=parse_decimal(args.output_price_per_million_usd, "output price"),
             source=args.pricing_source,
         )
+        if pricing.cached_input_per_million_usd > pricing.input_per_million_usd:
+            raise ValueError("cached input price cannot exceed regular input price")
         dataset_manifest, cases = validate_versioned_dataset(dataset_path)
         contract = load_contract()
         selected_cases = cases[: limits.max_cases]

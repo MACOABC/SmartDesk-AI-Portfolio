@@ -323,7 +323,7 @@ Phase 7B implementó localmente, desde el commit
   tokens y coste, con denominadores auditables;
 - documentación en `eval/README.md` y `docs/PHASE_7.md`.
 
-La suite local terminó con 24/24 tests PASS y el CLI de preflight fue probado
+La suite local terminó con 25/25 tests PASS y el CLI de preflight fue probado
 sobre cinco casos `dev` con valores monetarios marcados exclusivamente para
 validación. No se proporcionó API key, no se creó un run real, no se llamó a
 OpenAI y no se ejecutó `test.jsonl`. Su SHA-256 permaneció intacto.

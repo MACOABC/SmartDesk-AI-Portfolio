@@ -172,6 +172,16 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(record["error_code"], "AI_PROVIDER_PERMANENT")
         self.assertEqual(len(attempts), 1)
 
+    def test_non_null_provider_error_is_permanent_even_when_empty(self) -> None:
+        response = api_response()
+        response["error"] = {}
+        sender = FakeSender(runner.HttpResult(200, response))
+        record, attempts = runner.evaluate_case(
+            sample_case(), "run", self.contract, self.pricing, self.budget(), sender
+        )
+        self.assertEqual(record["error_code"], "AI_PROVIDER_PERMANENT")
+        self.assertEqual(len(attempts), 1)
+
     def test_transient_error_retries_then_succeeds(self) -> None:
         sender = FakeSender(runner.HttpResult(503, None), runner.HttpResult(200, api_response()))
         sleeps: list[float] = []
