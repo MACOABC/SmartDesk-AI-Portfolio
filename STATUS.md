@@ -1,15 +1,29 @@
 # SmartDesk AI — Estado actual
 
+```text
+Gate 0 = PASS
+Gate 1 = PASS
+Gate 2 = PASS
+Gate 3 = PASS
+Gate 4 = PASS
+Gate 5 = PASS
+Phase 5 = COMPLETE
+SmartDesk AI V1 = COMPLETE
+```
+
 - **Gate 0: APROBADO.**
 - **Gate 1: APROBADO.**
 - **Gate 2: APROBADO.**
 - **Gate 3: APROBADO.**
 - **Gate 4: APROBADO.**
+- **Gate 5: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
 - **Fase 4 — reglas de negocio + notificación: COMPLETADA.**
-- **Fase actual: Fase 5 — V1 completa, desplegada y probada end-to-end; NO INICIADA.**
+- **Fase 5 — V1 completa, desplegada y probada end-to-end: COMPLETADA.**
+- **SmartDesk AI V1: COMPLETA.**
+- **Fase actual: V1 cerrada; Fase 6 pendiente y no iniciada.**
 - **Documentos de contexto: REVISADOS Y APROBADOS por el usuario, con la categoría residual fijada como `other`.**
 - **Base del repositorio: COMPLETADA; documentación, `.gitignore` y `.env.example` versionados en `main`.**
 - **Subparte PostgreSQL de Fase 1: IMPLEMENTADA, VALIDADA EN LA VM ORACLE Y APROBADA por el usuario.**
@@ -17,7 +31,7 @@
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA y la notificación Telegram. Gates 0–4 cuentan con aprobación explícita.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA, la notificación Telegram y el cierre end-to-end de V1. Gates 0–5 cuentan con aprobación explícita.
 
 ## Infraestructura aprobada
 
@@ -187,9 +201,9 @@ validador determinista 19/19. La evidencia completa, la limpieza y los límites
 se conservan en `docs/testing/GATE_4.md`. Gate 4 queda aprobado y Fase 4
 completada.
 
-## Fase 5 — Ingress HTTPS seguro
+## Fase 5 — V1 desplegada y probada end-to-end
 
-Fase 5 está en curso. El 2026-09-19 se desplegó Caddy 2.11.4 como tercer
+El 2026-09-19 se desplegó Caddy 2.11.4 como tercer
 servicio de Compose para terminar TLS y publicar únicamente
 `POST /webhook/tickets`:
 
@@ -211,22 +225,44 @@ la ejecución 170 recorrió solamente recepción, validación, decisión y respu
 de error. No ejecutó inserción de ticket, OpenAI, Telegram ni automatización;
 los conteos de tickets, predictions y automation events permanecieron en cero.
 
-Esta comprobación acredita únicamente infraestructura y routing. Gate 5 sigue
-pendiente y no se creó la release `v1.0`.
+## Cierre de Fase 5, Gate 5 y V1
+
+La matriz final E2E-01 a E2E-06 fue ejecutada y aprobada sobre el commit
+realmente probado y desplegado
+`fc42c911725aa589e3b36207d0be5b95b9f08063`. Verificó:
+
+- rechazo inválido sin persistencia ni llamadas externas;
+- clasificación HIGH y entrega Telegram real exactamente una vez;
+- clasificación LOW con evento `skipped` y cero Telegram;
+- fallo controlado de IA con ticket conservado;
+- fallo controlado de Telegram con clasificación conservada;
+- redeploy documentado sin borrar volúmenes, persistencia y smoke posterior;
+- correlación SQL de 5 tickets, 5 predictions y 4 eventos;
+- cero predictions o eventos pendientes, duplicados o acciones incoherentes;
+- HTTPS, routing restringido y ausencia de exposición pública en 5678, 5432 y
+  9000.
+
+Las ejecuciones 170–175 realizaron exactamente 5 llamadas OpenAI —4 exitosas y
+1 fallida— y 2 intentos Telegram —1 exitoso y 1 fallido—, todos sin retries. La
+evidencia completa se conserva en `docs/testing/GATE_5.md`.
+
+Gate 5 queda aprobado, Fase 5 completada y SmartDesk AI V1 completada. El tag
+Git local `v1.0` apunta al tested/release commit anterior, no al commit
+documental posterior.
 
 ## Siguiente paso
 
-Ejecutar la matriz E2E final definida para Gate 5 sobre el commit candidato,
-incluidas persistencia, clasificación, reglas, Telegram, fallos controlados,
-reinicio y reproducibilidad. Solo después de aprobar toda la matriz podrá
-crearse `v1.0`.
+Fase 6 permanece pendiente y no iniciada. Cualquier trabajo de confiabilidad,
+reintentos, recuperación, HITL o SLA requiere autorización y criterios de gate
+propios; este cierre no implementa esas capacidades ni avanza fases posteriores.
 
 Se mantiene el método: explicar el paso y su motivo, entregar solo los comandos necesarios, indicar el resultado esperado, esperar la salida del usuario y validarla.
 
 ## Límites actuales
 
-- V1 ya dispone de ingress HTTPS restringido, pero la matriz E2E final de Gate 5 todavía no se ha ejecutado.
-- No hay métricas de clasificación, rendimiento, disponibilidad o impacto empresarial obtenidas en esta tarea.
-- La regla y Telegram están implementados y verificados. SLA, HITL, retries, Power BI y CI/CD no están implementados.
+- V1 dispone de ingress HTTPS restringido y matriz E2E aprobada, pero no acredita accuracy, rendimiento, disponibilidad, SLA, ahorro o impacto empresarial.
+- Reintentos avanzados, recuperación automática, HITL, evaluación con dataset, SQL analítico, Power BI, CI/CD, monitoreo, alertas, backups ensayados, alta disponibilidad, rate limiting y WAF no están implementados.
+- La VM única sigue siendo un punto único de fallo; permanece el riesgo documentado de una prediction `pending` si PostgreSQL falla entre su creación y actualización terminal.
+- El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 4 está aprobado.
+- Ningún gate posterior a Gate 5 está aprobado; las fases 6–10 permanecen pendientes.

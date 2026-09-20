@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3 y Gate 4 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gate 0, Gate 1, Gate 2, Gate 3, Gate 4 y Gate 5 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -15,7 +15,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 2 | Webhook, validación y persistencia inicial. | Gate 2. | COMPLETADA / APROBADO. |
 | 3 | IA, salida estructurada y versionado de prompts. | Gate 3. | COMPLETADA / APROBADO. |
 | 4 | Reglas, Telegram y manejo básico de errores. | Gate 4. | COMPLETADA / APROBADO. |
-| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | ACTUAL / EN CURSO. |
+| 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | Pendiente; posterior a V1. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | Pendiente. |
 | 8 | SQL analítico y Power BI. | Gate 8. | Pendiente. |
@@ -93,6 +93,15 @@ Gate 5 / aceptación de V1:
 | Reproducibilidad | Versiones, configuración de ejemplo, instrucciones y evidencia suficientes para repetir el despliegue y las pruebas. |
 
 Publicar la release v1.0 únicamente después de superar el gate. Esto completa V1; todavía no cierra el proyecto de portafolio.
+
+Gate 5 fue aprobado el 2026-09-19 después de completar E2E-01 a E2E-06 sobre
+el tested/release commit `fc42c911725aa589e3b36207d0be5b95b9f08063`.
+La matriz verificó entrada inválida, HIGH con Telegram real, LOW sin Telegram,
+fallos controlados de IA y Telegram, correlación SQL, ausencia de duplicados y
+pendientes, redeploy con persistencia, HTTPS y regresión de exposición. La
+evidencia saneada se conserva en `docs/testing/GATE_5.md`. El tag local `v1.0`
+apunta al commit probado, no al commit documental de cierre. Fase 5 y
+SmartDesk AI V1 quedan completados; las fases 6–10 permanecen pendientes.
 
 ## Fases posteriores a V1
 
