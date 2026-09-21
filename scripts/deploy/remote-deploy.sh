@@ -14,6 +14,7 @@ deploy_root="$HOME/.smartdesk-deploy"
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 rollback_id="$timestamp-${expected_sha:0:12}"
 rollback_dir="$deploy_root/rollbacks/$rollback_id"
+install -d -m 700 "$deploy_root" "$deploy_root/rollbacks"
 stage_dir="$(mktemp -d "$deploy_root/stage.XXXXXX")"
 
 cleanup() { rm -rf -- "$stage_dir"; }
@@ -39,7 +40,6 @@ verify_health() {
 [[ "$expected_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "deploy=FAIL reason=invalid_sha" >&2; exit 2; }
 [[ "$target_dir" == "$HOME/"* && "$target_dir" != "$HOME" ]] || { echo "deploy=FAIL reason=unsafe_target" >&2; exit 2; }
 [[ -f "$target_dir/.env" ]] || { echo "deploy=FAIL reason=production_env_missing" >&2; exit 1; }
-install -d -m 700 "$deploy_root/rollbacks"
 
 if tar -tzf "$archive" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
   echo "deploy=FAIL reason=unsafe_archive" >&2
