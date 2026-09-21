@@ -8,9 +8,9 @@ OnFailure=smartdesk-health-alert@%n.service
 Type=oneshot
 User=ubuntu
 Group=docker
-WorkingDirectory=%h/smartdesk-ai
-Environment=SMARTDESK_PROJECT_DIR=%h/smartdesk-ai
-ExecStart=%h/smartdesk-ai/scripts/ops/check-health.sh
+WorkingDirectory=/home/ubuntu/smartdesk-ai
+Environment=SMARTDESK_PROJECT_DIR=/home/ubuntu/smartdesk-ai
+ExecStart=/home/ubuntu/smartdesk-ai/scripts/ops/check-health.sh
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
