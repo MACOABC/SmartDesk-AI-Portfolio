@@ -47,6 +47,14 @@ if tar -tzf "$archive" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
 fi
 tar -xzf "$archive" -C "$stage_dir"
 
+# The deployment workspace is intentionally created under umask 077. Restore
+# explicit artifact permissions before rsync so read-only container mounts stay
+# traversable by their non-root runtime users.
+find "$stage_dir" -type d -exec chmod 755 {} +
+find "$stage_dir" -type f -exec chmod 644 {} +
+find "$stage_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
+find "$stage_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
+
 actual_sha="$(tr -cd '0-9a-f' <"$stage_dir/DEPLOYED_COMMIT")"
 [[ "$actual_sha" == "$expected_sha" ]] || { echo "deploy=FAIL reason=archive_sha_mismatch" >&2; exit 1; }
 [[ ! -e "$stage_dir/.env" ]] || { echo "deploy=FAIL reason=release_contains_env" >&2; exit 1; }
