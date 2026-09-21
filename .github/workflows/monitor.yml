@@ -1,0 +1,25 @@
+name: External availability monitor
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  https-boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Check HTTPS without creating a ticket
+        env:
+          MONITOR_URL: ${{ secrets.SMARTDESK_MONITOR_URL }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$MONITOR_URL"
+          status="$(curl --silent --show-error --location --max-time 15 \
+            --output /dev/null --write-out '%{http_code}' "$MONITOR_URL/")"
+          test "$status" = "404"
+          echo "external_monitor=PASS status=404"

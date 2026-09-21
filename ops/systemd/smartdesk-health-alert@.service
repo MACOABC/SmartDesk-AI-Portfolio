@@ -1,0 +1,10 @@
+[Unit]
+Description=Record SmartDesk health alert for %I
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger -p user.err -t smartdesk-monitor "SmartDesk health check failed: %I"
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
