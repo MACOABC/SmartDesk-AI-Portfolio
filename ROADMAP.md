@@ -146,8 +146,18 @@ documentados y no invalidan la medición.
 Phase 8 está **COMPLETE** y Gate 8 **PASS**. La capa SQL, sus validaciones, el
 rol BI read-only y el túnel se verificaron; Power BI Desktop completó refresh,
 relaciones, filtros y reconciliación KPI. El template reproducible se conserva
-en `powerbi/SmartDeskAI.pbit` sin datos importados. Phase 9 permanece
-**NOT STARTED**.
+en `powerbi/SmartDeskAI.pbit` sin datos importados.
+
+## Phase 9 — Operación y hardening
+
+Phase 9 está **COMPLETE** y Gate 9 **PASS**. CI se ejecutó con PostgreSQL
+temporal, migraciones desde cero, 35 tests offline y prueba FAIL/PASS
+controlada. El CD manual por SHA se desplegó, se verificó y se revirtió
+realmente. Monitoring interno/externo detectó healthy, fallo y recovery.
+Backup cifrado de ambas bases y n8n_data pasó restore aislado y fue copiado y
+descifrado fuera de la VM. El hardening y la regresión Gate 0–8 quedaron PASS.
+
+Phase 10 permanece **NOT STARTED**.
 
 ## Fases posteriores a V1
 

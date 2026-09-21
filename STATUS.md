@@ -387,16 +387,33 @@ reviews persistidas; confidence no es probabilidad calibrada; resolution time
 son minutos corridos entre timestamps persistidos; y Gate 7 permanece separado
 de BI operacional.
 
+## Phase 9 — Operación, recuperación y hardening
+
+Phase 9 quedó COMPLETE y Gate 9 PASS. Se implementaron y probaron:
+
+- CI determinista con validación repo, 35 tests offline y PostgreSQL temporal
+  desde migraciones `001→005`, incluido FAIL/PASS controlado;
+- CD manual por SHA con prechecks, snapshot, health/smoke y rollback real;
+- monitoring interno systemd y externo Windows, con healthy, fallo, alerta y
+  recovery;
+- backup diario de SmartDesk/n8n/n8n_data, cifrado CMS, retención, copia
+  OneDrive privada fuera de la VM y restore aislado real;
+- `no-new-privileges`, log rotation, permisos, exposición, UFW, SSH,
+  unattended upgrades y secret scan verificados;
+- regresión mínima Gate 0–8 con una llamada OpenAI real y cero Telegram.
+
+La evidencia está en `docs/testing/GATE_9.md`; la operación y recuperación en
+`docs/OPERATIONS.md` y `docs/BACKUP_RESTORE.md`.
+
 ## Siguiente paso
 
-Phase 9 permanece NOT STARTED. Este cierre no implementó CI/CD, monitoreo,
-backups ni hardening adicional.
+Phase 10 permanece NOT STARTED. No fue implementada durante Phase 9.
 
 ## Límites actuales
 
-- V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
-- El dataset v1 y su corrida oficial están preservados; Gate 7 está aprobado. El confidence observado no discriminó los errores con el threshold productivo. La capa SQL analítica y Power BI están cerrados en Gate 8; CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF todavía no están implementados.
+- V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan disponibilidad continua, ahorro o impacto empresarial.
+- El dataset v1 y su corrida oficial están preservados; Gate 7 está aprobado. El confidence observado no discriminó los errores con el threshold productivo. La capa SQL analítica y Power BI están cerrados en Gate 8; CI/CD, monitoring y recuperación están cerrados en Gate 9. Alta disponibilidad, rate limiting y WAF no están implementados.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 8 está aprobado; Phase 9 está NOT STARTED y Phase 10 permanece pendiente.
+- Gate 0–9 están aprobados. Phase 10 permanece pendiente y no iniciada.

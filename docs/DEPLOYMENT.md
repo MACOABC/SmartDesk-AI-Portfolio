@@ -162,3 +162,24 @@ external_9000=closed
 ```
 
 Esta evidencia no sustituye la matriz E2E final de Gate 5.
+
+## Deployment controlado de Phase 9
+
+El mecanismo vigente empaqueta un commit exacto y no depende de un working
+tree en la VM. El workflow manual está en `.github/workflows/deploy.yml`; los
+scripts reutilizables están en `scripts/deploy/`.
+
+Un release:
+
+- incluye `DEPLOYED_COMMIT` con el SHA completo;
+- nunca incluye `.env`;
+- normaliza LF y permisos runtime;
+- rechaza una migración existente modificada;
+- exige `ALLOW_MIGRATIONS=1` para una migración nueva y toma backup antes;
+- conserva un snapshot de archivos y devuelve `rollback_id`;
+- ejecuta Compose wait, health interno y smoke HTTPS.
+
+El rollback automático solo aplica cuando el snapshot declara cero migraciones.
+Si hubo migración, usar el backup verificado y el procedimiento de
+`docs/BACKUP_RESTORE.md`. Operación, secrets requeridos y comandos están en
+`docs/OPERATIONS.md`.
