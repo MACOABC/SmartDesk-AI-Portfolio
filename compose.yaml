@@ -1,7 +1,19 @@
+name: smartdesk-ai
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
   postgres:
+    <<: *service-defaults
     image: postgres:17.11-bookworm
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
@@ -31,8 +43,8 @@ services:
     stop_grace_period: 30s
 
   n8n:
+    <<: *service-defaults
     image: docker.n8n.io/n8nio/n8n:2.39.6
-    restart: unless-stopped
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
@@ -74,8 +86,8 @@ services:
     stop_grace_period: 30s
 
   caddy:
+    <<: *service-defaults
     image: caddy:2.11.4-alpine
-    restart: unless-stopped
     environment:
       SMARTDESK_HOST: ${SMARTDESK_HOST:?SMARTDESK_HOST must be set}
     ports:
