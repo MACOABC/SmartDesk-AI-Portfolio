@@ -1,0 +1,22 @@
+[Unit]
+Description=Create and validate SmartDesk encrypted backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=docker
+WorkingDirectory=%h/smartdesk-ai
+Environment=SMARTDESK_PROJECT_DIR=%h/smartdesk-ai
+Environment=SMARTDESK_BACKUP_DIR=%h/smartdesk-ai/backups
+Environment=SMARTDESK_BACKUP_RETENTION_DAYS=14
+Environment=SMARTDESK_BACKUP_RECIPIENT_CERT=/etc/smartdesk-backup/recipient.pem
+ExecStart=%h/smartdesk-ai/scripts/ops/backup-smartdesk.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/smartdesk-ai/backups
+ProtectKernelTunables=true
+ProtectControlGroups=true
