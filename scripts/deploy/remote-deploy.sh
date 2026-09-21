@@ -60,7 +60,8 @@ if [[ -d "$target_dir/db/migrations" ]]; then
     base="$(basename "$new_file")"
     old_file="$target_dir/db/migrations/$base"
     if [[ -f "$old_file" ]]; then
-      cmp --silent "$old_file" "$new_file" || { echo "deploy=FAIL reason=immutable_migration_changed file=$base" >&2; exit 1; }
+      cmp --silent <(tr -d '\r' <"$old_file") <(tr -d '\r' <"$new_file") \
+        || { echo "deploy=FAIL reason=immutable_migration_changed file=$base" >&2; exit 1; }
     else
       new_migrations+=("$base")
     fi
