@@ -35,8 +35,8 @@ migration_count="$(sed -n 's/^migration_count=//p' "$rollback_dir/metadata")"
 [[ "$migration_count" == "0" ]] || { echo "rollback=FAIL reason=database_restore_required" >&2; exit 1; }
 
 rsync -a --delete --exclude='.env' --exclude='backups/' "$rollback_dir/files/" "$target_dir/"
-find "$target_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
-find "$target_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
+[[ ! -d "$target_dir/db" ]] || find "$target_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
+[[ ! -d "$target_dir/scripts" ]] || find "$target_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
 docker compose --project-directory "$target_dir" --file "$target_dir/compose.yaml" up --detach --remove-orphans --wait
 verify_health
 previous_sha="$(tr -cd '0-9a-f' <"$target_dir/DEPLOYED_COMMIT" 2>/dev/null || true)"

@@ -17,6 +17,9 @@ resolved="$(git -C "$root_dir" rev-parse "$sha^{commit}")"
 work_dir="$(mktemp -d)"
 trap 'rm -rf -- "$work_dir"' EXIT
 git -C "$root_dir" archive --format=tar "$sha" | tar -xf - -C "$work_dir"
+# MSYS tar can materialize archived shell files with CRLF on Windows. Normalize
+# release scripts explicitly so the immutable artifact behaves identically on Linux.
+find "$work_dir" -type f -name '*.sh' -exec sed -i 's/\r$//' {} +
 printf '%s\n' "$sha" >"$work_dir/DEPLOYED_COMMIT"
 tar -C "$work_dir" -czf "$output" .
 tar -tzf "$output" >/dev/null

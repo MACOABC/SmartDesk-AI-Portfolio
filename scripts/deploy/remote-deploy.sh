@@ -115,8 +115,8 @@ if (( deploy_failed != 0 )); then
   echo "deploy=FAIL reason=deployment_or_healthcheck rollback_id=$rollback_id" >&2
   if (( ${#new_migrations[@]} == 0 )); then
     rsync -a --delete --exclude='.env' --exclude='backups/' "$rollback_dir/files/" "$target_dir/"
-    find "$target_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
-    find "$target_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
+    [[ ! -d "$target_dir/db" ]] || find "$target_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
+    [[ ! -d "$target_dir/scripts" ]] || find "$target_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
     docker compose --project-directory "$target_dir" --file "$target_dir/compose.yaml" up --detach --remove-orphans --wait
     verify_health
     echo "automatic_rollback=PASS" >&2
