@@ -20,6 +20,22 @@ cleanup() { rm -rf -- "$stage_dir"; }
 trap cleanup EXIT
 umask 077
 
+verify_health() {
+  if [[ -x "$target_dir/scripts/ops/check-health.sh" ]]; then
+    SMARTDESK_PROJECT_DIR="$target_dir" "$target_dir/scripts/ops/check-health.sh"
+    return
+  fi
+  local service container_id state health
+  for service in postgres n8n caddy; do
+    container_id="$(docker compose --project-directory "$target_dir" --file "$target_dir/compose.yaml" ps --quiet "$service")"
+    [[ -n "$container_id" ]] || return 1
+    state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_id")"
+    [[ "$state" == "running" && "$health" == "healthy" ]] || return 1
+  done
+  [[ "$(curl --silent --max-time 8 --output /dev/null --write-out '%{http_code}' http://127.0.0.1:5678/healthz/readiness)" == "200" ]]
+}
+
 [[ "$expected_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "deploy=FAIL reason=invalid_sha" >&2; exit 2; }
 [[ "$target_dir" == "$HOME/"* && "$target_dir" != "$HOME" ]] || { echo "deploy=FAIL reason=unsafe_target" >&2; exit 2; }
 [[ -f "$target_dir/.env" ]] || { echo "deploy=FAIL reason=production_env_missing" >&2; exit 1; }
@@ -91,7 +107,7 @@ if (( deploy_failed == 0 )); then
   docker compose --project-directory "$target_dir" --file "$target_dir/compose.yaml" up --detach --remove-orphans --wait || deploy_failed=1
 fi
 if (( deploy_failed == 0 )); then
-  SMARTDESK_PROJECT_DIR="$target_dir" "$target_dir/scripts/ops/check-health.sh" || deploy_failed=1
+  verify_health || deploy_failed=1
 fi
 
 if (( deploy_failed != 0 )); then
@@ -101,7 +117,7 @@ if (( deploy_failed != 0 )); then
     find "$target_dir/db" -type f -name '*.sh' -exec chmod 755 {} +
     find "$target_dir/scripts" -type f -name '*.sh' -exec chmod 750 {} +
     docker compose --project-directory "$target_dir" --file "$target_dir/compose.yaml" up --detach --remove-orphans --wait
-    SMARTDESK_PROJECT_DIR="$target_dir" "$target_dir/scripts/ops/check-health.sh"
+    verify_health
     echo "automatic_rollback=PASS" >&2
   else
     echo "automatic_rollback=SKIP reason=migration_restore_requires_operator" >&2
