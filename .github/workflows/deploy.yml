@@ -1,0 +1,91 @@
+name: Controlled production deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact 40-character commit SHA to deploy
+        required: true
+        type: string
+      allow_migrations:
+        description: Allow additive new migrations after a verified backup
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smartdesk-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: production
+    steps:
+      - name: Validate requested SHA
+        env:
+          REQUESTED_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out the exact commit
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+
+      - name: Verify checkout and run prechecks
+        env:
+          REQUESTED_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$REQUESTED_SHA"
+          python -m pip install --disable-pip-version-check -r requirements-ci.txt
+          scripts/ci/run-ci.sh
+
+      - name: Package immutable release
+        env:
+          REQUESTED_SHA: ${{ inputs.commit_sha }}
+        run: scripts/deploy/package-release.sh "$REQUESTED_SHA" "$RUNNER_TEMP/smartdesk-release.tar.gz"
+
+      - name: Configure restricted SSH client
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.SMARTDESK_DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.SMARTDESK_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" >"$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >"$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Deploy release and verify internal health
+        env:
+          REQUESTED_SHA: ${{ inputs.commit_sha }}
+          DEPLOY_HOST: ${{ secrets.SMARTDESK_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.SMARTDESK_DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.SMARTDESK_DEPLOY_PATH }}
+          ALLOW_MIGRATIONS: ${{ inputs.allow_migrations && '1' || '0' }}
+        run: |
+          set -Eeuo pipefail
+          target="${DEPLOY_USER}@${DEPLOY_HOST}"
+          remote_archive="/tmp/smartdesk-${REQUESTED_SHA}.tar.gz"
+          remote_script="/tmp/smartdesk-remote-deploy-${REQUESTED_SHA}.sh"
+          trap 'ssh "$target" "rm -f -- $remote_archive $remote_script" || true' EXIT
+          scp "$RUNNER_TEMP/smartdesk-release.tar.gz" "$target:$remote_archive"
+          scp scripts/deploy/remote-deploy.sh "$target:$remote_script"
+          ssh "$target" "ALLOW_MIGRATIONS=$ALLOW_MIGRATIONS bash $remote_script $remote_archive $REQUESTED_SHA ${DEPLOY_PATH:-smartdesk-ai}"
+
+      - name: Verify HTTPS from outside the VM
+        env:
+          MONITOR_URL: ${{ secrets.SMARTDESK_MONITOR_URL }}
+        run: |
+          set -Eeuo pipefail
+          status="$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$MONITOR_URL/")"
+          test "$status" = "404"
+          echo "deployment_external_smoke=PASS status=404"
