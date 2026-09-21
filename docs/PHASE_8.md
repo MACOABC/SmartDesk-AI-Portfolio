@@ -8,9 +8,11 @@ Phase 8.2 = PASS
 Phase 8.3 = PASS
 Phase 8.4 = PASS
 Phase 8.5 = PASS
-Phase 8.6 = PARTIAL
-Phase 8.7 = PARTIAL
-Gate 8 = NOT YET PASS
+Phase 8.6 = PASS
+Phase 8.7 = PASS
+Gate 8 = PASS
+Phase 8 = COMPLETE
+Phase 9 = NOT STARTED
 ```
 
 La auditoría 8.1 se ejecutó el 2026-09-20 contra el repositorio local y la
@@ -452,26 +454,35 @@ recrearon los contenedores afectados y se verificaron tres logins, modo 0600 y
 salud de PostgreSQL/n8n/Caddy. No se expusieron claves SSH, OpenAI, Telegram ni
 el token administrativo.
 
-## Power BI — Checkpoint 8.6 PARTIAL
+## Power BI — Checkpoint 8.6 PASS
 
-Power BI Desktop no estaba instalado en el entorno disponible. No se creó un
-`.pbit` falso ni se afirmó refresh. Se prepararon:
+Power BI Desktop se conectó por el túnel SSH existente a
+`localhost:15432`, usando `smartdesk_bi_reader` y modo Import. Se importaron y
+renombraron exclusivamente las cuatro vistas contratadas como `FactTickets`,
+`FactAIPredictions`, `FactHITLReviews` y `FactAutomationEvents`.
 
-- `powerbi/README.md`: túnel, conexión Import, Power Query, refresh,
-  reconciliación, seguridad y límites;
-- `powerbi/MODEL.md`: relaciones 1:N, dirección de filtro, tipos y páginas;
-- `powerbi/DAX.md`: medidas justificadas y valores SQL de referencia.
+El reporte real contiene tres páginas: Operations Overview, AI & Human Review
+y SLA & Automation. Las tres relaciones desde `FactTickets[ticket_id]` hacia
+las tablas hijas están activas, son 1:* y no existe una relación many-to-many
+entre facts. Los slicers se probaron de forma interactiva; una selección de
+control redujo la población de 13 a 2 tickets y actualizó los visuales
+relacionados de forma consistente.
 
-El modelo propuesto relaciona `FactTickets` 1:N con predictions, reviews y
-automation events mediante `ticket_id`, con filtro simple desde tickets. No
-introduce many-to-many ni relaciones entre facts.
+Refresh terminó con cero errores de query, credenciales o PostgreSQL. Una
+consulta DAX directa al modelo abierto confirmó 13 tickets, 1 resuelto, 5 SLA
+asignados, 3 breaches, 13 predictions (9 succeeded y 4 failed), 2 reviews
+completadas y eventos de automatización 6/1/5. `Prediction Success Rate` usa
+como denominador únicamente succeeded + failed y devolvió 0.6923076923.
 
-Pendiente manual real: construir `SmartDeskAI.pbit`, ejecutar refresh, validar
-relaciones/visuales/filtros y reconciliar cards en Power BI Desktop.
+Se exportó `powerbi/SmartDeskAI.pbit`. Su inspección confirmó
+`DataModelSchema`, ausencia de `DataModel` importado, las tres páginas, las
+cuatro tablas y la fórmula corregida. SHA-256:
+`7c7a7319030fc0360cd5d02528b54f346e3c5706b7e8804a84b04414d375d1cc`.
 
-## Evidencia Gate 8 — Checkpoint 8.7 PARTIAL
+## Evidencia Gate 8 — Checkpoint 8.7 PASS
 
-La matriz ejecutable está en `docs/testing/GATE_8.md`. Gate 8 continúa **NOT
-YET PASS** porque G8-17, G8-18 y G8-19 requieren Power BI Desktop real. No se
-añadieron datos demo: las filas actuales bastan para validación técnica, pero
-no deben usarse en screenshots públicos.
+La matriz completa está en `docs/testing/GATE_8.md`. G8-17, G8-18 y G8-19
+quedaron validados con Power BI Desktop real, inspección directa del modelo y
+reconciliación contra PostgreSQL. No se añadieron screenshots con datos
+operacionales ni datos demo. Gate 8 queda **PASS** y Phase 8 **COMPLETE**;
+Phase 9 permanece **NOT STARTED**.

@@ -4,7 +4,7 @@ Las medidas siguientes agregan columnas ya definidas en PostgreSQL. No
 reimplementan reglas de negocio.
 
 ```DAX
-Tickets :=
+Total Tickets :=
 DISTINCTCOUNT(FactTickets[ticket_id])
 ```
 
@@ -13,14 +13,6 @@ Resolved Tickets :=
 CALCULATE(
     DISTINCTCOUNT(FactTickets[ticket_id]),
     NOT ISBLANK(FactTickets[resolved_at])
-)
-```
-
-```DAX
-Open Tickets :=
-CALCULATE(
-    DISTINCTCOUNT(FactTickets[ticket_id]),
-    FactTickets[ticket_status] = "open"
 )
 ```
 
@@ -77,15 +69,10 @@ CALCULATE(
 ```
 
 ```DAX
-Terminal Prediction Attempts :=
-[Successful Predictions] + [Failed Predictions]
-```
-
-```DAX
 Prediction Success Rate :=
 DIVIDE(
     [Successful Predictions],
-    [Terminal Prediction Attempts]
+    [Successful Predictions] + [Failed Predictions]
 )
 ```
 
@@ -93,7 +80,7 @@ DIVIDE(
 el porcentaje de tickets resueltos correctamente.
 
 ```DAX
-Persisted Reviews :=
+Reviews :=
 COUNTROWS(FactHITLReviews)
 ```
 
@@ -101,9 +88,13 @@ COUNTROWS(FactHITLReviews)
 Completed Reviews :=
 CALCULATE(
     COUNTROWS(FactHITLReviews),
-    FactHITLReviews[review_status] IN { "approved", "overridden" }
+    NOT ISBLANK(FactHITLReviews[review_decided_at])
 )
 ```
+
+`review_status` persiste `approved` u `overridden`; no existe un estado
+`completed`. La medida usa el timestamp persistido de decisión para contar
+reviews completadas.
 
 ```DAX
 Pending Reviews :=
@@ -130,7 +121,7 @@ CALCULATE(
 ```
 
 ```DAX
-Overridden Reviews :=
+Reviews With Override :=
 CALCULATE(
     COUNTROWS(FactHITLReviews),
     FactHITLReviews[review_status] = "overridden"
@@ -139,7 +130,7 @@ CALCULATE(
 
 ```DAX
 Override Rate :=
-DIVIDE([Overridden Reviews], [Completed Reviews])
+DIVIDE([Reviews With Override], [Completed Reviews])
 ```
 
 ```DAX
@@ -148,7 +139,7 @@ COUNTROWS(FactAutomationEvents)
 ```
 
 ```DAX
-Succeeded Events :=
+Automation Succeeded :=
 CALCULATE(
     COUNTROWS(FactAutomationEvents),
     FactAutomationEvents[event_status] = "succeeded"
@@ -156,7 +147,7 @@ CALCULATE(
 ```
 
 ```DAX
-Failed Events :=
+Automation Failed :=
 CALCULATE(
     COUNTROWS(FactAutomationEvents),
     FactAutomationEvents[event_status] = "failed"
@@ -164,7 +155,7 @@ CALCULATE(
 ```
 
 ```DAX
-Skipped Events :=
+Automation Skipped :=
 CALCULATE(
     COUNTROWS(FactAutomationEvents),
     FactAutomationEvents[event_status] = "skipped"
@@ -177,7 +168,7 @@ Antes de aplicar filtros, la ejecución SQL de Gate 8 produjo:
 
 | Medida | Valor PostgreSQL |
 | --- | ---: |
-| Tickets | 13 |
+| Total Tickets | 13 |
 | Resolved Tickets | 1 |
 | SLA Assigned | 5 |
 | SLA Breached | 3 |
@@ -186,17 +177,16 @@ Antes de aplicar filtros, la ejecución SQL de Gate 8 produjo:
 | Successful Predictions | 9 |
 | Failed Predictions | 4 |
 | Prediction Success Rate | 0.692308 |
-| Persisted Reviews | 2 |
+| Reviews (persisted) | 2 |
 | Completed Reviews | 2 |
 | Pending Reviews | 0 |
 | Category Overrides | 0 |
 | Priority Overrides | 1 |
 | Override Rate | 0.500000 |
 | Automation Events | 12 |
-| Succeeded Events | 6 |
-| Failed Events | 1 |
-| Skipped Events | 5 |
+| Automation Succeeded | 6 |
+| Automation Failed | 1 |
+| Automation Skipped | 5 |
 
-Estos valores son evidencia de reconciliación SQL, no evidencia de refresh en
-Power BI. Deben volver a calcularse si cambia la base antes de construir el
-template.
+Estos valores reconciliaron con Power BI después del refresh de cierre. Deben
+volver a calcularse si la base cambia antes de una validación posterior.

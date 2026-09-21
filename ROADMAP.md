@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gates 0–7 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gates 0–8 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -18,8 +18,8 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 5 | V1 completa, desplegada y probada de extremo a extremo. | Gate 5 / release v1.0. | COMPLETADA / APROBADO. |
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
-| 8 | SQL analítico y Power BI. | Gate 8. | IN PROGRESS / NOT YET PASS. |
-| 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | Pendiente. |
+| 8 | SQL analítico y Power BI. | Gate 8. | COMPLETADA / APROBADO. |
+| 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | NOT STARTED. |
 | 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
 
 El roadmap original nombró explícitamente Gates 0–4 y estableció un gate por fase. Aquí se extiende esa numeración a 5–10 para mantener una referencia uniforme, sin alterar el orden acordado.
@@ -143,9 +143,11 @@ documentados y no invalidan la medición.
 
 ## Phase 8 — SQL analítico y Power BI
 
-Phase 8 es la fase actual y está **IN PROGRESS**. La capa SQL, validaciones,
-acceso BI y túnel están implementados; el refresh, relaciones y reconciliación
-en Power BI Desktop siguen pendientes antes de aprobar Gate 8.
+Phase 8 está **COMPLETE** y Gate 8 **PASS**. La capa SQL, sus validaciones, el
+rol BI read-only y el túnel se verificaron; Power BI Desktop completó refresh,
+relaciones, filtros y reconciliación KPI. El template reproducible se conserva
+en `powerbi/SmartDeskAI.pbit` sin datos importados. Phase 9 permanece
+**NOT STARTED**.
 
 ## Fases posteriores a V1
 

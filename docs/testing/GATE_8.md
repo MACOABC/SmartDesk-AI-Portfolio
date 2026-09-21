@@ -1,15 +1,16 @@
-# Evidencia de progreso — Gate 8
+# Evidencia de cierre — Gate 8
 
 ## Estado
 
 ```text
-Gate 8 = NOT YET PASS
-Phase 8 = IN PROGRESS
+Gate 8 = PASS
+Phase 8 = COMPLETE
+Phase 9 = NOT STARTED
 ```
 
-La capa SQL, sus pruebas, el rol BI y el túnel están implementados y
-verificados. La ejecución real de Power BI Desktop continúa pendiente; por
-ello este documento no declara el gate cerrado.
+La capa SQL, sus pruebas, el rol BI, el túnel y el reporte real de Power BI
+Desktop están implementados y verificados. El template reproducible se conserva
+en `powerbi/SmartDeskAI.pbit` sin datos importados.
 
 ## Matriz G8
 
@@ -31,14 +32,14 @@ ello este documento no declara el gate cerrado.
 | G8-14 BI reader writes fail | PASS | SELECT directo public, UPDATE, INSERT, DELETE y CREATE denegados. |
 | G8-15 PostgreSQL not public | PASS | Solo `127.0.0.1:5432`; prueba externa TCP devolvió false. |
 | G8-16 SSH tunnel | PASS | Listener local y handshake PostgreSQL real mediante `localhost:15432`. |
-| G8-17 Power BI refresh | PENDING MANUAL VALIDATION | Power BI Desktop no está instalado en este entorno. |
-| G8-18 Power BI relationships | PENDING MANUAL VALIDATION | Contrato preparado; requiere inspección del modelo real. |
-| G8-19 KPI reconciliation | PENDING POWER BI RECONCILIATION | Valores PostgreSQL preparados; falta compararlos con cards reales. |
+| G8-17 Power BI refresh | PASS | Refresh manual real: 0 errores de query, credenciales o PostgreSQL; los valores permanecieron reconciliados. |
+| G8-18 Power BI relationships | PASS | Inspección del modelo real: tres relaciones activas 1:* desde `FactTickets[ticket_id]`, filtro simple y ninguna many-to-many entre facts. |
+| G8-19 KPI reconciliation | PASS | Cards comparadas con PostgreSQL y consulta DAX directa al modelo: coincidencia exacta para tickets, SLA, predictions, HITL y automatización. |
 | G8-20 HITL semantics | PASS | Derivadas exclusivamente de `ticket_reviews` y sus FKs. |
 | G8-21 Confidence semantics | PASS | Documentada como señal operacional no calibrada. |
 | G8-22 SLA semantics | PASS | Assignment, status, due, resolution y breach son persistidos. |
 | G8-23 Gate 7 separation | PASS | Benchmark experimental no aparece en vistas ni KPIs operacionales. |
-| G8-24 Secret scan | PASS | 0 claves, tokens, private keys o URLs PostgreSQL con credenciales versionadas. |
+| G8-24 Secret scan | PASS | Scan final, incluido el `.pbit`: 0 API keys, tokens, private keys, URLs PostgreSQL con password o coincidencias con la contraseña BI vigente. |
 | G8-25 Scope control | PASS | Sin Phase 9/10, ETL, warehouse, dbt, Airflow, Fabric ni monitoring nuevo. |
 
 ## Objetos creados
@@ -83,24 +84,41 @@ No se alteraron objetos transaccionales de `public`.
 Los valores deben recalcularse inmediatamente antes del refresh manual si la
 base cambia.
 
+## Evidencia Power BI
+
+- Artefacto: `powerbi/SmartDeskAI.pbit`, 793761 bytes, SHA-256
+  `7c7a7319030fc0360cd5d02528b54f346e3c5706b7e8804a84b04414d375d1cc`.
+- Estructura: `DataModelSchema` presente y `DataModel` importado ausente.
+- Páginas: Operations Overview, AI & Human Review y SLA & Automation.
+- Refresh: PASS, sin errores de query, credenciales ni PostgreSQL.
+- Relaciones: `FactTickets` en el lado 1 y las tres facts hijas en el lado *,
+  activas y sin many-to-many accidental.
+- Filtros: una selección manual redujo 13 tickets a 2 y propagó el filtro a
+  visuales y cards relacionados.
+- Screenshots: no se versionaron capturas con las filas operacionales.
+
+La inspección directa del `.pbit` confirmó que `Prediction Success Rate`
+divide Successful Predictions entre Successful Predictions + Failed
+Predictions. Las métricas de prediction conservan grain prediction; Completed
+Reviews usa `review_decided_at` persistido y Override Rate usa
+`review_status = "overridden"`.
+
 ## Seguridad
 
 - `smartdesk_bi_reader` no posee privilegios administrativos ni DML/DDL.
 - Su password no forma parte de Git, documentación o outputs conservados.
 - PostgreSQL permanece inaccesible desde el exterior.
 - El túnel probado no requiere abrir firewall para 5432.
+- Los `.pbix` con datos importados están ignorados; solo el `.pbit` sin
+  `DataModel` forma parte del cierre versionable.
 - Una exposición accidental de tres passwords de base durante la inspección
   se remedió con rotación inmediata, actualización de n8n, recreación y pruebas
   3/3; no quedan vigentes los valores expuestos.
 
-## Pendientes para cerrar Gate 8
+## Cierre
 
-1. Instalar o usar Power BI Desktop en una estación autorizada.
-2. Abrir el túnel y construir `SmartDeskAI.pbit` desde las cuatro vistas.
-3. Ejecutar Refresh y verificar las relaciones descritas en `MODEL.md`.
-4. Reconciliar todos los cards y varios filtros contra
-   `sql/analytics/gate8_checks.sql`.
-5. Guardar evidencia saneada y actualizar G8-17, G8-18 y G8-19 a PASS.
-
-Hasta completar esos pasos, Gate 8 no puede aprobarse ni Phase 8 declararse
-completa.
+Los 25 criterios están en PASS. Prediction metrics permanecen separadas a
+grain prediction; HITL proviene de reviews persistidas; confidence no es una
+probabilidad calibrada; resolution time son minutos corridos basados en
+timestamps persistidos; y el benchmark experimental de Gate 7 no se mezcla con
+BI operacional. Gate 8 queda aprobado y Phase 8 completa. Phase 9 no se inició.

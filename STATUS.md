@@ -9,12 +9,12 @@ Gate 4 = PASS
 Gate 5 = PASS
 Gate 6 = PASS
 Gate 7 = PASS
+Gate 8 = PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = COMPLETE
-Current phase = Phase 8
-Phase 8 = IN PROGRESS
-Gate 8 = NOT YET PASS
+Phase 8 = COMPLETE
+Phase 9 = NOT STARTED
 ```
 
 - **Gate 0: APROBADO.**
@@ -25,6 +25,7 @@ Gate 8 = NOT YET PASS
 - **Gate 5: APROBADO.**
 - **Gate 6: APROBADO.**
 - **Gate 7: APROBADO.**
+- **Gate 8: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
@@ -33,7 +34,8 @@ Gate 8 = NOT YET PASS
 - **Fase 6 — Reliability + HITL + SLA: COMPLETADA.**
 - **SmartDesk AI V1: COMPLETA.**
 - **Phase 7 — dataset sintético y evaluación de IA: COMPLETADA.**
-- **Fase actual: Phase 8 — SQL analítico y Power BI; IN PROGRESS.**
+- **Phase 8 — SQL analítico y Power BI: COMPLETADA.**
+- **Phase 9 — operación: NOT STARTED.**
 - **Phase 7A — dataset sintético, política y validación local: COMPLETADA.**
 - **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
 - **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 aprobado.**
@@ -372,19 +374,29 @@ análisis de fallos y reproducibilidad offline fueron satisfechos. Los hallazgos
 de calidad documentados no invalidan la evaluación. No se modificaron después
 del test el dataset, prompt, schema, modelo, configuración ni threshold HITL.
 
+## Phase 8 — SQL analítico y Power BI
+
+Phase 8 quedó COMPLETE y Gate 8 PASS. Las subfases 8.1–8.7 están en PASS: se
+verificaron contrato analítico, cuatro vistas, pruebas SQL, rol BI read-only,
+túnel SSH y Power BI Desktop real. Refresh terminó sin errores; las tres
+relaciones 1:* están activas; filtros y cards reconciliaron con PostgreSQL; y
+`powerbi/SmartDeskAI.pbit` conserva el modelo y reporte sin datos importados.
+
+Las métricas de prediction permanecen a grain prediction; HITL se deriva de
+reviews persistidas; confidence no es probabilidad calibrada; resolution time
+son minutos corridos entre timestamps persistidos; y Gate 7 permanece separado
+de BI operacional.
+
 ## Siguiente paso
 
-Phase 8 es la fase actual y está IN PROGRESS. Las subfases 8.1–8.5 están en
-PASS: contrato analítico, cuatro vistas, pruebas SQL, rol BI read-only y túnel
-SSH quedaron verificados. Power BI Desktop no está disponible en este entorno;
-el siguiente paso es construir el `.pbit`, ejecutar refresh y reconciliar
-relaciones, cards y filtros con las queries PostgreSQL ya versionadas.
+Phase 9 permanece NOT STARTED. Este cierre no implementó CI/CD, monitoreo,
+backups ni hardening adicional.
 
 ## Límites actuales
 
 - V1 y Phase 6 disponen de ingress HTTPS restringido y matrices E2E aprobadas, pero no acreditan accuracy, rendimiento, disponibilidad, ahorro o impacto empresarial.
-- El dataset v1 y su corrida oficial están preservados; Gate 7 está aprobado. El confidence observado no discriminó los errores con el threshold productivo. La capa SQL analítica está implementada, pero Power BI Desktop sigue pendiente; CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF todavía no están implementados.
+- El dataset v1 y su corrida oficial están preservados; Gate 7 está aprobado. El confidence observado no discriminó los errores con el threshold productivo. La capa SQL analítica y Power BI están cerrados en Gate 8; CI/CD, monitoreo, alertas, backups con restore ensayado, alta disponibilidad, rate limiting y WAF todavía no están implementados.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Ningún gate posterior a Gate 7 está aprobado; Gate 8 continúa NOT YET PASS, Phase 8 está IN PROGRESS y las fases 9–10 permanecen pendientes.
+- Ningún gate posterior a Gate 8 está aprobado; Phase 9 está NOT STARTED y Phase 10 permanece pendiente.

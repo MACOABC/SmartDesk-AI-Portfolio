@@ -2,9 +2,10 @@
 
 ## Estado del artefacto
 
-Power BI Desktop no estaba instalado en el entorno de ejecución de Phase 8.
-Por ello no se creó un `.pbit` o `.pbix` ficticio. Esta carpeta contiene el
-contrato reproducible para construir y verificar el template real.
+`SmartDeskAI.pbit` es el template real construido y validado en Power BI
+Desktop para el cierre de Gate 8. Su estructura contiene `DataModelSchema` y
+no contiene `DataModel` importado; las credenciales siguen en el almacén local
+de Power BI Desktop y no forman parte del artefacto ni del repositorio.
 
 ## Conexión segura
 
@@ -87,6 +88,18 @@ No habilitar DirectQuery. No importar tablas de `public`.
    contra consultas SQL equivalentes.
 7. Guardar finalmente `powerbi/SmartDeskAI.pbit`, no un `.pbix` con datos
    productivos importados.
+
+## Validación de cierre
+
+El refresh real terminó sin errores de query, credenciales o PostgreSQL. Las
+tres relaciones 1:* están activas desde `FactTickets`; los slicers propagaron
+filtros de forma consistente; y cards de tickets, SLA, predictions, HITL y
+automation reconciliaron exactamente con `sql/analytics/gate8_checks.sql`.
+
+La inspección directa del modelo confirmó 13 predictions: 9 succeeded y 4
+failed. `Prediction Success Rate` divide succeeded entre succeeded + failed y
+devolvió 69.23%. Completed Reviews cuenta `review_decided_at` no NULL; Override
+Rate usa exclusivamente `review_status = "overridden"`.
 
 ## Semántica y límites
 

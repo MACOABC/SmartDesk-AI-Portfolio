@@ -53,3 +53,4 @@ n8n-data/
 *.backup
 *.sqlite
 *.sqlite3
+*.pbix

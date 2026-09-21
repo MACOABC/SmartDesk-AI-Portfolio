@@ -9,8 +9,8 @@ FactTickets[ticket_id] (1)
     └── (*) FactAutomationEvents[ticket_id]
 ```
 
-Crear las tres relaciones como activas, uno-a-muchos y con filtro en una sola
-dirección desde `FactTickets` hacia cada tabla hija.
+Las tres relaciones se validaron como activas, uno-a-muchos y con filtro en una
+sola dirección desde `FactTickets` hacia cada tabla hija.
 
 No crear relaciones entre las tres tablas hijas. Aunque existen IDs físicos
 compartidos, añadirlos produciría rutas de filtro ambiguas. La vista HITL ya
@@ -43,19 +43,20 @@ No sustituir NULL por cero o `false` cuando represente ausencia de evidencia.
 
 ### 1 — Operations Overview
 
-Cards: Total Tickets, Resolved Tickets, Open Tickets y SLA Breached.
+Cards: Total Tickets, Resolved Tickets, SLA Assigned y SLA Breached.
 
-Visuales: tickets por fecha de creación, área, categoría final, prioridad
-final y estado. Slicers: fecha, área, categoría final, prioridad final y
-estado.
+Visuales: tickets por área, categoría final, prioridad final y estado. Slicers:
+área, categoría final, prioridad final y estado. Los valores de presentación
+como `Sin decisión final` sustituyen blancos solo en visuales y no alteran la
+fuente de verdad.
 
 ### 2 — AI & Human Review
 
-Cards: Prediction Attempts, Prediction Success Rate, Persisted Reviews,
-Completed Reviews y Override Rate.
+Cards: Prediction Attempts, Successful Predictions, Failed Predictions,
+Prediction Success Rate, Completed Reviews y Override Rate.
 
-Visuales: predictions por estado, categoría, prioridad, modelo, prompt y error;
-distribución de confidence; category/priority changes en HITL.
+Visuales: predictions por estado, categoría y prioridad, además de resultados
+de revisión humana.
 
 Etiquetar confidence como señal operacional no calibrada. No usar la palabra
 accuracy para agreement u overrides.
@@ -68,6 +69,9 @@ Resolution Minutes.
 Visuales: SLA por estado; breaches por prioridad final; resolution minutes por
 prioridad/categoría final; eventos por estado; fallos por error code.
 
+Slicers: estado SLA, categoría final, prioridad final y dimensiones de
+automatización usadas en la página.
+
 ## Filtros de comprobación
 
 Validar al menos:
@@ -79,3 +83,6 @@ Validar al menos:
 5. un rango de fecha de creación.
 
 Cada selección debe reconciliarse con SQL sobre las mismas vistas.
+
+La validación manual aplicó una selección que redujo 13 tickets a 2 y confirmó
+la actualización consistente de cards y visuales relacionados.
