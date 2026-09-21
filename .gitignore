@@ -51,6 +51,8 @@ n8n-data/
 *.dump
 *.pgdump
 *.backup
+*.tar.gz.enc
+*.cms
 *.sqlite
 *.sqlite3
 *.pbix

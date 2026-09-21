@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate shell scripts
+        run: |
+          find db scripts -type f -name '*.sh' -print0 \
+            | sort -z \
+            | xargs -0 shellcheck --severity=warning
+
+      - name: Install pinned CI parser
+        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+
+      - name: Run deterministic CI
+        run: scripts/ci/run-ci.sh
