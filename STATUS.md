@@ -416,11 +416,30 @@ Durante 9.7 se realizaron cero llamadas OpenAI y cero envíos Telegram.
 La evidencia está en `docs/testing/GATE_9.md`; la operación y recuperación en
 `docs/OPERATIONS.md` y `docs/BACKUP_RESTORE.md`.
 
+## Phase 10 — Portfolio readiness
+
+Phase 10 está IN PROGRESS. El sprint inicial completó:
+
+- monitor hosted reparado y verificado en GitHub run `36087544636`;
+- current tree sin hostname productivo, secretos ni rutas personales;
+- documentación de contexto, deployment y gobernanza reconciliada;
+- quickstart y check estático desde fresh clone;
+- contrato y fixtures de demo sintética;
+- arquitectura Mermaid y README profesional;
+- plan de assets y registro de métricas/claims;
+- descripción y topics de GitHub mejorados sin cambiar visibilidad;
+- CI hosted PASS sobre los commits del sprint.
+
+La historia Git conserva la referencia anterior al hostname productivo. El
+repositorio debe permanecer privado hasta una decisión humana sobre history
+rewrite. También permanecen pendientes licencia, assets manuales, estrategia
+de release y Gate 10. La evidencia detallada está en `docs/PHASE_10.md`.
+
 ## Siguiente paso
 
-Phase 10 está IN PROGRESS. La primera iteración reparó el monitor hosted y
-comenzó la sanitización, coherencia documental, reproducibilidad y preparación
-de portafolio. Gate 10 permanece pendiente.
+El propietario debe decidir si autoriza una sanitización de historia antes de
+cualquier publicación. No mover `v1.0`, no hacer force push y no cambiar la
+visibilidad hasta esa decisión. Gate 10 permanece pendiente.
 
 ## Límites actuales
 

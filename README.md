@@ -147,6 +147,7 @@ publicado.
 | --- | --- |
 | Estado actual | [STATUS.md](STATUS.md) |
 | Roadmap y gates | [ROADMAP.md](ROADMAP.md) |
+| Phase 10 | [docs/PHASE_10.md](docs/PHASE_10.md) |
 | Arquitectura | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Reproducción | [docs/QUICKSTART.md](docs/QUICKSTART.md) |
 | Demo segura | [docs/DEMO.md](docs/DEMO.md) |
