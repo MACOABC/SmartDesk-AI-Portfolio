@@ -1,0 +1,61 @@
+{
+  "description": "Synthetic demo data for SmartDesk AI. No production or personal data.",
+  "cases": [
+    {
+      "id": "DEMO-LOW-001",
+      "purpose": "Planned service request with no active outage",
+      "expected_demo_label": {
+        "category": "service_request",
+        "priority": "low"
+      },
+      "payload": {
+        "requester_email": "alice@example.com",
+        "requester_area": "Finanzas",
+        "title": "Solicitar un segundo monitor",
+        "description": "Necesito cotizar un monitor adicional para el próximo trimestre; mi equipo actual funciona con normalidad."
+      }
+    },
+    {
+      "id": "DEMO-MEDIUM-001",
+      "purpose": "Localized hardware degradation with a workaround",
+      "expected_demo_label": {
+        "category": "hardware",
+        "priority": "medium"
+      },
+      "payload": {
+        "requester_email": "supporter@example.com",
+        "requester_area": "Operaciones",
+        "title": "Teclado del puesto responde de forma intermitente",
+        "description": "Varias teclas dejan de responder durante algunos minutos; puedo continuar temporalmente con un teclado USB de respaldo."
+      }
+    },
+    {
+      "id": "DEMO-HIGH-001",
+      "purpose": "Multi-user network outage suitable for the notification branch",
+      "expected_demo_label": {
+        "category": "network",
+        "priority": "high"
+      },
+      "payload": {
+        "requester_email": "network.demo@example.com",
+        "requester_area": "Logística",
+        "title": "La sede no puede conectarse a la VPN",
+        "description": "Doce personas de la sede no acceden al sistema de despachos desde hace una hora y no existe una conexión alternativa disponible."
+      }
+    },
+    {
+      "id": "DEMO-CRITICAL-001",
+      "purpose": "Security-sensitive access incident for critical routing",
+      "expected_demo_label": {
+        "category": "access",
+        "priority": "critical"
+      },
+      "payload": {
+        "requester_email": "security.demo@example.com",
+        "requester_area": "Seguridad de la Información",
+        "title": "Cuenta de exempleado conserva acceso activo",
+        "description": "Una cuenta de exempleado mantiene acceso confirmado a documentos internos y requiere contención inmediata."
+      }
+    }
+  ]
+}
