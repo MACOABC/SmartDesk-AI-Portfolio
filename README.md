@@ -67,6 +67,13 @@ The versioned [sanitized workflow export](n8n/workflows/ticket-intake.json) is
 importable. Production credentials, the private route and environment-specific
 configuration remain external to the repository.
 
+### Structured AI output
+
+[![Synthetic ticket and schema-validated structured AI result](docs/assets/screenshots/ticket-ai-response.png)](docs/assets/screenshots/ticket-ai-response.png)
+
+*Example synthetic ticket and the schema-validated structured result preserved
+from the frozen evaluation benchmark. No production data is shown.*
+
 ## Capacidades verificadas
 
 - contrato HTTP con validación acumulativa y persistencia DB-first;

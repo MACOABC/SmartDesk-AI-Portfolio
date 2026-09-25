@@ -63,20 +63,21 @@ deterministas después de validar el JSON.”
 ## 3. Synthetic ticket and structured AI response
 
 **Filename:** `ticket-ai-response.png`
-**Status:** MANUAL CAPTURE REQUIRED
-**Pantalla a abrir:** cliente HTTP o terminal limpia con request y response de
-una ejecución ensayada de `DEMO-LOW-001`.
-**Estado/datos:** entorno demo aislado; payload de `demo/tickets.json`; salida
-real capturada en el ensayo.
-**Debe verse:** marca de dato sintético, request, HTTP result y JSON con
+**Status:** READY / PASS
+**Human review:** APPROVED
+**Fuente:** caso sintético `SD-EVAL-TEST-083` del dataset congelado y su salida
+real conservada en los artefactos de la evaluación oficial.
+**Estado/datos:** composición determinista con los valores originales del input
+y del resultado exitoso, sin datos productivos ni identificadores del proveedor.
+**Debe verse:** marca de dato sintético, área, asunto, descripción y JSON con
 `category`, `priority` y `summary`.
 **Debe ocultarse:** endpoint real, authorization headers, provider response ID,
-ticket UUID completo y command history no relacionada.
-**Crop recomendado:** dos paneles o bloques verticales request/response, sin
-barra de direcciones.
-**Resolución:** 1600×900 o superior, 16:9.
-**Caption:** “Ticket sintético clasificado mediante Structured Outputs y JSON
-Schema.”
+execution ID, ticket UUID, hostname, IP y rutas personales.
+**Composición:** dos paneles input/output, fondo claro y contenido legible en
+GitHub README.
+**Resolución:** 1920×1080, 16:9.
+**Caption:** “Example synthetic ticket and the schema-validated structured
+result preserved from the frozen evaluation benchmark.”
 **Competencia demostrada:** IA aplicada con contratos y validación
 determinista.
 
