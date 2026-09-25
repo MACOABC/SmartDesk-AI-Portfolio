@@ -29,6 +29,7 @@ una release.
 | 10.O GitHub polish | PASS parcial | Descripción y topics actualizados; repo privado; sin homepage, release o licencia. |
 | 10.P Secret scan | PASS árbol / BLOCKED historia | Cero secretos; endpoint ausente del árbol y presente en historia. |
 | 10.Q Tests | PASS | Validator, 35 tests, dataset y links; CI hosted `36088293846` PASS sobre `e5259e5...`. |
+| 10.V Endpoint rotation | PASS | Ruta pública nueva configurada externamente; E2E sintético único PASS; ruta histórica 404; hosted monitor `36152093510` PASS sobre `a711971...`. |
 
 ## Documentación vigente
 
@@ -54,4 +55,23 @@ una release.
    esa tag no se mueve ni se publica automáticamente.
 5. Gate 10 requiere una revisión final después de resolver los puntos
    anteriores; este sprint no lo declara PASS.
+
+## Phase 10.V — rotación del endpoint productivo
+
+La ruta pública productiva fue reemplazada por un valor aleatorio conservado
+únicamente en configuración externa. Caddy mantiene estable el webhook interno
+de n8n, expone una sonda GET 204 sin efectos y solo reenvía POST en la ruta
+vigente. La ruta histórica fue retirada y una petición GET segura devolvió
+404, sin alcanzar el workflow.
+
+La transición utilizó dos deployments manuales por SHA: preparación
+`36151549502` y cierre `36151962190`. Una única prueba sintética creó el ticket
+esperado, obtuvo predicción `succeeded` y evento `skipped`; consumió una llamada
+OpenAI y no activó Telegram. El monitor alojado `36152093510`, disparado por
+`workflow_dispatch`, terminó `success` con HTTP 204 y su log no contiene el
+hostname ni la ruta privada.
+
+`refs/pull/1/head` continúa conservando la referencia histórica. Phase 10.V no
+reescribió historia, no hizo force push, no movió `v1.0`, no cambió la
+visibilidad privada y no intentó resolver ese ref.
 

@@ -29,7 +29,8 @@ no debe copiarse a tickets, logs, capturas ni commits.
 
 Para una comprobación local sin ingress público, `SMARTDESK_HOST` puede
 conservar el hostname de ejemplo. Un deployment con Caddy y TLS necesita un
-hostname propio cuyo DNS resuelva al host.
+hostname propio cuyo DNS resuelva al host. `SMARTDESK_WEBHOOK_PATH` debe
+reemplazarse por una ruta aleatoria privada y conservarse fuera de Git.
 
 ## 2. Servicios y PostgreSQL
 
@@ -82,9 +83,10 @@ Para un entorno con DNS propio y puertos 80/443 disponibles:
 docker compose up -d --wait
 ```
 
-Caddy publica únicamente `POST /webhook/tickets`; las rutas de administración
-Phase 6 permanecen en loopback. Antes de exponer el servicio, revisar
-`DEPLOYMENT.md`. El repositorio no incluye dominio, IP ni credenciales reales.
+Caddy publica únicamente `POST` en `SMARTDESK_WEBHOOK_PATH`; las rutas de
+administración Phase 6 permanecen en loopback. Antes de exponer el servicio,
+revisar `DEPLOYMENT.md`. El repositorio no incluye dominio, IP, ruta pública
+real ni credenciales.
 
 ## 5. Tests locales
 

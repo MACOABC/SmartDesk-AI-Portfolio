@@ -435,11 +435,18 @@ repositorio debe permanecer privado hasta una decisión humana sobre history
 rewrite. También permanecen pendientes licencia, assets manuales, estrategia
 de release y Gate 10. La evidencia detallada está en `docs/PHASE_10.md`.
 
+Phase 10.V quedó PASS: la ruta productiva fue rotada mediante configuración
+externa, una única prueba E2E sintética confirmó n8n y persistencia, la ruta
+histórica quedó inactiva con HTTP 404 y el monitor alojado terminó `success`.
+El valor vigente no está en Git, docs ni logs. `refs/pull/1/head` sigue siendo
+el bloqueante histórico de publicación y no fue modificado.
+
 ## Siguiente paso
 
-El propietario debe decidir si autoriza una sanitización de historia antes de
-cualquier publicación. No mover `v1.0`, no hacer force push y no cambiar la
-visibilidad hasta esa decisión. Gate 10 permanece pendiente.
+El propietario debe decidir entre solicitar purge/support seguido de una
+reescritura autorizada, o crear posteriormente un repositorio público
+saneado. No mover `v1.0`, no hacer force push y no cambiar la visibilidad hasta
+esa decisión. Gate 10 permanece pendiente.
 
 ## Límites actuales
 

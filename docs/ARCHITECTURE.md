@@ -36,7 +36,9 @@ flowchart TB
     PowerBI[Power BI por túnel SSH] -->|127.0.0.1:5432| PostgreSQL
 ```
 
-- Caddy solo reenvía `POST /webhook/tickets`.
+- Caddy solo reenvía `POST` en `SMARTDESK_WEBHOOK_PATH`, una ruta privada
+  configurada fuera de Git, y la reescribe hacia el webhook interno estable
+  de n8n.
 - Los endpoints HITL y resolución permanecen en loopback y exigen token.
 - PostgreSQL y la administración n8n no están expuestos a Internet.
 - Secrets y credenciales viven fuera de Git.
@@ -51,7 +53,7 @@ flowchart LR
     VM --> Health[systemd health monitor]
     VM --> Backup[backup cifrado diario]
     Backup --> Offhost[copia privada off-host]
-    Hosted[GitHub external monitor] -->|GET seguro; espera 404| VM
+    Hosted[GitHub external monitor] -->|GET seguro; espera 204| VM
 ```
 
 El CD es manual por SHA completo y no se ejecuta por push. El environment

@@ -70,7 +70,7 @@ estos valores fuera de Git:
 | `SMARTDESK_DEPLOY_KNOWN_HOSTS` | Secret | host key fijada |
 | `SMARTDESK_DEPLOY_HOST` | Secret | host de destino |
 | `SMARTDESK_DEPLOY_USER` | Secret | usuario no root |
-| `SMARTDESK_MONITOR_URL` | Secret | URL HTTPS para smoke/monitor |
+| `SMARTDESK_MONITOR_URL` | Secret | URL HTTPS completa de la sonda segura de la ruta pública vigente |
 | `SMARTDESK_DEPLOY_PATH` | Variable | ruta relativa, normalmente `smartdesk-ai` |
 
 CI se ejecuta en PR/push a main. CD nunca se ejecuta por push: requiere

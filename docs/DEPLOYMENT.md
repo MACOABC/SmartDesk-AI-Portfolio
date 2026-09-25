@@ -5,13 +5,15 @@
 La entrada pública de V1 está limitada a:
 
 ```text
-POST https://<SMARTDESK_HOST>/webhook/tickets
+POST https://<SMARTDESK_HOST><SMARTDESK_WEBHOOK_PATH>
 ```
 
 El nodo productivo `Receive Ticket` conserva internamente la ruta
-`/webhook/tickets`. Caddy termina TLS y reenvía únicamente esa combinación
-exacta de método y ruta a `n8n:5678`. Cualquier otra ruta o método recibe 404 y
-no alcanza n8n.
+`/webhook/tickets`. Caddy termina TLS, acepta únicamente la ruta pública
+privada definida por `SMARTDESK_WEBHOOK_PATH`, la reescribe hacia esa ruta
+interna y la reenvía a `n8n:5678`. Cualquier otra ruta o método recibe 404 y
+no alcanza n8n. La ruta pública real permanece fuera de Git y de la
+documentación.
 
 ## Arquitectura
 
@@ -33,6 +35,8 @@ Internet :80/:443
 - Los volúmenes `caddy_data` y `caddy_config` conservan certificados y estado
   fuera de Git.
 - El hostname se configura una sola vez mediante `SMARTDESK_HOST` en `.env`.
+- La ruta pública se configura mediante `SMARTDESK_WEBHOOK_PATH` en `.env` y
+  debe ser aleatoria, privada y distinta en cada deployment.
 - n8n recibe `N8N_WEBHOOK_URL=https://<SMARTDESK_HOST>/` y
   `N8N_PROXY_HOPS=1`; su listener interno continúa usando HTTP.
 
@@ -42,6 +46,7 @@ Crear `.env` desde `.env.example` y establecer al menos:
 
 ```text
 SMARTDESK_HOST=<hostname DNS público>
+SMARTDESK_WEBHOOK_PATH=/webhook/<private-random-route>
 ```
 
 El registro DNS debe resolver a la IP pública reservada de la VM. OCI y UFW
@@ -55,6 +60,7 @@ Validar antes de desplegar:
 ```bash
 docker compose config --quiet
 docker run --rm -e SMARTDESK_HOST=smartdesk.example.com \
+  -e SMARTDESK_WEBHOOK_PATH=/webhook/example-private-route \
   -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
   caddy:2.11.4-alpine caddy validate --config /etc/caddy/Caddyfile
 ```
@@ -79,8 +85,9 @@ Comprobar:
 http://<SMARTDESK_HOST>/                   -> redirección HTTPS
 https://<SMARTDESK_HOST>/                  -> 404
 https://<SMARTDESK_HOST>/login             -> 404
-GET https://<SMARTDESK_HOST>/webhook/tickets  -> 404
-POST https://<SMARTDESK_HOST>/webhook/tickets -> n8n
+GET https://<SMARTDESK_HOST><SMARTDESK_WEBHOOK_PATH>  -> 204
+POST https://<SMARTDESK_HOST><SMARTDESK_WEBHOOK_PATH> -> n8n
+GET a la ruta pública anterior                        -> 404/410
 ```
 
 Para verificar el webhook sin consumir servicios externos, utilizar un JSON
@@ -122,8 +129,8 @@ POST http://127.0.0.1:5678/webhook/admin/tickets/resolve
 ```
 
 Ambos exigen `X-SmartDesk-Admin-Token`. Caddy continúa admitiendo públicamente
-solo `POST /webhook/tickets`, por lo que esas rutas administrativas reciben
-404 desde Internet.
+solo `POST` en la ruta privada configurada, por lo que esas rutas
+administrativas reciben 404 desde Internet.
 
 ## Trazabilidad del deployment
 
