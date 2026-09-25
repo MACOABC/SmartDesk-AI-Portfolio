@@ -180,12 +180,16 @@ snapshots de implementación y `docs/testing/GATE_X` conserva evidencia.
 - El environment `production` no tiene required reviewers configurados.
 - La copia de portfolio omite refs operativos históricos y conserva únicamente
   la historia sanitizada de `main` y el tag `v1.0`.
-- La licencia y la estrategia de release posterior a `v1.0` están pendientes
-  de decisión del propietario (**LICENSE DECISION REQUIRED**).
+- La versión histórica `v1.0` permanece intacta; `v1.1.0` está reservada
+  para el futuro release de portfolio y todavía no tiene tag ni GitHub Release.
 
 ## Estado del proyecto
 
 Gates 0–9 están aprobados. Phase 10 está en progreso y Gate 10 aún no ha sido
 cerrado. No se afirman usuarios, volumen productivo, ahorro ni impacto de
 negocio porque esas métricas no han sido verificadas.
+
+## Licencia
+
+Distribuido bajo la [MIT License](LICENSE).
 
