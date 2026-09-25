@@ -21,6 +21,6 @@ jobs:
           set -Eeuo pipefail
           test -n "$MONITOR_URL"
           status="$(curl --silent --show-error --location --max-time 15 \
-            --output /dev/null --write-out '%{http_code}' "$MONITOR_URL/")"
-          test "$status" = "404"
-          echo "external_monitor=PASS status=404"
+            --output /dev/null --write-out '%{http_code}' "$MONITOR_URL")"
+          test "$status" = "204"
+          echo "external_monitor=PASS status=204"

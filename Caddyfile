@@ -12,7 +12,7 @@
 
 	@ticket_webhook {
 		method POST
-		path /webhook/tickets {$SMARTDESK_WEBHOOK_PATH}
+		path {$SMARTDESK_WEBHOOK_PATH}
 	}
 
 	handle @ticket_webhook {

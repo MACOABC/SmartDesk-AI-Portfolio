@@ -86,6 +86,6 @@ jobs:
           MONITOR_URL: ${{ secrets.SMARTDESK_MONITOR_URL }}
         run: |
           set -Eeuo pipefail
-          status="$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$MONITOR_URL/")"
-          test "$status" = "404"
-          echo "deployment_external_smoke=PASS status=404"
+          status="$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$MONITOR_URL")"
+          test "$status" = "204"
+          echo "deployment_external_smoke=PASS status=204"
