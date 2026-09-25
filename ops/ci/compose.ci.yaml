@@ -21,7 +21,7 @@ services:
       - ../../db/tests:/opt/smartdesk/tests:ro
       - ../../sql/analytics:/opt/smartdesk/analytics:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready --username=ci_admin --dbname=postgres"]
+      test: ["CMD-SHELL", "pg_isready --host=127.0.0.1 --username=ci_admin --dbname=postgres"]
       interval: 2s
       timeout: 3s
       retries: 30
