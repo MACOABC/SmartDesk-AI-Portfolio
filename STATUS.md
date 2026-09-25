@@ -430,10 +430,10 @@ Phase 10 está IN PROGRESS. El sprint inicial completó:
 - descripción y topics de GitHub mejorados sin cambiar visibilidad;
 - CI hosted PASS sobre los commits del sprint.
 
-La historia Git conserva la referencia anterior al hostname productivo. El
-repositorio debe permanecer privado hasta una decisión humana sobre history
-rewrite. También permanecen pendientes licencia, assets manuales, estrategia
-de release y Gate 10. La evidencia detallada está en `docs/PHASE_10.md`.
+El candidato sanitizado `MACOABC/SmartDesk-AI-Portfolio` permanece privado,
+con `v1.0` preservado, historia/refs seguras, CI funcional y aislamiento de
+producción. MIT License y la estrategia `v1.1.0 — Portfolio Release` están
+documentadas; no existe todavía tag ni GitHub Release.
 
 Phase 10.V quedó PASS: la ruta productiva fue rotada mediante configuración
 externa, una única prueba E2E sintética confirmó n8n y persistencia, la ruta
@@ -443,10 +443,9 @@ el bloqueante histórico de publicación y no fue modificado.
 
 ## Siguiente paso
 
-El propietario debe decidir entre solicitar purge/support seguido de una
-reescritura autorizada, o crear posteriormente un repositorio público
-saneado. No mover `v1.0`, no hacer force push y no cambiar la visibilidad hasta
-esa decisión. Gate 10 permanece pendiente.
+Capturar los seis assets definidos en `docs/PORTFOLIO_ASSETS.md`, grabar la
+demo segura y revisar visualmente README/video antes de autorizar `v1.1.0` y
+el cambio de visibilidad. Gate 10 permanece pendiente.
 
 ## Límites actuales
 

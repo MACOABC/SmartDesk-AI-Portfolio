@@ -141,10 +141,14 @@ one-command production deploy.
 
 ## Demo
 
-El [contrato de demo](docs/DEMO.md) define un storyboard seguro de 2–4 minutos
-y usa cuatro fixtures en [demo/tickets.json](demo/tickets.json). La grabación y
-las capturas todavía requieren trabajo manual; no existe un enlace de video
-publicado.
+El [guion de demo](docs/DEMO.md) define una ejecución segura de unos 3 minutos.
+Usa `DEMO-LOW-001` como caso principal sin notificación y reserva
+`DEMO-HIGH-001` como alerta opcional solo para un entorno aislado. Los cuatro
+fixtures están en [demo/tickets.json](demo/tickets.json).
+
+Las capturas todavía requieren trabajo manual. La
+[guía de assets](docs/PORTFOLIO_ASSETS.md) indica exactamente qué abrir,
+ocultar y recortar; no se incluyen mocks ni screenshots ficticios.
 
 ## Documentación
 
@@ -158,6 +162,9 @@ publicado.
 | Demo segura | [docs/DEMO.md](docs/DEMO.md) |
 | Claims y métricas | [docs/PORTFOLIO_METRICS.md](docs/PORTFOLIO_METRICS.md) |
 | Plan de assets | [docs/PORTFOLIO_ASSETS.md](docs/PORTFOLIO_ASSETS.md) |
+| Assets | [docs/assets](docs/assets) |
+| Checklist de publicación | [docs/PUBLICATION_CHECKLIST.md](docs/PUBLICATION_CHECKLIST.md) |
+| Release notes v1.1.0 | [docs/RELEASE_NOTES_v1.1.0.md](docs/RELEASE_NOTES_v1.1.0.md) |
 | Contrato de intake | [docs/INTAKE.md](docs/INTAKE.md) |
 | Evaluación | [docs/PHASE_7.md](docs/PHASE_7.md) |
 | Power BI | [powerbi/README.md](powerbi/README.md) |

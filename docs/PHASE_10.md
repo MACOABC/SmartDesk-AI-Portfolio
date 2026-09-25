@@ -30,6 +30,8 @@ una release.
 | 10.P Secret scan | PASS árbol / BLOCKED historia | Cero secretos; endpoint ausente del árbol y presente en historia. |
 | 10.Q Tests | PASS | Validator, 35 tests, dataset y links; CI hosted `36088293846` PASS sobre `e5259e5...`. |
 | 10.V Endpoint rotation | PASS | Ruta pública nueva configurada externamente; E2E sintético único PASS; ruta histórica 404; hosted monitor `36152093510` PASS sobre `a711971...`. |
+| 10.W Sanitized portfolio repository | PASS | Candidato privado con historia y refs saneadas, `v1.0` preservado, aislamiento productivo y CI hosted PASS. |
+| 10.X Pre-publication preparation | READY FOR MANUAL ASSETS | MIT, guía exacta de seis capturas, demo ejecutable, CV-safe claims, release notes y checklist preparados; sin tag, release ni cambio de visibilidad. |
 
 ## Documentación vigente
 
@@ -44,17 +46,26 @@ una release.
 
 ## Bloqueantes para Gate 10
 
-1. **HISTORY SANITIZATION REQUIRED BEFORE PUBLICATION.** El propietario debe
-   decidir si autoriza reescritura de historia y force push. Hasta entonces el
-   repositorio permanece privado.
-2. **LICENSE DECISION REQUIRED.** No se selecciona una licencia sin decisión
-   explícita del propietario.
-3. Las capturas y el video requieren producción manual desde un entorno demo
+1. Las capturas y el video requieren producción manual desde un entorno demo
    aislado y una revisión cuadro por cuadro.
-4. Debe decidirse la semántica de release posterior a la tag histórica `v1.0`;
-   esa tag no se mueve ni se publica automáticamente.
-5. Gate 10 requiere una revisión final después de resolver los puntos
+2. El README renderizado necesita revisión visual con los assets incorporados.
+3. El propietario debe autorizar explícitamente tag, release y cambio de
+   visibilidad.
+4. Gate 10 requiere una revisión final después de resolver los puntos
    anteriores; este sprint no lo declara PASS.
+
+## Phase 10.W–10.X — candidato y pre-publicación
+
+`MACOABC/SmartDesk-AI-Portfolio` es el candidato sanitizado de portfolio.
+Permanece privado, conserva `v1.0`, no tiene secrets ni environments
+productivos y sus workflows operativos están bloqueados. El repositorio
+privado original conserva la autoridad de deployment.
+
+Phase 10.X añadió MIT License, un manual exacto para seis assets reales, un
+guion demo de aproximadamente tres minutos, claims aptos para CV con fuentes,
+release notes de `v1.1.0` y la checklist de publicación. `v1.1.0` está
+preparada conceptualmente, pero no existe tag ni GitHub Release. El siguiente
+estado es `READY FOR MANUAL ASSETS`; Gate 10 continúa pendiente.
 
 ## Phase 10.V — rotación del endpoint productivo
 

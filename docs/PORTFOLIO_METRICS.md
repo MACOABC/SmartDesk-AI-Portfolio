@@ -37,6 +37,22 @@ puede usarse junto con su contexto y caveat. Los conteos operacionales de Gate
 | Backup/restore | PASS aislado y cifrado | `docs/testing/GATE_9.md` | README, CV | Evidencia de drill; no mide RPO/RTO continuo. |
 | Hosted monitor | PASS, status esperado 204 | GitHub run `36152395973` | README técnico | GET seguro; no crea tickets ni acredita disponibilidad histórica. |
 
+## CV-safe claims
+
+Estas frases pueden adaptarse en longitud, pero no ampliar su alcance ni
+eliminar sus caveats.
+
+| Claim | Evidence | Required context |
+| --- | --- | --- |
+| Built and deployed an AI-assisted help desk workflow on Oracle Cloud using n8n, PostgreSQL, Docker and structured LLM outputs. | `docs/testing/GATE_5.md`, `docs/testing/GATE_6.md` | Despliegue real; no implica usuarios o volumen productivo. |
+| Evaluated ticket classification on 120 labeled synthetic cases, reaching 89.17% category accuracy and 76.67% priority accuracy. | `docs/PHASE_7.md`, official `metrics.json` | Benchmark sintético congelado; no accuracy productiva. |
+| Implemented DB-first persistence, deterministic output validation, business rules, HITL and SLA tracking with auditable states. | Gates 3, 4 y 6 | Capacidad funcional; HITL no mejoró accuracy en el benchmark observado. |
+| Built deterministic CI with 35 automated tests, temporary PostgreSQL, migrations and SQL contract checks. | `docs/testing/GATE_9.md`, `.github/workflows/ci.yml` | Suite del repositorio; no es una métrica de disponibilidad. |
+| Created four PostgreSQL analytics views and a three-page Power BI model with reconciled SQL/DAX measures. | `docs/testing/GATE_8.md`, `powerbi/SmartDeskAI.pbit` | Datos de validación pequeños; no impacto empresarial. |
+
+No actualizar automáticamente el CV, LinkedIn ni otros perfiles a partir de
+esta tabla: el propietario debe elegir el wording final.
+
 ## Claims no permitidos
 
 | Claim | Estado | Uso |
