@@ -35,7 +35,7 @@ puede usarse junto con su contexto y caveat. Los conteos operacionales de Gate
 | Negative CI / recovery | FAIL esperado → PASS | GitHub runs `36079465259` y `36079518418` | README, entrevista | Prueba controlada, no incidente productivo. |
 | CD por SHA | PASS sobre SHA exacto | GitHub run `36080435344` y `docs/testing/GATE_9.md` | README, entrevista | Environment sin required reviewers. |
 | Backup/restore | PASS aislado y cifrado | `docs/testing/GATE_9.md` | README, CV | Evidencia de drill; no mide RPO/RTO continuo. |
-| Hosted monitor | PASS, status esperado 404 | GitHub run `36087544636` | README técnico | GET seguro; no crea tickets ni acredita disponibilidad histórica. |
+| Hosted monitor | PASS, status esperado 204 | GitHub run `36152395973` | README técnico | GET seguro; no crea tickets ni acredita disponibilidad histórica. |
 
 ## Claims no permitidos
 

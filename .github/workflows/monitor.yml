@@ -1,8 +1,6 @@
 name: External availability monitor
 
 on:
-  schedule:
-    - cron: "17,47 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -10,6 +8,7 @@ permissions:
 
 jobs:
   https-boundary:
+    if: github.repository == 'MACOABC/SmartDesk-AI'
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     environment: production

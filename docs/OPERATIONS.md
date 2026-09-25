@@ -1,5 +1,14 @@
 # Operaciones de SmartDesk AI
 
+## Autoridad del repositorio
+
+La copia sanitizada de portfolio conserva estos workflows como evidencia de
+implementación, pero no contiene secrets productivos y no es autoridad de
+deployment. Los jobs de monitor y despliegue están restringidos al repositorio
+privado original `MACOABC/SmartDesk-AI`; en esta copia el monitor tampoco tiene
+schedule. Producción continúa operándose exclusivamente desde el repositorio
+privado original.
+
 ## Salud diaria
 
 ```bash

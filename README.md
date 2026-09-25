@@ -10,6 +10,11 @@ deterministas deciden la automatización y Power BI consume vistas analíticas
 read-only. El proyecto incluye HITL, SLA, CI/CD, monitoring y recuperación sin
 pretender sustituir una plataforma ITSM completa.
 
+> Este repositorio es la copia sanitizada para portfolio. Conserva el código,
+> la evidencia y el tag histórico `v1.0`, pero no contiene secretos ni tiene
+> autoridad para desplegar o monitorizar la producción. El repositorio privado
+> original sigue siendo la única autoridad operativa.
+
 ## Arquitectura
 
 ```mermaid
@@ -104,7 +109,7 @@ documentación de Gates y en el registro de métricas de portafolio.
   Internet.
 - Secrets y credenciales permanecen fuera de Git; `.env.example` contiene solo
   placeholders.
-- El monitor hosted ejecuta un GET seguro que espera 404 y no crea tickets.
+- El monitor hosted ejecuta un GET seguro que espera 204 y no crea tickets.
 - Los backups cifrados pasaron un restore drill aislado.
 - CI no llama OpenAI, Telegram ni bases productivas.
 
@@ -173,10 +178,10 @@ snapshots de implementación y `docs/testing/GATE_X` conserva evidencia.
 - El webhook no sustituye identidad corporativa ni un portal ITSM.
 - La demo pública debe operar con datos y servicios aislados.
 - El environment `production` no tiene required reviewers configurados.
-- La historia Git conserva un hostname productivo anterior; el repositorio debe
-  permanecer privado hasta decidir una sanitización autorizada de historia.
+- La copia de portfolio omite refs operativos históricos y conserva únicamente
+  la historia sanitizada de `main` y el tag `v1.0`.
 - La licencia y la estrategia de release posterior a `v1.0` están pendientes
-  de decisión del propietario.
+  de decisión del propietario (**LICENSE DECISION REQUIRED**).
 
 ## Estado del proyecto
 
