@@ -4,5 +4,6 @@
 *.yml text eol=lf
 *.sql text eol=lf
 *.json text eol=lf
+*.jsonl binary
 *.ps1 text eol=crlf
 *.pbit binary
