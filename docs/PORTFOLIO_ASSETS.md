@@ -1,9 +1,9 @@
 # SmartDesk AI — Guía de captura de assets
 
-Esta guía define seis assets finales de alto valor. Ninguno debe fabricarse,
-simular producción ni capturarse desde datos operacionales. Guardar los PNG
-aprobados en `docs/assets/screenshots/` solo después de revisar cada imagen al
-100 % de zoom.
+Esta guía define seis grupos de evidencia visual de alto valor —siete PNG por
+la secuencia n8n en tres partes—. Ninguno debe fabricarse, simular producción
+ni capturarse desde datos operacionales. Los PNG seleccionados se guardan en
+`docs/assets/screenshots/` después de revisar cada imagen al 100 % de zoom.
 
 ## Reglas comunes
 
@@ -81,59 +81,47 @@ result preserved from the frozen evaluation benchmark.”
 **Competencia demostrada:** IA aplicada con contratos y validación
 determinista.
 
-## 4. Power BI overview
+## 4. Power BI analytical model
 
-**Filename:** `powerbi-overview.png`
-**Status:** MANUAL CAPTURE REQUIRED
-**Pantalla a abrir:** página Overview del reporte Power BI.
-**Estado/datos:** modelo conectado únicamente a la base demo y filtros en un
-estado representativo; nunca usar las filas operacionales de Gate 8.
-**Debe verse:** KPIs, distribución por categoría/prioridad/área, filtros y
-periodo visible.
-**Debe ocultarse:** panel de conexión, servidor, usuario, rutas locales,
-emails, texto libre y Power Query con credenciales.
-**Crop recomendado:** canvas completo del reporte, sin Desktop chrome
-innecesario.
-**Resolución:** 1920×1080 preferida, 16:9.
-**Caption:** “Overview operativo sobre vistas PostgreSQL y datos sintéticos de
-demo.”
-**Competencia demostrada:** modelado analítico, SQL, DAX y visualización.
+**Filename:** `powerbi-data-model.png`
+**Status:** READY / PASS
+**Source:** modelo real validado en Power BI Desktop durante Gate 8.
+**Debe verse:** `FactTickets` como tabla padre y las relaciones activas 1:* a
+`FactAIPredictions`, `FactHITLReviews` y `FactAutomationEvents`.
+**Debe ocultarse:** filas, credenciales, conexión, hostname, IP, rutas locales
+y cualquier dato operacional.
+**Resolución:** 1227×779.
+**Caption:** “Power BI analytical model with active one-to-many relationships
+across tickets, predictions, human reviews and automation events.”
+**Competencia demostrada:** SQL analítico, modelado relacional y Power BI.
 
-## 5. Power BI AI quality
-
-**Filename:** `powerbi-ai-quality.png`
-**Status:** MANUAL CAPTURE REQUIRED
-**Pantalla a abrir:** página AI Quality del reporte Power BI.
-**Estado/datos:** dataset demo sintético con filtros visibles y sin texto de
-tickets.
-**Debe verse:** status de predictions, categorías, prioridades y métricas con
-grain explícito.
-**Debe ocultarse:** response IDs, summaries, emails, conexión y datos
-operacionales de Gate 8.
-**Crop recomendado:** canvas del reporte completo o zona central con título y
-filtros.
-**Resolución:** 1920×1080 preferida, 16:9.
-**Caption:** “Trazabilidad de predicciones a grain prediction; confidence no
-se presenta como probabilidad calibrada.”
-**Competencia demostrada:** evaluación responsable y observabilidad de IA.
-
-## 6. GitHub Actions CI
+## 5. GitHub Actions CI
 
 **Filename:** `github-actions-ci.png`
-**Status:** MANUAL CAPTURE REQUIRED
-**Pantalla a abrir:** run CI final del repositorio candidato.
-**Estado/datos:** ejecución PASS sobre el commit final, con el job
-`Run deterministic CI` expandido solo si la salida está saneada.
-**Debe verse:** repositorio candidato, estado verde, SHA abreviado,
-validator/tests y PostgreSQL temporal o migraciones.
-**Debe ocultarse:** rutas del runner que distraigan, identidad no necesaria,
-tabs personales y cualquier valor sensible.
-**Crop recomendado:** encabezado del run y lista de steps; evitar sidebar y
-actividad ajena.
-**Resolución:** 1600×900 o superior, 16:9.
-**Caption:** “CI determinista: validator, 35 tests y migraciones sobre
-PostgreSQL temporal.”
+**Status:** READY / PASS
+**Source:** GitHub Actions run `36187333999`, SHA `e036b09`, repositorio
+candidato.
+**Debe verse:** repositorio candidato, `Status Success` y job `validate` verde.
+**Debe ocultarse:** URL, tabs personales, logs del runner y cualquier valor
+sensible.
+**Ajuste:** crop y eliminación de padding únicamente; la UI no fue recreada.
+**Resolución:** 1920×650.
+**Caption:** “Hosted CI run for the sanitized portfolio candidate, with the
+deterministic validation job completed successfully.”
 **Competencia demostrada:** testing, CI y reproducibilidad.
+
+## Power BI dashboards no seleccionados
+
+Las tres capturas de páginas del reporte se contrastaron con Gate 8. Sus
+valores coinciden exactamente con las 13 filas operacionales usadas para
+reconciliación técnica y no existe evidencia de un seed demo público. Por ello
+no se versionan ni se presentan en el README.
+
+| Captura | Clasificación | Motivo |
+| --- | --- | --- |
+| Operations Overview | REJECT | Conteos operacionales de Gate 8; no son un dataset demo público. |
+| AI & Human Review | REJECT | Mismos datos operacionales y riesgo de confundir `Prediction Success Rate` con accuracy. |
+| SLA & Automation | REJECT | Datos operacionales, redundancia y poco valor adicional frente al modelo. |
 
 ## Assets descartados del bloque principal
 
@@ -144,6 +132,21 @@ PostgreSQL temporal.”
 | Deploy por SHA | NOT NEEDED | El candidato no es autoridad productiva; mostrarlo puede confundir esa separación. |
 | Demo thumbnail | NOT NEEDED | Crear solo después de que exista un video aprobado. |
 
+## Selección visual final
+
+| Asset | Source image | Classification | Final filename | README? | Reason | Security status |
+| --- | --- | --- | --- | --- | --- | --- |
+| Architecture | Asset aprobado | PRIMARY | `architecture-overview.png` | YES | Resume la arquitectura end-to-end. | PASS |
+| n8n intake | Workflow real | PRIMARY | `n8n-ticket-workflow-01-intake.png` | YES | Intake, validación, persistencia y contrato IA. | PASS |
+| n8n AI processing | Workflow real | PRIMARY | `n8n-ticket-workflow-02-ai-processing.png` | YES | Llamadas estructuradas, retries y fallos. | PASS |
+| n8n outcome | Workflow real | PRIMARY | `n8n-ticket-workflow-03-outcome.png` | YES | Clasificación, HITL, reglas y resultado final. | PASS |
+| Structured AI result | Caso `SD-EVAL-TEST-083` | PRIMARY | `ticket-ai-response.png` | YES | Une un input sintético con su output real validado. | PASS |
+| Power BI data model | IMG-01 | PRIMARY | `powerbi-data-model.png` | YES | Demuestra relaciones analíticas sin mostrar filas. | PASS |
+| GitHub Actions CI | Run `36187333999` | PRIMARY | `github-actions-ci.png` | YES | Evidencia CI alojado y job determinista exitoso. | PASS |
+| Power BI SLA / Automation | IMG-02 | REJECT | — | NO | Datos operacionales de Gate 8 y redundancia. | SAFE BUT NOT PUBLICABLE |
+| Power BI AI & Human Review | IMG-03 | REJECT | — | NO | Datos operacionales; success rate no es accuracy. | SAFE BUT NOT PUBLICABLE |
+| Power BI Operations Overview | IMG-04 | REJECT | — | NO | Datos operacionales sin seed demo público. | SAFE BUT NOT PUBLICABLE |
+
 ## Revisión antes de incorporar un PNG
 
 - [ ] La fuente es local/demo y todos los datos son sintéticos.
@@ -151,6 +154,6 @@ PostgreSQL temporal.”
 - [ ] No aparecen secrets, credentials, chat IDs ni response IDs.
 - [ ] No aparecen notificaciones, tabs, perfiles o ventanas ajenas.
 - [ ] El caption es factual y coherente con `PORTFOLIO_METRICS.md`.
-- [ ] El archivo mantiene su nombre final y 16:9.
+- [ ] El archivo mantiene su nombre final y un crop legible para README.
 - [ ] La imagen fue revisada al 100 % de zoom.
 

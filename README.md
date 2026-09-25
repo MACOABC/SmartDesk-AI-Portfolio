@@ -131,6 +131,11 @@ Estas cifras prueban contratos y escenarios controlados; no equivalen a
 volumen de producción ni ahorro de tiempo. Las fuentes se consolidan en la
 documentación de Gates y en el registro de métricas de portafolio.
 
+[![Successful GitHub Actions CI run for SmartDesk AI](docs/assets/screenshots/github-actions-ci.png)](docs/assets/screenshots/github-actions-ci.png)
+
+*Hosted CI for the sanitized portfolio candidate, with the deterministic
+validation job completed successfully.*
+
 ## Reliability y seguridad
 
 - HTTPS termina en Caddy y solo el webhook de intake cruza el límite público.
@@ -152,6 +157,12 @@ Las vistas `v_ticket_lifecycle`, `v_ai_predictions`, `v_hitl_reviews` y
 template [SmartDeskAI.pbit](powerbi/SmartDeskAI.pbit) contiene el modelo y las
 tres páginas sin datos importados ni credenciales. Las cifras operacionales de
 Gate 8 sirven para reconciliación técnica, no como impacto del proyecto.
+
+[![Power BI analytical data model](docs/assets/screenshots/powerbi-data-model.png)](docs/assets/screenshots/powerbi-data-model.png)
+
+*Power BI model with active one-to-many relationships from tickets to AI
+predictions, human reviews and automation events. The image contains schema
+metadata only, not ticket rows.*
 
 ## Quickstart
 
@@ -175,9 +186,9 @@ Usa `DEMO-LOW-001` como caso principal sin notificación y reserva
 `DEMO-HIGH-001` como alerta opcional solo para un entorno aislado. Los cuatro
 fixtures están en [demo/tickets.json](demo/tickets.json).
 
-Las capturas todavía requieren trabajo manual. La
-[guía de assets](docs/PORTFOLIO_ASSETS.md) indica exactamente qué abrir,
-ocultar y recortar; no se incluyen mocks ni screenshots ficticios.
+La [guía de assets](docs/PORTFOLIO_ASSETS.md) documenta el origen, selección y
+controles de seguridad del set visual. No se incluyen mocks ni screenshots con
+datos operacionales de Gate 8; la revisión del video sigue siendo manual.
 
 ## Documentación
 
