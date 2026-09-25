@@ -149,6 +149,9 @@ publicado.
 | Roadmap y gates | [ROADMAP.md](ROADMAP.md) |
 | Arquitectura | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Reproducción | [docs/QUICKSTART.md](docs/QUICKSTART.md) |
+| Demo segura | [docs/DEMO.md](docs/DEMO.md) |
+| Claims y métricas | [docs/PORTFOLIO_METRICS.md](docs/PORTFOLIO_METRICS.md) |
+| Plan de assets | [docs/PORTFOLIO_ASSETS.md](docs/PORTFOLIO_ASSETS.md) |
 | Contrato de intake | [docs/INTAKE.md](docs/INTAKE.md) |
 | Evaluación | [docs/PHASE_7.md](docs/PHASE_7.md) |
 | Power BI | [powerbi/README.md](powerbi/README.md) |
