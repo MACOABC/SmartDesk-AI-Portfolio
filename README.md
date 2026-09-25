@@ -17,21 +17,11 @@ pretender sustituir una plataforma ITSM completa.
 
 ## Arquitectura
 
-```mermaid
-flowchart LR
-    A[Ticket sintético] -->|HTTPS| B[Caddy]
-    B --> C[n8n]
-    C --> D[Validación]
-    D -->|Persistencia inicial| E[(PostgreSQL)]
-    D --> F[OpenAI]
-    F --> G[JSON Schema]
-    G --> E
-    G --> H[Reglas]
-    H --> I[Telegram]
-    E --> J[HITL y SLA]
-    E --> K[Vistas analytics]
-    K --> L[Power BI]
-```
+![SmartDesk AI end-to-end architecture](docs/assets/screenshots/architecture-overview.png)
+
+*End-to-end architecture from HTTPS ticket intake through validated AI
+classification, PostgreSQL-backed automation and read-only Power BI
+analytics.*
 
 La entrada se persiste antes de llamar al proveedor de IA. Predicción,
 revisión humana, decisión final, SLA y eventos se almacenan por separado para

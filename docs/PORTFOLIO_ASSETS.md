@@ -18,7 +18,7 @@ aprobados en `docs/assets/screenshots/` solo después de revisar cada imagen al
 ## 1. Architecture overview
 
 **Filename:** `architecture-overview.png`
-**Status:** MANUAL CAPTURE REQUIRED
+**Status:** READY / PASS
 **Pantalla a abrir:** preview renderizado del Mermaid de
 `docs/ARCHITECTURE.md` en el candidato de portfolio.
 **Estado/datos:** commit final candidato, sin paneles laterales ni información
