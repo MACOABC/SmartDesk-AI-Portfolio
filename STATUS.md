@@ -16,7 +16,7 @@ Phase 6 = COMPLETE
 Phase 7 = COMPLETE
 Phase 8 = COMPLETE
 Phase 9 = COMPLETE
-Phase 10 = NOT STARTED
+Phase 10 = IN PROGRESS
 ```
 
 - **Gate 0: APROBADO.**
@@ -39,7 +39,7 @@ Phase 10 = NOT STARTED
 - **Phase 7 — dataset sintético y evaluación de IA: COMPLETADA.**
 - **Phase 8 — SQL analítico y Power BI: COMPLETADA.**
 - **Phase 9 — operación: COMPLETADA.**
-- **Phase 10 — portafolio y cierre integral: NOT STARTED.**
+- **Phase 10 — portafolio y cierre integral: IN PROGRESS; Gate 10 pendiente.**
 - **Phase 7A — dataset sintético, política y validación local: COMPLETADA.**
 - **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
 - **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 aprobado.**
@@ -418,7 +418,9 @@ La evidencia está en `docs/testing/GATE_9.md`; la operación y recuperación en
 
 ## Siguiente paso
 
-Phase 10 permanece NOT STARTED. No fue implementada durante Phase 9.
+Phase 10 está IN PROGRESS. La primera iteración reparó el monitor hosted y
+comenzó la sanitización, coherencia documental, reproducibilidad y preparación
+de portafolio. Gate 10 permanece pendiente.
 
 ## Límites actuales
 
@@ -427,4 +429,4 @@ Phase 10 permanece NOT STARTED. No fue implementada durante Phase 9.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Gate 0–9 están aprobados. Phase 10 permanece pendiente y no iniciada.
+- Gate 0–9 están aprobados. Phase 10 está en progreso y Gate 10 permanece pendiente.

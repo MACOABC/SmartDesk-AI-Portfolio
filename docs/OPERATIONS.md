@@ -61,8 +61,8 @@ variables productivas.
 
 ## Activar GitHub Actions
 
-Al conectar un remote privado, configurar environment `production` con
-aprobación y estos valores fuera de Git:
+Al conectar un remote privado, configurar el environment `production` con
+estos valores fuera de Git:
 
 | Nombre | Tipo | Uso |
 | --- | --- | --- |
@@ -74,7 +74,11 @@ aprobación y estos valores fuera de Git:
 | `SMARTDESK_DEPLOY_PATH` | Variable | ruta relativa, normalmente `smartdesk-ai` |
 
 CI se ejecuta en PR/push a main. CD nunca se ejecuta por push: requiere
-`workflow_dispatch`, SHA completo y approval del environment.
+`workflow_dispatch` y un SHA completo. El environment `production` centraliza
+secrets, pero actualmente no tiene required reviewers ni otra regla de
+aprobación configurada. Añadir esa protección exige una decisión explícita del
+propietario y un reviewer identificable; hasta entonces no debe describirse el
+deploy como sujeto a aprobación humana adicional.
 
 ## Deployment manual con los mismos scripts
 

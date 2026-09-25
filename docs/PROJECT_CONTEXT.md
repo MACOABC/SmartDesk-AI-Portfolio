@@ -2,7 +2,7 @@
 
 ## Producto y problema
 
-SmartDesk AI automatizará el triage inicial de solicitudes internas de soporte: recibir, validar, registrar, comprender, clasificar, priorizar, resumir, aplicar reglas y notificar. Busca reducir trabajo manual e inconsistencias y producir datos estructurados para análisis. Esos beneficios son objetivos; todavía no se han medido.
+SmartDesk AI automatiza el triage inicial de solicitudes internas de soporte: recibe, valida, registra, clasifica, prioriza, resume, aplica reglas y notifica. Busca reducir trabajo manual e inconsistencias y producir datos estructurados para análisis. Esos beneficios son objetivos; todavía no se han medido.
 
 El resultado esperado es un sistema empresarial funcional, desplegado y demostrable. V1 cubre el procesamiento inicial del ticket; no pretende sustituir una plataforma ITSM completa ni resolver automáticamente las incidencias.
 
@@ -18,7 +18,7 @@ Cada decisión debe poder explicarse en entrevista y respaldarse con artefactos 
 | --- | --- |
 | Solicitante | Enviar área, asunto y descripción sin requerir un portal completo en V1. |
 | Analista de soporte | Recibir el ticket original junto con categoría, prioridad y resumen. |
-| Responsable de TI u operaciones | Consultar indicadores operativos y analíticos en fases posteriores. |
+| Responsable de TI u operaciones | Consultar indicadores operativos y analíticos mediante SQL y Power BI. |
 | Administrador técnico | Mantener infraestructura, servicios, configuración y accesos. |
 
 ## Arquitectura objetivo
@@ -36,7 +36,7 @@ POST al webhook
   → Telegram: notificación
   → registro del resultado y respuesta con ticket_id y estado
 
-PostgreSQL → consultas SQL → Power BI [posterior a V1]
+PostgreSQL → vistas analytics → Power BI
 ```
 
 La persistencia precede a la llamada a la IA para conservar la solicitud si falla un servicio externo. Una respuesta de IA inválida no pasa a las reglas de negocio.
@@ -57,7 +57,7 @@ Internet → HTTPS → Caddy → n8n
 Oracle Cloud ARM64 + Docker Compose
 ```
 
-Caddy y HTTPS se incorporaron en Fase 5 con una superficie pública limitada al webhook productivo. La administración de n8n permanece en localhost mediante túnel SSH. La base no se publica al host; los contenedores autorizados acceden por nombre de servicio. Se mantienen una red de aplicación y una red interna para PostgreSQL, y Caddy solo pertenece a la primera.
+Caddy y HTTPS se incorporaron en Fase 5 con una superficie pública limitada al webhook productivo. La administración de n8n permanece en localhost mediante túnel SSH. PostgreSQL no está expuesto a Internet: el host enlaza `127.0.0.1:5432` para acceso BI mediante túnel SSH y los contenedores autorizados acceden por nombre de servicio. Se mantienen una red de aplicación y una red interna para PostgreSQL, y Caddy solo pertenece a la primera.
 
 La infraestructura disponible es una VM Oracle Cloud ARM64 con Ubuntu 22.04, 2 OCPU y 12 GB de RAM. Docker y Docker Compose ya están disponibles. La operación continua es un objetivo; no existe todavía una medición de disponibilidad. El estado aprobado de seguridad se mantiene en `../STATUS.md`.
 
@@ -123,10 +123,11 @@ mismo evento lógico interno.
 V1 excluye portal completo, autenticación corporativa, asignación inteligente, resolución automática, RAG, embeddings, base vectorial, chatbot, ML propio, backend personalizado, microservicios, Redis, Kafka y Kubernetes.
 
 Después de V1 se completaron confiabilidad, reintentos selectivos, revisión
-humana y SLA en Phase 6. Permanecen evaluación de IA, SQL analítico, Power BI,
-CI/CD, monitoreo, backups y hardening adicional según `../ROADMAP.md`. La
-detección de tickets duplicados y otras extensiones se considerarán por su
-valor. Portainer no forma parte del producto.
+humana y SLA en Phase 6; evaluación de IA en Phase 7; SQL analítico y Power BI
+en Phase 8; y CI/CD, monitoring, backups y hardening adicional en Phase 9.
+Phase 10 prepara la documentación, demo y evidencia profesional sin ampliar el
+producto. La detección de tickets duplicados y otras extensiones solo se
+considerarán por su valor. Portainer no forma parte del producto.
 
 ## Calidad, seguridad y evidencia
 
@@ -134,8 +135,8 @@ valor. Portainer no forma parte del producto.
 - Secretos externos a Git; `.env.example` solo con valores ficticios. Datos sintéticos en pruebas, demos y capturas.
 - PostgreSQL privado y n8n sin exposición pública directa en `5678`; administración protegida y publicación mediante HTTPS.
 - Pruebas de contratos, JSON inválido, fallos externos, persistencia, reglas e integración completa, con resultados comprobables.
-- Evaluación futura con dataset sintético etiquetado: accuracy de categoría y prioridad, matrices de confusión, latencia, errores, tickets procesados y tasa de revisión humana.
-- Análisis por categoría, prioridad, área, estado, tiempo, SLA y resolución; el dashboard permanece para Phase 8.
+- Evaluación ejecutada sobre un dataset sintético etiquetado y congelado: accuracy de categoría y prioridad, matrices de confusión, latencia, errores, coste y routing HITL, con limitaciones documentadas.
+- Análisis implementado por categoría, prioridad, área, estado, tiempo, SLA y resolución mediante cuatro vistas y un template Power BI de tres páginas.
 - No se afirmarán ahorros, precisión, disponibilidad ni impacto sin mediciones ejecutadas y reproducibles.
 
 La VM única es un punto único de fallo aceptado inicialmente. Deben contemplarse errores de IA, abuso del webhook, instrucciones maliciosas dentro de tickets, filtración de secretos, consumo de disco e incompatibilidades ARM64. Sus controles se incorporarán en la fase correspondiente, sin declarar resuelto lo que aún no se haya validado.
@@ -144,4 +145,9 @@ La VM única es un punto único de fallo aceptado inicialmente. Deben contemplar
 
 El hostname y DNS de V1 quedaron resueltos al implementar el ingress HTTPS de Fase 5. La categoría residual permanece fijada como `other` por aprobación del usuario.
 
-Este contexto consolida «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». El estado más reciente prevalece sobre las propuestas iniciales. La aprobación de gates y la evidencia disponible se consultan en `../STATUS.md`.
+Este contexto consolida «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». `../STATUS.md` es la fuente del estado actual, `../ROADMAP.md` define fases y gates, `PHASE_X.md` conserva snapshots de implementación y `testing/GATE_X.md` conserva evidencia. El estado más reciente prevalece sobre propuestas o snapshots anteriores.
+
+La historia Git anterior a Phase 10 conserva una referencia al hostname
+productivo que fue sustituida por un placeholder en el árbol actual. El
+repositorio debe permanecer privado hasta que el propietario decida si autoriza
+una sanitización de historia; Phase 10 no reescribe historia ni hace force push.

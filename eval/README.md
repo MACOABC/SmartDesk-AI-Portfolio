@@ -250,5 +250,5 @@ retries ni errores operacionales. El threshold HITL productivo no envió casos
 a revisión y dejó 39 error escapes; el hallazgo queda documentado como una
 limitación de calidad. El scoring offline reprodujo métricas y coste sin clave
 ni red. El detalle, matrices, análisis secundario, hashes y limitaciones están
-en `docs/PHASE_7.md`. Gate 7 fue aprobado formalmente; Phase 8 permanece NOT
-STARTED.
+en `docs/PHASE_7.md`. Gate 7 fue aprobado formalmente; las Phases 8 y 9
+también están completas y Phase 10 es el cierre de portafolio vigente.

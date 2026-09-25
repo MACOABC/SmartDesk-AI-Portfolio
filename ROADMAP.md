@@ -20,7 +20,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
 | 8 | SQL analítico y Power BI. | Gate 8. | COMPLETADA / APROBADO. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | COMPLETADA / APROBADO. |
-| 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
+| 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | EN PROGRESO. |
 
 El roadmap original nombró explícitamente Gates 0–4 y estableció un gate por fase. Aquí se extiende esa numeración a 5–10 para mantener una referencia uniforme, sin alterar el orden acordado.
 
@@ -160,7 +160,9 @@ El cierre 9.7 conectó `MACOABC/SmartDesk-AI` y añadió evidencia alojada real:
 CI PASS, FAIL controlado en PR, recovery PASS y CD `workflow_dispatch` PASS por
 SHA exacto.
 
-Phase 10 permanece **NOT STARTED**.
+Phase 10 está **IN PROGRESS**: comenzó con auditoría de publicación, corrección
+del monitor hosted, coherencia documental, reproducibilidad y preparación de
+assets. Gate 10 todavía no está aprobado.
 
 ## Fases posteriores a V1
 

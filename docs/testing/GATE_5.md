@@ -72,7 +72,8 @@ real fue restaurada antes de comprobar el envío HIGH exitoso.
 
 - DNS A del hostname productivo resolvió hacia la IPv4 reservada de la VM.
 - Caddy `2.11.4` permaneció `healthy` y publicó únicamente 80 y 443.
-- El certificado Let's Encrypt para `smartdesk.example.com` fue válido;
+- El certificado Let's Encrypt para `smartdesk.example.com` fue válido en el
+  hostname productivo original, sustituido aquí por un placeholder público;
   la comprobación registró expiración UTC `2026-12-19T02:28:14Z`.
 - HTTP redirigió a HTTPS con estado 308.
 - El único endpoint público de aplicación fue

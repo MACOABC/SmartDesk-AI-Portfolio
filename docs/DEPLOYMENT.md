@@ -26,7 +26,9 @@ Internet :80/:443
 ```
 
 - Caddy solo pertenece a la red `app`.
-- PostgreSQL solo pertenece a la red interna `database` y no publica puertos.
+- PostgreSQL pertenece a la red interna `database`. El host enlaza
+  `127.0.0.1:5432` exclusivamente para acceso local o mediante túnel SSH de
+  Power BI; `5432` no queda accesible desde Internet.
 - n8n mantiene `127.0.0.1:5678:5678` para administración mediante túnel SSH.
 - Los volúmenes `caddy_data` y `caddy_config` conservan certificados y estado
   fuera de Git.
