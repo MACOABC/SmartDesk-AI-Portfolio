@@ -35,6 +35,38 @@ Ticket → validación → persistencia → clasificación estructurada
        → reglas → notificación / HITL / SLA → analytics → Power BI
 ```
 
+## n8n orchestration
+
+SmartDesk's main n8n workflow orchestrates validated ticket intake, DB-first
+persistence, structured AI classification, bounded retries, review routing and
+deterministic notification outcomes.
+
+### 1. Intake and persistence
+
+[![SmartDesk ticket intake and persistence workflow](docs/assets/screenshots/n8n-ticket-workflow-01-intake.png)](docs/assets/screenshots/n8n-ticket-workflow-01-intake.png)
+
+*Ticket reception, validation, PostgreSQL persistence and preparation of the
+versioned production prompt and schema. The lower lanes are isolated contract,
+synthetic-case and persistence tests, not the normal production path.*
+
+### 2. AI processing and retries
+
+[![SmartDesk AI processing and retry workflow](docs/assets/screenshots/n8n-ticket-workflow-02-ai-processing.png)](docs/assets/screenshots/n8n-ticket-workflow-02-ai-processing.png)
+
+*Structured OpenAI calls with bounded retries, transient-failure decisions and
+persisted success or failure outcomes.*
+
+### 3. Classification and automation outcome
+
+[![SmartDesk classification and automation outcome workflow](docs/assets/screenshots/n8n-ticket-workflow-03-outcome.png)](docs/assets/screenshots/n8n-ticket-workflow-03-outcome.png)
+
+*Classification validation, prediction updates, HITL routing, deterministic
+Telegram notification, failure handling and the final ticket response.*
+
+The versioned [sanitized workflow export](n8n/workflows/ticket-intake.json) is
+importable. Production credentials, the private route and environment-specific
+configuration remain external to the repository.
+
 ## Capacidades verificadas
 
 - contrato HTTP con validación acumulativa y persistencia DB-first;

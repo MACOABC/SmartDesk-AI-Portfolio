@@ -35,8 +35,16 @@ automatización, persistencia y analítica.”
 
 ## 2. n8n ticket workflow
 
-**Filename:** `n8n-ticket-workflow.png`
-**Status:** MANUAL CAPTURE REQUIRED
+**Assets:**
+
+- `n8n-ticket-workflow-01-intake.png`
+- `n8n-ticket-workflow-02-ai-processing.png`
+- `n8n-ticket-workflow-03-outcome.png`
+
+**Status:** READY / PASS
+**Human review:** APPROVED
+**Strategy:** 3-part sequence because the 78-node workflow is not legible in a
+single full-canvas screenshot.
 **Pantalla a abrir:** canvas del workflow real `Ticket Intake` en una
 instancia local/demo.
 **Estado/datos:** workflow importado y nodos nombrados; cerrar execution data,
