@@ -1,149 +1,185 @@
-# SmartDesk AI — Guion de demo segura
+# SmartDesk AI — Demo final segura
 
-## Objetivo y fixtures
+## Objetivo y duración
 
-Duración objetivo: **3 minutos**; rango aceptable: 2–4 minutos.
+La demo presenta el problema, la arquitectura, un ticket sintético, la salida
+IA estructurada, la orquestación, el modelo analítico, la evaluación y CI sin
+depender de producción.
 
-- **DEMO_PRIMARY:** `DEMO-LOW-001`. Solicitud planificada, ideal para mostrar
-  el flujo completo con automation `skipped` y sin Telegram.
-- **DEMO_ALERT:** `DEMO-HIGH-001`. Opcional y solo en un entorno demo aislado
-  con destino Telegram de prueba. No usarlo si pudiera notificar producción.
+- Objetivo: **3:10**.
+- Rango recomendado: **2:45–3:30**.
+- Máximo: **4:00**.
+- Idioma hablado: español, conservando nombres técnicos en inglés.
 
-Ambos payloads viven en `demo/tickets.json`, usan `example.com` y son
-sintéticos. La etiqueta esperada debe validarse durante el ensayo; nunca se
-presenta como resultado garantizado del modelo.
+El recorrido predeterminado usa evidencia estática ya aprobada. Una ejecución
+live es opcional y solo se permite en un entorno demo aislado que haya sido
+ensayado y saneado antes de grabar.
 
-## Preparación del entorno
+## Fixture principal
 
-1. Usar una base demo separada de producción y cargar únicamente fixtures
-   sintéticos.
-2. Configurar hostname, webhook y credenciales de demo fuera de Git.
-3. Importar los workflows y mapear credenciales sin grabar esas pantallas.
-4. Ensayar `DEMO_PRIMARY` y guardar una ejecución limpia para el plan B.
-5. Poblar Power BI desde la base demo, nunca desde las filas operacionales de
-   reconciliación de Gate 8.
-6. Abrir previamente arquitectura, payload, respuesta, vista de persistencia,
-   Power BI y el run CI candidato.
+**DEMO_PRIMARY:** `DEMO-LOW-001`, definido en `demo/tickets.json`.
 
-## Checklist inmediatamente antes de grabar
+Es una solicitud sintética, breve y planificada para un segundo monitor. Usa
+`example.com`, no describe una interrupción y su etiqueta esperada es
+`service_request / low`. Si se ejecuta en un entorno demo, una clasificación
+LOW debe dejar la automatización en `skipped` y no enviar Telegram. La etiqueta
+esperada es ground truth de demo, no una predicción garantizada.
 
-- [ ] Browser tabs sanitized.
-- [ ] Notifications disabled.
+**DEMO_ALERT:** `DEMO-HIGH-001` queda documentado, pero no se usa en la
+grabación final. Podría disparar Telegram y no aporta suficiente valor para
+justificar esa dependencia.
+
+La imagen `ticket-ai-response.png` corresponde al caso independiente
+`SD-EVAL-TEST-083` y a su predicción real conservada en el benchmark
+congelado. No debe presentarse como respuesta de `DEMO-LOW-001`.
+
+## Live frente a evidencia estática
+
+| Parte | Modo predeterminado | Alternativa permitida |
+| --- | --- | --- |
+| Arquitectura | STATIC EVIDENCE: `architecture-overview.png` | Ninguna necesaria. |
+| Ticket principal | STATIC EVIDENCE: `demo/tickets.json` | LIVE: un único `DEMO-LOW-001` en entorno demo aislado. |
+| Salida IA | STATIC EVIDENCE: `ticket-ai-response.png` | Resultado real de `DEMO-LOW-001` solo si fue ensayado y saneado. |
+| n8n | STATIC EVIDENCE: secuencia de tres capturas | LIVE GUI local/demo con paneles cerrados. |
+| Power BI | STATIC EVIDENCE: `powerbi-data-model.png` | Ninguna; no usar dashboards rechazados. |
+| Evaluación | STATIC EVIDENCE: README | Ninguna necesaria. |
+| CI | STATIC EVIDENCE: `github-actions-ci.png` | Run alojado del candidato, sin abrir logs. |
+
+El recorrido estático no requiere OpenAI, Telegram, PostgreSQL, Power BI
+Desktop, n8n ni acceso a producción durante la grabación.
+
+## Storyboard definitivo
+
+| Tiempo | Pantalla | Acción | Mensaje clave |
+| --- | --- | --- | --- |
+| 0:00–0:20 | README + `architecture-overview.png` | Presentar problema y producto. | SmartDesk AI automatiza el procesamiento inicial de solicitudes de soporte. |
+| 0:20–0:40 | Arquitectura | Recorrer Caddy, n8n, OpenAI, PostgreSQL, reglas y Power BI. | El ticket se persiste antes de IA y la salida se valida antes de aplicar reglas. |
+| 0:40–1:15 | `demo/tickets.json`, `DEMO-LOW-001` | Mostrar input sintético; ejecutar solo si existe entorno demo seguro. | El contrato recibe email, área, título y descripción; el caso no contiene datos reales. |
+| 1:15–1:40 | `ticket-ai-response.png` | Señalar `category`, `priority` y `summary`; aclarar que es `SD-EVAL-TEST-083`. | Structured Outputs + JSON Schema, con validación determinista. |
+| 1:40–2:05 | Tres capturas n8n | Mostrar intake, procesamiento IA y outcome sin recorrer cada nodo. | Validación, DB-first persistence, bounded retries, rules, Telegram y review. |
+| 2:05–2:25 | `powerbi-data-model.png` | Señalar las cuatro tablas y relaciones 1:*. | Cuatro vistas analíticas alimentan Power BI mediante acceso read-only. |
+| 2:25–2:45 | README, Evaluación de IA | Mostrar 120 casos, 89.17% y 76.67%. | Benchmark sintético congelado; no confundirlo con métricas operacionales. |
+| 2:45–3:05 | `github-actions-ci.png` | Mostrar `Success` y el job `validate`. | CI alojado ejecuta 35 tests; deployment, monitoring y backups viven en el repo operativo. |
+| 3:05–3:15 | README | Cerrar en una frase. | SmartDesk AI integra automation, applied AI, SQL/BI y cloud operations en un sistema desplegado. |
+
+El texto hablado exacto está en `docs/DEMO_SCRIPT.md`.
+
+## Pestañas antes de grabar
+
+Preparar un máximo de cinco pestañas y ordenarlas antes de iniciar:
+
+1. README del repositorio candidato, en la arquitectura.
+2. `demo/tickets.json`, ubicado en `DEMO-LOW-001`.
+3. README del candidato, en la secuencia n8n y la salida estructurada.
+4. README del candidato, en Power BI y evaluación.
+5. GitHub Actions del candidato o la captura CI aprobada.
+
+La UI de n8n puede reemplazar la pestaña 3 únicamente si es una instancia
+local/demo saneada. Cerrar pestañas no relacionadas y ocultar bookmarks,
+perfiles y barra de URL cuando puedan revelar información.
+
+## Preparación de n8n
+
+Workflow exacto: **SmartDesk - Ticket Intake**.
+
+- Cerrar node configuration, credentials, executions y output panels.
+- No seleccionar nodos que muestren payloads o headers anteriores.
+- Usar canvas sin sidebar y zoom aproximado de 45–55 %.
+- Centrar intake → validation → persistence para la primera vista; AI/retries
+  para la segunda; classification/review/outcome para la tercera.
+- Hacer como máximo dos desplazamientos ensayados.
+- Si el texto no resulta legible, usar las tres capturas aprobadas del README.
+
+## Request live opcional
+
+No existe una URL demo versionada. Si Marco prepara un entorno demo aislado,
+la URL debe permanecer en una variable de proceso y nunca mostrarse:
+
+```powershell
+$case = (Get-Content demo/tickets.json -Raw | ConvertFrom-Json).cases |
+  Where-Object id -eq 'DEMO-LOW-001'
+Invoke-RestMethod -Method Post -Uri $env:DEMO_WEBHOOK_URL `
+  -ContentType 'application/json' -Body ($case.payload | ConvertTo-Json)
+```
+
+Antes de usarlo, limpiar la pantalla y verificar que el prompt no incluya una
+ruta personal. No ejecutar si `DEMO_WEBHOOK_URL` apunta a producción, si el
+destino Telegram no está aislado o si no puede confirmarse el efecto esperado.
+La grabación predeterminada no necesita este comando.
+
+## Checklist obligatoria antes de grabar
+
+- [ ] Browser notifications disabled.
+- [ ] WhatsApp and webmail closed.
+- [ ] Unrelated tabs closed.
+- [ ] Bookmarks hidden if necessary.
 - [ ] `.env` closed.
 - [ ] Terminal history safe.
-- [ ] SSH aliases hidden.
+- [ ] SSH alias hidden.
+- [ ] Production hostname hidden.
+- [ ] Webhook URL hidden.
 - [ ] Public IP hidden.
-- [ ] Production URL hidden.
 - [ ] n8n credentials hidden.
-- [ ] Telegram chat IDs hidden.
-- [ ] OpenAI data and provider response IDs hidden.
-- [ ] Database passwords and connection details hidden.
+- [ ] OpenAI key hidden.
+- [ ] Telegram token and chat ID hidden.
+- [ ] PostgreSQL password hidden.
+- [ ] Local personal paths hidden.
 - [ ] Only synthetic tickets visible.
-- [ ] Power BI connected only to safe demo data.
-- [ ] GitHub candidate repository used where appropriate.
-- [ ] Microphone, crop and 16:9 recording area verified.
+- [ ] No personal emails visible.
+- [ ] No provider response IDs visible.
+- [ ] No execution IDs unless necessary.
+- [ ] No rejected Power BI operational dashboards open.
+- [ ] Candidate portfolio repository shown instead of the operational repo where possible.
+- [ ] Microphone, crop, zoom and 16:9 recording area verified.
 
-## Guion ejecutable
+## Power BI y métricas
 
-### 0:00–0:20 — Problema
+Usar únicamente `powerbi-data-model.png`. Explicar brevemente
+`FactTickets`, `FactAIPredictions`, `FactAutomationEvents` y
+`FactHITLReviews`, las relaciones y el acceso read-only. No abrir Operations
+Overview, AI & Human Review ni SLA / Automation.
 
-**Pantalla:** título del README o slide limpia.
+La demo puede mencionar:
 
-**Narración sugerida:** “SmartDesk AI automatiza el procesamiento inicial de
-tickets internos. Valida la entrada, conserva el ticket, obtiene una
-clasificación estructurada y deja trazabilidad para reglas y análisis; no
-pretende reemplazar una plataforma ITSM completa.”
+- 120 synthetic labeled cases;
+- 89.17% category accuracy;
+- 76.67% priority accuracy;
+- 67.50% exact match, solo si entra de forma natural.
 
-### 0:20–0:45 — Arquitectura
+`Prediction Success Rate` operacional no es benchmark accuracy y no debe
+aparecer como tal.
 
-**Pantalla:** Mermaid renderizado de `docs/ARCHITECTURE.md`.
+## Plan B
 
-**Acción:** recorrer de izquierda a derecha: request → Caddy/HTTPS → n8n →
-validación → PostgreSQL/OpenAI → reglas → HITL/SLA → analytics/Power BI.
+- Si una dependencia externa no está estable, usar la evidencia estática.
+- Si n8n no puede mostrarse de forma segura, usar sus tres capturas aprobadas.
+- Si una ejecución live devuelve otra etiqueta, mostrar el resultado real o
+  repetir sin grabar; nunca sustituirlo por una respuesta inventada.
+- No generar una alerta HIGH/CRITICAL para mejorar la grabación.
+- No abrir dashboards Power BI rechazados como reemplazo del modelo.
 
-**Mensaje clave:** la persistencia ocurre antes de la llamada IA y la salida
-JSON se valida antes de aplicar reglas.
+## Revisión cuadro por cuadro
 
-### 0:45–1:20 — Ticket sintético
+- [ ] No secret visible.
+- [ ] No endpoint or webhook path visible.
+- [ ] No IP visible.
+- [ ] No personal notification visible.
+- [ ] No personal email visible.
+- [ ] No password visible.
+- [ ] No SSH information visible.
+- [ ] No production URL visible.
+- [ ] No real ticket visible.
+- [ ] No provider response or execution ID visible.
+- [ ] No misleading metric visible.
+- [ ] Audio is understandable.
+- [ ] Text is readable.
+- [ ] Duration is no more than 4 minutes.
+- [ ] Workflow is legible.
+- [ ] Project objective is clear.
+- [ ] Ending is concise.
 
-**Pantalla:** request de `DEMO-LOW-001` y cliente HTTP saneado.
+## Publicación del video
 
-**Acción:** enviar exactamente un ticket al entorno demo. Mostrar HTTP result
-y respuesta sin revelar URL ni headers. Si la API externa introduce
-variabilidad, usar la ejecución ensayada.
-
-**Mensaje clave:** email `example.com`, contenido sintético y contrato de
-entrada explícito.
-
-### 1:20–1:45 — IA estructurada
-
-**Pantalla:** JSON real de la ejecución.
-
-**Acción:** señalar `category`, `priority` y `summary`.
-
-**Mensaje clave:** Structured Outputs + JSON Schema; la respuesta se valida de
-forma determinista y no se confía en texto libre.
-
-### 1:45–2:05 — Persistencia y automatización
-
-**Pantalla:** consulta saneada que relaciona ticket, prediction, decision/SLA y
-automation event.
-
-**Acción:** con `DEMO_PRIMARY`, mostrar `skipped` por prioridad baja. Usar
-`DEMO_ALERT` únicamente si el ensayo aislado y el destino de prueba están
-confirmados.
-
-**Mensaje clave:** el evento queda auditado incluso cuando no se envía una
-notificación.
-
-### 2:05–2:30 — Reliability, HITL y SLA
-
-**Pantalla:** entidades o vista preparada con datos demo.
-
-**Acción:** mostrar brevemente review, decisión final y deadline.
-
-**Mensaje clave:** predicción y decisión operacional están separadas. La señal
-`confidence` no está calibrada y el benchmark no demostró mejora por HITL.
-
-### 2:30–2:50 — Power BI
-
-**Pantalla:** página Overview y, si el tiempo permite, AI Quality.
-
-**Acción:** señalar filtros, KPIs y grains; indicar que los datos son
-sintéticos.
-
-**Mensaje clave:** cuatro vistas PostgreSQL alimentan un modelo Power BI de
-tres páginas; los conteos no representan impacto empresarial.
-
-### 2:50–3:10 — Calidad de ingeniería
-
-**Pantalla:** GitHub Actions del candidato.
-
-**Acción:** mostrar CI PASS, 35 tests y PostgreSQL temporal.
-
-**Cierre sugerido:** “El proyecto combina automatización, IA estructurada,
-persistencia, BI y operación verificable, con secretos y producción separados
-del repositorio de portfolio.”
-
-## Plan B seguro
-
-- OpenAI inestable: usar la ejecución demo ensayada y explicar el manejo de
-  fallo persistido.
-- Telegram no disponible: mantener `DEMO_PRIMARY`; no generar una alerta
-  real para mejorar la grabación.
-- Power BI sin refresh: usar capturas previamente aprobadas sobre la misma base
-  demo.
-- Etiqueta diferente: mostrar el resultado real y explicar la separación entre
-  expected label, prediction y decisión.
-- Fallo durante la grabación: detener, sanear el estado y repetir; no editar
-  una respuesta ficticia.
-
-## Revisión posterior
-
-- [ ] Duración entre 2 y 4 minutos.
-- [ ] Flujo comprensible sin contexto adicional.
-- [ ] Solo datos sintéticos.
-- [ ] Cero endpoints, IPs, secrets o identificadores productivos visibles.
-- [ ] Métricas coherentes con `PORTFOLIO_METRICS.md`.
-- [ ] Limitación HITL y naturaleza sintética expresadas con claridad.
-- [ ] Revisión cuadro por cuadro completada antes de enlazar el video.
+No publicar durante esta fase. Después de aprobar la revisión cuadro por
+cuadro, la opción preferida es **YouTube Unlisted**. No añadir una URL al
+README hasta que el video exista, haya sido revisado y Marco autorice su uso.

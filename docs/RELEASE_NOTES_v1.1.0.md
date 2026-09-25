@@ -47,7 +47,8 @@ representa ahorro, volumen o impacto empresarial.
 - No hay identidad corporativa, rate limiting ni WAF en el webhook.
 - El repositorio de portfolio no contiene secrets y no puede desplegar ni
   monitorizar producción.
-- Screenshots y video requieren captura y revisión manual.
+- Los screenshots están integrados; el video y la revisión visual final siguen
+  siendo manuales.
 
 ## Security
 

@@ -181,10 +181,11 @@ one-command production deploy.
 
 ## Demo
 
-El [guion de demo](docs/DEMO.md) define una ejecución segura de unos 3 minutos.
-Usa `DEMO-LOW-001` como caso principal sin notificación y reserva
-`DEMO-HIGH-001` como alerta opcional solo para un entorno aislado. Los cuatro
-fixtures están en [demo/tickets.json](demo/tickets.json).
+La [preparación de demo](docs/DEMO.md) y el
+[script hablado](docs/DEMO_SCRIPT.md) definen un recorrido seguro de unos 3
+minutos. Usa `DEMO-LOW-001` como caso principal sin notificación; los cuatro
+fixtures están en [demo/tickets.json](demo/tickets.json). El recorrido
+predeterminado usa evidencia estática y no depende de producción.
 
 La [guía de assets](docs/PORTFOLIO_ASSETS.md) documenta el origen, selección y
 controles de seguridad del set visual. No se incluyen mocks ni screenshots con
@@ -200,6 +201,7 @@ datos operacionales de Gate 8; la revisión del video sigue siendo manual.
 | Arquitectura | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Reproducción | [docs/QUICKSTART.md](docs/QUICKSTART.md) |
 | Demo segura | [docs/DEMO.md](docs/DEMO.md) |
+| Script hablado | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) |
 | Claims y métricas | [docs/PORTFOLIO_METRICS.md](docs/PORTFOLIO_METRICS.md) |
 | Plan de assets | [docs/PORTFOLIO_ASSETS.md](docs/PORTFOLIO_ASSETS.md) |
 | Assets | [docs/assets](docs/assets) |

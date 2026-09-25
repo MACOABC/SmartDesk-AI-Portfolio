@@ -426,7 +426,8 @@ Phase 10 está IN PROGRESS. El sprint inicial completó:
 - quickstart y check estático desde fresh clone;
 - contrato y fixtures de demo sintética;
 - arquitectura Mermaid y README profesional;
-- plan de assets y registro de métricas/claims;
+- siete assets finales integrados y registro de métricas/claims;
+- storyboard y script hablado final de demo, con recorrido estático seguro;
 - descripción y topics de GitHub mejorados sin cambiar visibilidad;
 - CI hosted PASS sobre los commits del sprint.
 
@@ -438,14 +439,15 @@ documentadas; no existe todavía tag ni GitHub Release.
 Phase 10.V quedó PASS: la ruta productiva fue rotada mediante configuración
 externa, una única prueba E2E sintética confirmó n8n y persistencia, la ruta
 histórica quedó inactiva con HTTP 404 y el monitor alojado terminó `success`.
-El valor vigente no está en Git, docs ni logs. `refs/pull/1/head` sigue siendo
-el bloqueante histórico de publicación y no fue modificado.
+El valor vigente no está en Git, docs ni logs. `refs/pull/1/head` sigue
+existiendo únicamente en el repositorio operativo; el candidato sanitizado no
+contiene refs de pull request.
 
 ## Siguiente paso
 
-Capturar los seis assets definidos en `docs/PORTFOLIO_ASSETS.md`, grabar la
-demo segura y revisar visualmente README/video antes de autorizar `v1.1.0` y
-el cambio de visibilidad. Gate 10 permanece pendiente.
+Grabar la demo segura con `docs/DEMO_SCRIPT.md`, revisar el video cuadro por
+cuadro y revisar el README renderizado antes de autorizar `v1.1.0` y el cambio
+de visibilidad. Gate 10 permanece pendiente.
 
 ## Límites actuales
 

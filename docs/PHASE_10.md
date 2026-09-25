@@ -32,6 +32,7 @@ una release.
 | 10.V Endpoint rotation | PASS | Ruta pública nueva configurada externamente; E2E sintético único PASS; ruta histórica 404; hosted monitor `36152093510` PASS sobre `a711971...`. |
 | 10.W Sanitized portfolio repository | PASS | Candidato privado con historia y refs saneadas, `v1.0` preservado, aislamiento productivo y CI hosted PASS. |
 | 10.X Pre-publication preparation | READY FOR MANUAL ASSETS | MIT, guía exacta de seis capturas, demo ejecutable, CV-safe claims, release notes y checklist preparados; sin tag, release ni cambio de visibilidad. |
+| 10.Y Demo + publication preflight | READY FOR RECORDING | Set visual integrado, fixture exacto, storyboard 3:10, script hablado y checklist de video; sin tag, release ni publicación. |
 
 ## Documentación vigente
 
@@ -46,8 +47,7 @@ una release.
 
 ## Bloqueantes para Gate 10
 
-1. Las capturas y el video requieren producción manual desde un entorno demo
-   aislado y una revisión cuadro por cuadro.
+1. El video requiere grabación manual y revisión cuadro por cuadro.
 2. El README renderizado necesita revisión visual con los assets incorporados.
 3. El propietario debe autorizar explícitamente tag, release y cambio de
    visibilidad.
@@ -61,11 +61,12 @@ Permanece privado, conserva `v1.0`, no tiene secrets ni environments
 productivos y sus workflows operativos están bloqueados. El repositorio
 privado original conserva la autoridad de deployment.
 
-Phase 10.X añadió MIT License, un manual exacto para seis assets reales, un
-guion demo de aproximadamente tres minutos, claims aptos para CV con fuentes,
-release notes de `v1.1.0` y la checklist de publicación. `v1.1.0` está
-preparada conceptualmente, pero no existe tag ni GitHub Release. El siguiente
-estado es `READY FOR MANUAL ASSETS`; Gate 10 continúa pendiente.
+Phase 10.X añadió MIT License, un manual exacto para assets reales, claims
+aptos para CV con fuentes, release notes de `v1.1.0` y la checklist de
+publicación. Phase 10.Y consolidó siete PNG finales, un storyboard de 3:10 y
+un script hablado que no depende de producción. `v1.1.0` está preparada
+conceptualmente, pero no existe tag ni GitHub Release. El siguiente estado es
+`READY FOR RECORDING`; Gate 10 continúa pendiente.
 
 ## Phase 10.V — rotación del endpoint productivo
 

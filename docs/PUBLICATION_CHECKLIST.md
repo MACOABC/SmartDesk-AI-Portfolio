@@ -20,7 +20,7 @@ estén completados y el propietario autorice explícitamente la publicación.
 
 ## Manual publication controls
 
-- [ ] Screenshots reales capturados e insertados.
+- [x] Screenshots reales capturados e insertados.
 - [ ] Cada screenshot revisado al 100 % de zoom.
 - [ ] Demo de aproximadamente 3 minutos grabada.
 - [ ] Video revisado cuadro por cuadro.
