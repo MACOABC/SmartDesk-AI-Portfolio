@@ -1,14 +1,17 @@
 # Gate 9 — Evidencia de operación
 
-Fecha local: 2026-09-20. Ejecuciones VM: 2026-09-21 UTC.
+Fecha inicial local: 2026-09-20. Ejecuciones VM: 2026-09-21 UTC.
+Cierre alojado 9.7: 2026-09-24 local / 2026-09-25 UTC.
 
 ## Conclusión
 
 **Gate 9: PASS. Phase 9: COMPLETE.**
 
-La aprobación se basa en ejecución real. No se asume un run alojado de GitHub:
-el checkout no tiene remote configurado. Los workflows quedaron versionados y
-el pipeline/deployer subyacente se ejecutó contra PostgreSQL temporal y la VM.
+La aprobación combina la evidencia operativa real previa con la activación
+alojada de GitHub verificada en 9.7. El repositorio privado
+`MACOABC/SmartDesk-AI` quedó conectado como `origin`; CI demostró la secuencia
+PASS → FAIL controlado → PASS y CD desplegó por `workflow_dispatch` un SHA
+completo con healthcheck y smoke externo PASS.
 
 ## Entornos y baseline
 
@@ -17,6 +20,8 @@ el pipeline/deployer subyacente se ejecutó contra PostgreSQL temporal y la VM.
 - imágenes: PostgreSQL 17.11-bookworm, n8n 2.39.6, Caddy 2.11.4-alpine;
 - baseline repo: `cab012b3a7af787733a783b1edba6cc95e35e376`;
 - tag preservada: `v1.0 = fc42c911725aa589e3b36207d0be5b95b9f08063`;
+- HEAD funcional publicado y desplegado en 9.7:
+  `0dd4f3604fc85136ecd73ebb9052ace8a69cd486`;
 - deployment funcional final previo al cierre documental:
   `f16823ff5829f732b7bb6a866c162f108209918f`.
 
@@ -35,11 +40,11 @@ sin OCI CLI/credencial Object Storage. Un dump histórico 664 fue endurecido a
 | G9-04 | PostgreSQL CI temporal | PASS | Container/volume únicos, sin puertos, eliminados por trap. |
 | G9-05 | Bootstrap migraciones | PASS | `001→005` desde volumen vacío. |
 | G9-06 | Contratos DB | PASS | `phase6_contract_tests=PASS`; analytics Gate 8 completo; migración 005 reaplicada. |
-| G9-07 | CI válido | PASS | `ci_pipeline=PASS`. |
-| G9-08 | CI negativo controlado | PASS | JSON truncado temporal produjo `JSONDecodeError` y exit no cero. |
-| G9-09 | CI recovery | PASS | artefacto roto retirado; `repository_validation=PASS`. |
-| G9-10 | CD exact SHA | PASS | package/deploy verificaron SHA completo y `migration_count=0`. |
-| G9-11 | Health/smoke post-deploy | PASS | tres containers healthy, PostgreSQL/n8n/HTTPS/resources PASS. |
+| G9-07 | CI válido | PASS | GitHub Actions run `36079703644` sobre `0dd4f36...`: job `validate` y pipeline completo PASS. |
+| G9-08 | CI negativo controlado | PASS | PR temporal #1, SHA `da544f0...`, run `36079465259`: JSON truncado detectado con `JSONDecodeError`; PR no merged. |
+| G9-09 | CI recovery | PASS | Mismo PR, SHA `b11498c...`, run `36079518418` PASS; PR cerrado y rama eliminada. |
+| G9-10 | CD exact SHA | PASS | `workflow_dispatch` run `36080435344` desplegó `0dd4f36...`; `migration_count=0`. |
+| G9-11 | Health/smoke post-deploy | PASS | Run alojado y verificación independiente: tres containers healthy, PostgreSQL/n8n/HTTPS/resources y smoke 404 PASS. |
 | G9-12 | Rollback real | PASS | rollback a `e24f6b9...`, healthy; redeploy posterior healthy. |
 | G9-13 | Fallos CD detectados | PASS | workspace faltante, CRLF y permisos de prompts fueron detectados, corregidos y reprobados; ningún dato perdido. |
 | G9-14 | Backup real | PASS | SmartDesk DB + n8n DB + n8n_data, hashes/list validation. |
@@ -85,6 +90,36 @@ ci_recovery=PASS
 
 OpenAI real, Telegram productivo y DB productiva usados por CI: **0 / 0 / 0**.
 
+## Evidencia GitHub alojada 9.7
+
+- repositorio: `https://github.com/MACOABC/SmartDesk-AI` (privado);
+- branch publicada: `main`; `origin/main` y HEAD funcional coincidieron en
+  `0dd4f3604fc85136ecd73ebb9052ace8a69cd486` antes del commit documental;
+- CI PASS inicial: workflow `CI`, run `36079397135`, SHA
+  `e54398e500501555556b1e451252699c15404fbe`, evento `push`, conclusión
+  `success`;
+- CI negativo: branch `test/gate9-ci-negative`, PR #1, SHA
+  `da544f02e9dddccc215d95891c09a8fa6580bc73`, run `36079465259`, conclusión
+  `failure` esperada en `Run deterministic CI` por
+  `n8n/workflows/gate9-ci-negative.json` inválido;
+- recovery del PR: SHA `b11498ccd179a1d7e89b58eb6668fe20e4e418be`,
+  run `36079518418`, conclusión `success`; PR cerrado sin merge y branch
+  temporal eliminada local/remotamente;
+- CI final funcional de `main`: run `36079703644`, SHA
+  `0dd4f3604fc85136ecd73ebb9052ace8a69cd486`, conclusión `success`;
+- un re-run manual `36079597156` detectó una carrera real del healthcheck
+  PostgreSQL durante el servidor temporal de inicialización. Se corrigió el
+  readiness CI para usar TCP y el run final anterior confirmó la corrección;
+- la tag local `v1.0` permaneció en
+  `fc42c911725aa589e3b36207d0be5b95b9f08063`; no se recreó ni movió y no se
+  publicó automáticamente al remote.
+
+Secrets configurados únicamente en el environment `production`:
+`SMARTDESK_DEPLOY_SSH_KEY`, `SMARTDESK_DEPLOY_KNOWN_HOSTS`,
+`SMARTDESK_DEPLOY_HOST`, `SMARTDESK_DEPLOY_USER` y
+`SMARTDESK_MONITOR_URL`. La ruta no sensible se configuró como variable
+`SMARTDESK_DEPLOY_PATH`. Ningún valor fue impreso ni versionado.
+
 ## Evidencia CD y rollback
 
 Deploy aprobado antes del cierre documental:
@@ -95,14 +130,35 @@ migration_count=0
 health_check=PASS
 ```
 
+Deploy alojado 9.7:
+
+```text
+workflow=Controlled production deployment
+event=workflow_dispatch
+run_id=36080435344
+requested_sha=0dd4f3604fc85136ecd73ebb9052ace8a69cd486
+deployed_sha=0dd4f3604fc85136ecd73ebb9052ace8a69cd486
+database_integration=PASS
+ci_pipeline=PASS
+migration_count=0
+health_check=PASS
+deployment_external_smoke=PASS status=404
+```
+
+Dos intentos anteriores (`36079945740` y `36080025743`) fallaron antes de
+modificar producción porque la primera clave dedicada se había creado con una
+passphrase no interactiva incorrecta. La clave fue reemplazada por otra
+dedicada, sin passphrase, restringida y verificada; la entrada autorizada
+obsoleta se retiró. El run final pasó todos los steps.
+
 Se probó rollback real de un deploy Phase 9 a `e24f6b9...`: los tres servicios
 volvieron healthy. Se redesplegó el release Phase 9 y se verificó health otra
 vez. Los intentos fallidos previos fueron útiles: uno encontró CRLF en scripts
 y otro permisos 700 en prompts. El rollback conservó la aplicación disponible;
 las correcciones añadieron normalización LF y permisos explícitos.
 
-El workflow alojado requiere remote GitHub y secrets externos; esta es la única
-limitación externa del bloque GitHub. El deployment real no quedó bloqueado.
+El workflow alojado quedó activado con remote, environment, secrets mínimos y
+variable de ruta externos a Git. El deployment real no quedó bloqueado.
 
 ## Evidencia backup/restore
 
@@ -159,8 +215,8 @@ No se versionaron secretos, dumps, URLs privadas, IPs ni claves. La clave
 privada de backup está fuera del repositorio y fuera de la VM.
 
 Limitaciones conservadas: VM única; tareas externas Windows requieren que la
-estación ejecute el scheduler; GitHub Actions alojado requiere conectar el
-remote y configurar secrets. Ninguna impide la operación real probada y el
-backup off-host existe.
+estación ejecute el scheduler. Ninguna impide la operación real probada y el
+backup off-host existe. En el cierre 9.7 hubo **0** llamadas OpenAI y **0**
+envíos Telegram adicionales.
 
 Phase 10 no fue implementada.

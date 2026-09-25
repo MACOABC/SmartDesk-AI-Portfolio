@@ -4,7 +4,7 @@
 
 Trabajar una fase y un paso por vez. Antes de avanzar, verificar los criterios del gate, conservar evidencia saneada y actualizar `STATUS.md`. Cada comprobación ejecutada se documentará con resultado `PASS` o `FAIL` y evidencia; lo no ejecutado permanecerá pendiente.
 
-La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gates 0–8 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
+La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase 1 y Gate 1 incorporan las precisiones de «02 — Base técnica: GitHub + Docker Compose + PostgreSQL». Gates 0–9 están aprobados. Los criterios de fases posteriores concretan los objetivos del diseño para su futura validación; no representan pruebas ejecutadas ni aprobaciones anticipadas.
 
 ## Secuencia acordada
 
@@ -19,7 +19,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 6 | Confiabilidad, reintentos, manejo de errores, revisión humana y SLA. | Gate 6. | COMPLETADA / APROBADO. |
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
 | 8 | SQL analítico y Power BI. | Gate 8. | COMPLETADA / APROBADO. |
-| 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | NOT STARTED. |
+| 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | COMPLETADA / APROBADO. |
 | 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | Pendiente. |
 
 El roadmap original nombró explícitamente Gates 0–4 y estableció un gate por fase. Aquí se extiende esa numeración a 5–10 para mantener una referencia uniforme, sin alterar el orden acordado.
@@ -156,6 +156,9 @@ controlada. El CD manual por SHA se desplegó, se verificó y se revirtió
 realmente. Monitoring interno/externo detectó healthy, fallo y recovery.
 Backup cifrado de ambas bases y n8n_data pasó restore aislado y fue copiado y
 descifrado fuera de la VM. El hardening y la regresión Gate 0–8 quedaron PASS.
+El cierre 9.7 conectó `MACOABC/SmartDesk-AI` y añadió evidencia alojada real:
+CI PASS, FAIL controlado en PR, recovery PASS y CD `workflow_dispatch` PASS por
+SHA exacto.
 
 Phase 10 permanece **NOT STARTED**.
 

@@ -10,11 +10,13 @@ Gate 5 = PASS
 Gate 6 = PASS
 Gate 7 = PASS
 Gate 8 = PASS
+Gate 9 = PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = COMPLETE
 Phase 8 = COMPLETE
-Phase 9 = NOT STARTED
+Phase 9 = COMPLETE
+Phase 10 = NOT STARTED
 ```
 
 - **Gate 0: APROBADO.**
@@ -26,6 +28,7 @@ Phase 9 = NOT STARTED
 - **Gate 6: APROBADO.**
 - **Gate 7: APROBADO.**
 - **Gate 8: APROBADO.**
+- **Gate 9: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
@@ -35,7 +38,8 @@ Phase 9 = NOT STARTED
 - **SmartDesk AI V1: COMPLETA.**
 - **Phase 7 — dataset sintético y evaluación de IA: COMPLETADA.**
 - **Phase 8 — SQL analítico y Power BI: COMPLETADA.**
-- **Phase 9 — operación: NOT STARTED.**
+- **Phase 9 — operación: COMPLETADA.**
+- **Phase 10 — portafolio y cierre integral: NOT STARTED.**
 - **Phase 7A — dataset sintético, política y validación local: COMPLETADA.**
 - **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
 - **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 aprobado.**
@@ -46,7 +50,7 @@ Phase 9 = NOT STARTED
 
 ## Alcance de este registro
 
-Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA, la notificación Telegram, el cierre end-to-end de V1 y Phase 6. Gates 0–6 cuentan con aprobación explícita.
+Este estado consolida los chats «00 — Roadmap y arquitectura inicial», «01 — Fase 0: Hardening OCI» y «02 — Base técnica: GitHub + Docker Compose + PostgreSQL», junto con las validaciones posteriores de PostgreSQL, n8n, el intake de tickets, la clasificación mediante IA, la notificación Telegram, el cierre end-to-end de V1 y las fases 6–9. Gates 0–9 cuentan con evidencia y aprobación.
 
 ## Infraestructura aprobada
 
@@ -401,6 +405,13 @@ Phase 9 quedó COMPLETE y Gate 9 PASS. Se implementaron y probaron:
 - `no-new-privileges`, log rotation, permisos, exposición, UFW, SSH,
   unattended upgrades y secret scan verificados;
 - regresión mínima Gate 0–8 con una llamada OpenAI real y cero Telegram.
+
+El cierre 9.7 conectó el repositorio privado `MACOABC/SmartDesk-AI` y produjo
+evidencia GitHub alojada real: CI PASS (`36079703644`), FAIL controlado
+(`36079465259`), recovery PASS (`36079518418`) y CD manual por SHA PASS
+(`36080435344`). El SHA desplegado fue
+`0dd4f3604fc85136ecd73ebb9052ace8a69cd486`; healthcheck y smoke HTTPS pasaron.
+Durante 9.7 se realizaron cero llamadas OpenAI y cero envíos Telegram.
 
 La evidencia está en `docs/testing/GATE_9.md`; la operación y recuperación en
 `docs/OPERATIONS.md` y `docs/BACKUP_RESTORE.md`.

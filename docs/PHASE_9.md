@@ -75,11 +75,11 @@ snapshot de rollback y valida Compose, contenedores, PostgreSQL, n8n, HTTPS,
 disco y memoria. Los scripts normalizan LF y permisos antes de sincronizar el
 release para que los bind mounts sean legibles por usuarios no root.
 
-No existe remote Git configurado en este checkout, por lo que GitHub Actions
-no pudo ejecutarse como servicio alojado durante esta fase. El mismo pipeline
-y el mismo deployer sí se ejecutaron realmente desde el entorno local contra
-una base temporal y la VM. Para activar los workflows alojados solo faltan el
-remote y los Secrets/Variables descritos en `docs/OPERATIONS.md`.
+El cierre 9.7 conectó el repositorio privado `MACOABC/SmartDesk-AI`, ejecutó el
+CI realmente en GitHub Actions, demostró un FAIL controlado en un PR temporal y
+su recuperación a PASS, y desplegó el SHA exacto
+`0dd4f3604fc85136ecd73ebb9052ace8a69cd486` mediante `workflow_dispatch`.
+Los IDs y resultados verificables están en `docs/testing/GATE_9.md`.
 
 ## Backup y restore
 
@@ -108,7 +108,7 @@ activa `smartdesk-health-alert@.service` y deja evidencia en journald.
 Desde fuera de la VM, una tarea Windows comprueba HTTPS cada 30 minutos sin
 crear tickets; otra tarea copia diariamente backups cifrados y verifica
 SHA-256. `.github/workflows/monitor.yml` ofrece la misma comprobación externa
-para cuando exista remote GitHub.
+desde el repositorio GitHub conectado.
 
 ## Hardening final
 
@@ -128,8 +128,8 @@ para cuando exista remote GitHub.
 Object Storage no se inventó: no había CLI ni credencial OCI disponible. La
 copia cifrada a un directorio OneDrive privado satisface off-host hoy y puede
 reemplazarse por Object Storage sin cambiar el formato de backup. Las tareas
-externas dependen de que la estación Windows ejecute su scheduler; el workflow
-GitHub queda preparado como alternativa permanente al conectar el repositorio.
+externas dependen de que la estación Windows ejecute su scheduler; GitHub
+Actions quedó conectado y validado para CI y deployment controlado.
 
 No se añadieron Kubernetes, Terraform, Ansible, Prometheus, Grafana, Loki,
 Vault ni servicios con coste. La VM única continúa siendo un punto único de
