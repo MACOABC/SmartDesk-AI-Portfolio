@@ -90,6 +90,7 @@ services:
     image: caddy:2.11.4-alpine
     environment:
       SMARTDESK_HOST: ${SMARTDESK_HOST:?SMARTDESK_HOST must be set}
+      SMARTDESK_WEBHOOK_PATH: ${SMARTDESK_WEBHOOK_PATH:?SMARTDESK_WEBHOOK_PATH must be set}
     ports:
       - "80:80"
       - "443:443"

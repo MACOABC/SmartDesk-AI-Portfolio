@@ -1,12 +1,22 @@
 {$SMARTDESK_HOST} {
 	header -Server
 
+	@webhook_probe {
+		method GET
+		path {$SMARTDESK_WEBHOOK_PATH}
+	}
+
+	handle @webhook_probe {
+		respond 204
+	}
+
 	@ticket_webhook {
 		method POST
-		path /webhook/tickets
+		path /webhook/tickets {$SMARTDESK_WEBHOOK_PATH}
 	}
 
 	handle @ticket_webhook {
+		rewrite * /webhook/tickets
 		reverse_proxy n8n:5678
 	}
 
