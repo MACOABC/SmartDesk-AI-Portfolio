@@ -12,6 +12,7 @@ jobs:
   https-boundary:
     runs-on: ubuntu-24.04
     timeout-minutes: 3
+    environment: production
     steps:
       - name: Check HTTPS without creating a ticket
         env:
