@@ -33,6 +33,7 @@ una release.
 | 10.W Sanitized portfolio repository | PASS | Candidato privado con historia y refs saneadas, `v1.0` preservado, aislamiento productivo y CI hosted PASS. |
 | 10.X Pre-publication preparation | READY FOR MANUAL ASSETS | MIT, guía exacta de seis capturas, demo ejecutable, CV-safe claims, release notes y checklist preparados; sin tag, release ni cambio de visibilidad. |
 | 10.Y Demo + publication preflight | READY FOR RECORDING | Set visual integrado, fixture exacto, storyboard 3:10, script hablado y checklist de video; sin tag, release ni publicación. |
+| 10.Z Final publication | READY FOR PUBLICATION | Demo 3m40s grabada, revisada y enlazada; publicación condicionada a auditoría, CI, tag, release y fresh clone final. |
 
 ## Documentación vigente
 
@@ -40,19 +41,17 @@ una release.
 - `docs/ARCHITECTURE.md`: flujo, límites y operación;
 - `docs/QUICKSTART.md`: reproducción;
 - `docs/DEMO.md`: demo segura;
-- `docs/PORTFOLIO_ASSETS.md`: capturas pendientes;
+- `docs/PORTFOLIO_ASSETS.md`: assets finales y demo aprobada;
 - `docs/PORTFOLIO_METRICS.md`: claims autorizados;
 - `STATUS.md`: estado actual;
 - `docs/PHASE_X.md` y `docs/testing/GATE_X.md`: snapshots y evidencia.
 
 ## Bloqueantes para Gate 10
 
-1. El video requiere grabación manual y revisión cuadro por cuadro.
-2. El README renderizado necesita revisión visual con los assets incorporados.
-3. El propietario debe autorizar explícitamente tag, release y cambio de
-   visibilidad.
-4. Gate 10 requiere una revisión final después de resolver los puntos
-   anteriores; este sprint no lo declara PASS.
+1. El commit final y su CI alojado deben pasar.
+2. El tag, la GitHub Release y el cambio de visibilidad deben verificarse.
+3. El fresh clone público final debe pasar validator, tests y scans.
+4. Gate 10 solo puede cerrarse después de completar esas verificaciones.
 
 ## Phase 10.W–10.X — candidato y pre-publicación
 
@@ -66,7 +65,8 @@ aptos para CV con fuentes, release notes de `v1.1.0` y la checklist de
 publicación. Phase 10.Y consolidó siete PNG finales, un storyboard de 3:10 y
 un script hablado que no depende de producción. `v1.1.0` está preparada
 conceptualmente, pero no existe tag ni GitHub Release. El siguiente estado es
-`READY FOR RECORDING`; Gate 10 continúa pendiente.
+`READY FOR PUBLICATION`; Gate 10 continúa pendiente hasta la verificación
+posterior a la publicación.
 
 ## Phase 10.V — rotación del endpoint productivo
 

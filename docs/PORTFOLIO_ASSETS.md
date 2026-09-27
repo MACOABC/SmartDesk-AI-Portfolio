@@ -110,6 +110,20 @@ sensible.
 deterministic validation job completed successfully.”
 **Competencia demostrada:** testing, CI y reproducibilidad.
 
+## 6. Final demo video
+
+**Status:** READY / PASS
+**Human review:** APPROVED
+**URL:** https://youtu.be/li0uU9b3e70
+**Duration:** approximately 3m40s
+**Visibility:** YouTube Unlisted
+**Source:** recorrido final basado en los assets seleccionados, fixtures
+sintéticos y evidencia saneada del repositorio candidato.
+**Security:** revisión visual completada antes de enlazar el video; no se usa
+ninguno de los dashboards Power BI rechazados como evidencia pública.
+**Competencia demostrada:** comunicación técnica concisa y explicación
+end-to-end del sistema.
+
 ## Power BI dashboards no seleccionados
 
 Las tres capturas de páginas del reporte se contrastaron con Gate 8. Sus

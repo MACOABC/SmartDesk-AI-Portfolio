@@ -21,14 +21,14 @@ estén completados y el propietario autorice explícitamente la publicación.
 ## Manual publication controls
 
 - [x] Screenshots reales capturados e insertados.
-- [ ] Cada screenshot revisado al 100 % de zoom.
-- [ ] Demo de aproximadamente 3 minutos grabada.
-- [ ] Video revisado cuadro por cuadro.
+- [x] Cada screenshot revisado al 100 % de zoom.
+- [x] Demo de aproximadamente 3 minutos grabada.
+- [x] Video revisado cuadro por cuadro.
 - [ ] README renderizado revisado con los assets finales.
 - [ ] Fresh clone final después de incorporar assets.
-- [ ] Tag `v1.1.0` autorizado.
-- [ ] GitHub Release `v1.1.0 — Portfolio Release` autorizada.
-- [ ] Owner approval para publicar.
+- [x] Tag `v1.1.0` autorizado.
+- [x] GitHub Release `v1.1.0 — Portfolio Release` autorizada.
+- [x] Owner approval para publicar.
 - [ ] Visibility cambiada explícitamente a PUBLIC.
 
 No marcar controles manuales por inferencia ni crear tag, release o cambio de

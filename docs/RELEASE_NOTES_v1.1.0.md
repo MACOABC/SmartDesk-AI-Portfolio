@@ -2,9 +2,8 @@
 
 ## Release status
 
-**Prepared, not released.** No existe todavía el tag `v1.1.0` ni una GitHub
-Release. Ambos requieren assets aprobados, revisión visual y autorización del
-propietario.
+Portfolio release of the sanitized SmartDesk AI repository, with verified
+documentation, visual evidence and a reviewed project demo.
 
 ## Highlights
 
@@ -18,6 +17,7 @@ propietario.
 - monitoring interno/externo y backup cifrado con restore drill;
 - ingress HTTPS restringido mediante Caddy;
 - documentación de portfolio, demo segura y métricas trazables.
+- [demo final de aproximadamente 3m40s](https://youtu.be/li0uU9b3e70).
 
 ## Verification
 
@@ -47,8 +47,8 @@ representa ahorro, volumen o impacto empresarial.
 - No hay identidad corporativa, rate limiting ni WAF en el webhook.
 - El repositorio de portfolio no contiene secrets y no puede desplegar ni
   monitorizar producción.
-- Los screenshots están integrados; el video y la revisión visual final siguen
-  siendo manuales.
+- Los screenshots y el video usan evidencia sintética o saneada; no constituyen
+  métricas de impacto empresarial.
 
 ## Security
 

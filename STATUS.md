@@ -428,6 +428,8 @@ Phase 10 está IN PROGRESS. El sprint inicial completó:
 - arquitectura Mermaid y README profesional;
 - siete assets finales integrados y registro de métricas/claims;
 - storyboard y script hablado final de demo, con recorrido estático seguro;
+- demo final de aproximadamente 3m40s grabada, revisada y enlazada desde
+  https://youtu.be/li0uU9b3e70;
 - descripción y topics de GitHub mejorados sin cambiar visibilidad;
 - CI hosted PASS sobre los commits del sprint.
 
@@ -445,9 +447,8 @@ contiene refs de pull request.
 
 ## Siguiente paso
 
-Grabar la demo segura con `docs/DEMO_SCRIPT.md`, revisar el video cuadro por
-cuadro y revisar el README renderizado antes de autorizar `v1.1.0` y el cambio
-de visibilidad. Gate 10 permanece pendiente.
+Ejecutar la auditoría final, publicar `v1.1.0`, verificar el repositorio público
+y cerrar Gate 10 únicamente si todo permanece en PASS.
 
 ## Límites actuales
 

@@ -1,5 +1,14 @@
 # SmartDesk AI — Demo final segura
 
+## Grabación final
+
+- **Estado:** RECORDED / REVIEWED / UPLOADED.
+- **URL:** https://youtu.be/li0uU9b3e70
+- **Duración:** aproximadamente 3m40s.
+- **Visibilidad:** YouTube Unlisted.
+- **Contenido:** evidencia sintética y saneada, revisada visualmente antes de
+  enlazarla desde el portfolio.
+
 ## Objetivo y duración
 
 La demo presenta el problema, la arquitectura, un ticket sintético, la salida
@@ -180,6 +189,6 @@ aparecer como tal.
 
 ## Publicación del video
 
-No publicar durante esta fase. Después de aprobar la revisión cuadro por
-cuadro, la opción preferida es **YouTube Unlisted**. No añadir una URL al
-README hasta que el video exista, haya sido revisado y Marco autorice su uso.
+La grabación final fue revisada y está disponible como **YouTube Unlisted** en
+https://youtu.be/li0uU9b3e70. El README enlaza esta URL sin afirmar que el video
+sea público.

@@ -15,6 +15,8 @@ pretender sustituir una plataforma ITSM completa.
 > autoridad para desplegar o monitorizar la producción. El repositorio privado
 > original sigue siendo la única autoridad operativa.
 
+**Demo:** [Watch the 3m40s SmartDesk AI project demo](https://youtu.be/li0uU9b3e70).
+
 ## Arquitectura
 
 ![SmartDesk AI end-to-end architecture](docs/assets/screenshots/architecture-overview.png)
@@ -181,15 +183,18 @@ one-command production deploy.
 
 ## Demo
 
+[Watch the final SmartDesk AI project demo](https://youtu.be/li0uU9b3e70)
+(approximately 3m40s). It uses synthetic, sanitized evidence and does not expose
+production configuration.
+
 La [preparación de demo](docs/DEMO.md) y el
-[script hablado](docs/DEMO_SCRIPT.md) definen un recorrido seguro de unos 3
-minutos. Usa `DEMO-LOW-001` como caso principal sin notificación; los cuatro
-fixtures están en [demo/tickets.json](demo/tickets.json). El recorrido
-predeterminado usa evidencia estática y no depende de producción.
+[script hablado](docs/DEMO_SCRIPT.md) documentan el recorrido. Usa
+`DEMO-LOW-001` como caso principal sin notificación; los cuatro fixtures están
+en [demo/tickets.json](demo/tickets.json).
 
 La [guía de assets](docs/PORTFOLIO_ASSETS.md) documenta el origen, selección y
 controles de seguridad del set visual. No se incluyen mocks ni screenshots con
-datos operacionales de Gate 8; la revisión del video sigue siendo manual.
+datos operacionales de Gate 8; el video final fue revisado antes de enlazarlo.
 
 ## Documentación
 
