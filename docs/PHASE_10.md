@@ -2,11 +2,11 @@
 
 ## Estado
 
-**Phase 10: IN PROGRESS. Gate 10: NOT APPROVED.**
+**Phase 10: COMPLETE. Gate 10: PASS.**
 
-Esta fase mejora presentación, reproducibilidad y defendibilidad profesional
-sin ampliar el producto. No cambia `v1.0`, no publica el repositorio y no crea
-una release.
+Esta fase mejoró presentación, reproducibilidad y defendibilidad profesional
+sin ampliar el producto. `v1.0` permaneció intacta y `v1.1.0` publicó el
+portfolio sanitizado.
 
 ## Sprint autónomo inicial
 
@@ -33,7 +33,7 @@ una release.
 | 10.W Sanitized portfolio repository | PASS | Candidato privado con historia y refs saneadas, `v1.0` preservado, aislamiento productivo y CI hosted PASS. |
 | 10.X Pre-publication preparation | READY FOR MANUAL ASSETS | MIT, guía exacta de seis capturas, demo ejecutable, CV-safe claims, release notes y checklist preparados; sin tag, release ni cambio de visibilidad. |
 | 10.Y Demo + publication preflight | READY FOR RECORDING | Set visual integrado, fixture exacto, storyboard 3:10, script hablado y checklist de video; sin tag, release ni publicación. |
-| 10.Z Final publication | READY FOR PUBLICATION | Demo 3m40s grabada, revisada y enlazada; publicación condicionada a auditoría, CI, tag, release y fresh clone final. |
+| 10.Z Final publication | PASS | Demo 3m40s enlazada; CI `36337187398` PASS; `v1.1.0` y GitHub Release publicados; repositorio PUBLIC y fresh clone público PASS. |
 
 ## Documentación vigente
 
@@ -46,12 +46,16 @@ una release.
 - `STATUS.md`: estado actual;
 - `docs/PHASE_X.md` y `docs/testing/GATE_X.md`: snapshots y evidencia.
 
-## Bloqueantes para Gate 10
+## Cierre de Gate 10
 
-1. El commit final y su CI alojado deben pasar.
-2. El tag, la GitHub Release y el cambio de visibilidad deben verificarse.
-3. El fresh clone público final debe pasar validator, tests y scans.
-4. Gate 10 solo puede cerrarse después de completar esas verificaciones.
+- Demo final grabada, revisada y enlazada.
+- Release target `e7171f22bc0e59951e9c70bd79d5ccf1e8f809c0` con CI alojado PASS.
+- `v1.0` preservada en `fc42c911725aa589e3b36207d0be5b95b9f08063`.
+- Tag y GitHub Release `v1.1.0 — Portfolio Release` publicados.
+- Repositorio de portfolio PUBLIC; repositorio operativo PRIVATE.
+- README, assets, licencia, topics y enlaces públicos verificados.
+- Fresh clone público con validator, 35/35 tests y dataset 30/120 en PASS.
+- Historia, refs, secrets, endpoints, IPs y rutas personales en PASS.
 
 ## Phase 10.W–10.X — candidato y pre-publicación
 
@@ -63,10 +67,10 @@ privado original conserva la autoridad de deployment.
 Phase 10.X añadió MIT License, un manual exacto para assets reales, claims
 aptos para CV con fuentes, release notes de `v1.1.0` y la checklist de
 publicación. Phase 10.Y consolidó siete PNG finales, un storyboard de 3:10 y
-un script hablado que no depende de producción. `v1.1.0` está preparada
-conceptualmente, pero no existe tag ni GitHub Release. El siguiente estado es
-`READY FOR PUBLICATION`; Gate 10 continúa pendiente hasta la verificación
-posterior a la publicación.
+un script hablado que no depende de producción. Phase 10.Z publicó `v1.1.0`,
+la GitHub Release y el repositorio sanitizado. Las condiciones de publicación
+y verificación posterior quedaron satisfechas sin mover `v1.0` ni dar
+autoridad productiva al candidato.
 
 ## Phase 10.V — rotación del endpoint productivo
 

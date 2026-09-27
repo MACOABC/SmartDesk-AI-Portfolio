@@ -1,7 +1,7 @@
 # SmartDesk AI — Publication checklist
 
-El candidato debe permanecer **PRIVATE** hasta que todos los controles manuales
-estén completados y el propietario autorice explícitamente la publicación.
+La publicación se ejecutó únicamente después de completar los controles y de
+la autorización explícita del propietario.
 
 ## Technical readiness
 
@@ -24,12 +24,12 @@ estén completados y el propietario autorice explícitamente la publicación.
 - [x] Cada screenshot revisado al 100 % de zoom.
 - [x] Demo de aproximadamente 3 minutos grabada.
 - [x] Video revisado cuadro por cuadro.
-- [ ] README renderizado revisado con los assets finales.
-- [ ] Fresh clone final después de incorporar assets.
+- [x] README renderizado revisado con los assets finales.
+- [x] Fresh clone final después de incorporar assets.
 - [x] Tag `v1.1.0` autorizado.
 - [x] GitHub Release `v1.1.0 — Portfolio Release` autorizada.
 - [x] Owner approval para publicar.
-- [ ] Visibility cambiada explícitamente a PUBLIC.
+- [x] Visibility cambiada explícitamente a PUBLIC.
 
 No marcar controles manuales por inferencia ni crear tag, release o cambio de
 visibilidad antes de la autorización final.

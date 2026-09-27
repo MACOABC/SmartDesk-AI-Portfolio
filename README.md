@@ -234,14 +234,15 @@ snapshots de implementación y `docs/testing/GATE_X` conserva evidencia.
 - El environment `production` no tiene required reviewers configurados.
 - La copia de portfolio omite refs operativos históricos y conserva únicamente
   la historia sanitizada de `main` y el tag `v1.0`.
-- La versión histórica `v1.0` permanece intacta; `v1.1.0` está reservada
-  para el futuro release de portfolio y todavía no tiene tag ni GitHub Release.
+- La versión histórica `v1.0` permanece intacta; `v1.1.0` identifica la
+  [Portfolio Release](https://github.com/MACOABC/SmartDesk-AI-Portfolio/releases/tag/v1.1.0).
 
 ## Estado del proyecto
 
-Gates 0–9 están aprobados. Phase 10 está en progreso y Gate 10 aún no ha sido
-cerrado. No se afirman usuarios, volumen productivo, ahorro ni impacto de
-negocio porque esas métricas no han sido verificadas.
+Gates 0–10 están aprobados y Phase 10 está completa. El repositorio de
+portfolio es público; el repositorio operativo continúa privado. No se afirman
+usuarios, volumen productivo, ahorro ni impacto de negocio porque esas métricas
+no han sido verificadas.
 
 ## Licencia
 

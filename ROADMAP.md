@@ -20,7 +20,7 @@ La secuencia de fases procede de «00 — Roadmap y arquitectura inicial». Fase
 | 7 | Dataset sintético y evaluación de IA. | Gate 7. | COMPLETADA / APROBADO. |
 | 8 | SQL analítico y Power BI. | Gate 8. | COMPLETADA / APROBADO. |
 | 9 | CI/CD, monitoreo, health checks, backups y hardening adicional. | Gate 9. | COMPLETADA / APROBADO. |
-| 10 | Portafolio, documentación, demo, métricas reales, CV, LinkedIn y entrevista. | Gate 10 / cierre integral. | EN PROGRESO. |
+| 10 | Portfolio, documentación, demo, métricas verificadas y publicación. | Gate 10 / publicación profesional. | COMPLETADA / APROBADO. |
 
 El roadmap original nombró explícitamente Gates 0–4 y estableció un gate por fase. Aquí se extiende esa numeración a 5–10 para mantener una referencia uniforme, sin alterar el orden acordado.
 
@@ -160,9 +160,11 @@ El cierre 9.7 conectó `MACOABC/SmartDesk-AI` y añadió evidencia alojada real:
 CI PASS, FAIL controlado en PR, recovery PASS y CD `workflow_dispatch` PASS por
 SHA exacto.
 
-Phase 10 está **IN PROGRESS**: comenzó con auditoría de publicación, corrección
-del monitor hosted, coherencia documental, reproducibilidad y preparación de
-assets. Gate 10 todavía no está aprobado.
+Phase 10 está **COMPLETE** y Gate 10 **PASS**. El candidato sanitizado se
+publicó con MIT License, assets y demo revisados, CI PASS, tag y GitHub Release
+`v1.1.0`, aislamiento productivo y fresh clone público validado. `v1.0` no fue
+movido. CV, LinkedIn y preparación de entrevista permanecen como trabajo de
+empleabilidad separado, no como features del producto.
 
 ## Fases posteriores a V1
 
@@ -174,6 +176,6 @@ Los siguientes criterios orientan el cierre; sus contratos, umbrales y pruebas d
 | 7 — Evaluación IA | Dataset sintético etiquetado y versionado; evaluación reproducible con resultados reales, configuración del experimento y análisis de errores. Medir categoría, prioridad, latencia y fallos; revisión humana cuando aplique. |
 | 8 — Data/BI | Consultas SQL verificadas y dashboard reproducible por categoría, prioridad, área, estado y tiempo. Conciliar los indicadores con la base; usar SLA y resolución solo si hay datos y procesos implementados. |
 | 9 — Operación | CI/CD probado, controles de salud y monitoreo verificables, backups con restauración ensayada y revisión de hardening. Los controles básicos de seguridad, errores y salud necesarios antes se mantienen desde sus fases iniciales. |
-| 10 — Portafolio | Repositorio público profesional, README, arquitectura, instrucciones, seguridad, tests y CI, capturas, demo segura, métricas con evidencia, release estable, CV y LinkedIn actualizados, explicación de entrevista y preguntas técnicas preparadas. |
+| 10 — Portfolio | Repositorio público profesional, README, arquitectura, reproducción, seguridad, tests y CI, capturas, demo segura, métricas con evidencia y release estable. |
 
 El proyecto termina al superar el cierre integral, no solo al lograr que un ticket funcione. Las extensiones nuevas deben justificar su utilidad y su retorno profesional antes de incorporarse.

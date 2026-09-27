@@ -11,12 +11,13 @@ Gate 6 = PASS
 Gate 7 = PASS
 Gate 8 = PASS
 Gate 9 = PASS
+Gate 10 = PASS
 SmartDesk AI V1 = COMPLETE
 Phase 6 = COMPLETE
 Phase 7 = COMPLETE
 Phase 8 = COMPLETE
 Phase 9 = COMPLETE
-Phase 10 = IN PROGRESS
+Phase 10 = COMPLETE
 ```
 
 - **Gate 0: APROBADO.**
@@ -29,6 +30,7 @@ Phase 10 = IN PROGRESS
 - **Gate 7: APROBADO.**
 - **Gate 8: APROBADO.**
 - **Gate 9: APROBADO.**
+- **Gate 10: APROBADO.**
 - **Fase 1 — Repositorio + Docker Compose + PostgreSQL + base de n8n: COMPLETADA.**
 - **Fase 2 — Webhook + validación + persistencia inicial: COMPLETADA.**
 - **Fase 3 — IA, salida estructurada y versionado de prompts: COMPLETADA.**
@@ -39,7 +41,7 @@ Phase 10 = IN PROGRESS
 - **Phase 7 — dataset sintético y evaluación de IA: COMPLETADA.**
 - **Phase 8 — SQL analítico y Power BI: COMPLETADA.**
 - **Phase 9 — operación: COMPLETADA.**
-- **Phase 10 — portafolio y cierre integral: IN PROGRESS; Gate 10 pendiente.**
+- **Phase 10 — portfolio y publicación profesional: COMPLETADA.**
 - **Phase 7A — dataset sintético, política y validación local: COMPLETADA.**
 - **Phase 7B.2 — smoke live controlado sobre tres casos `dev`: PASS; ese smoke no ejecutó el test congelado.**
 - **Phase 7C — corrida oficial del frozen test v1: COMPLETE; Gate 7 aprobado.**
@@ -418,7 +420,7 @@ La evidencia está en `docs/testing/GATE_9.md`; la operación y recuperación en
 
 ## Phase 10 — Portfolio readiness
 
-Phase 10 está IN PROGRESS. El sprint inicial completó:
+Phase 10 está COMPLETE y Gate 10 PASS. El cierre verificó:
 
 - monitor hosted reparado y verificado en GitHub run `36087544636`;
 - current tree sin hostname productivo, secretos ni rutas personales;
@@ -432,11 +434,15 @@ Phase 10 está IN PROGRESS. El sprint inicial completó:
   https://youtu.be/li0uU9b3e70;
 - descripción y topics de GitHub mejorados sin cambiar visibilidad;
 - CI hosted PASS sobre los commits del sprint.
+- tag `v1.1.0` preservado sobre el release target
+  `e7171f22bc0e59951e9c70bd79d5ccf1e8f809c0`;
+- GitHub Release `v1.1.0 — Portfolio Release` publicada;
+- repositorio candidato cambiado a PUBLIC y fresh clone público en PASS.
 
-El candidato sanitizado `MACOABC/SmartDesk-AI-Portfolio` permanece privado,
-con `v1.0` preservado, historia/refs seguras, CI funcional y aislamiento de
-producción. MIT License y la estrategia `v1.1.0 — Portfolio Release` están
-documentadas; no existe todavía tag ni GitHub Release.
+El repositorio sanitizado `MACOABC/SmartDesk-AI-Portfolio` es público, conserva
+`v1.0`, tiene historia/refs seguras, CI funcional y aislamiento de producción.
+MIT License y `v1.1.0 — Portfolio Release` están publicadas. El repositorio
+operativo privado continúa siendo la única autoridad de deployment.
 
 Phase 10.V quedó PASS: la ruta productiva fue rotada mediante configuración
 externa, una única prueba E2E sintética confirmó n8n y persistencia, la ruta
@@ -445,10 +451,10 @@ El valor vigente no está en Git, docs ni logs. `refs/pull/1/head` sigue
 existiendo únicamente en el repositorio operativo; el candidato sanitizado no
 contiene refs de pull request.
 
-## Siguiente paso
+## Siguiente paso de empleabilidad
 
-Ejecutar la auditoría final, publicar `v1.1.0`, verificar el repositorio público
-y cerrar Gate 10 únicamente si todo permanece en PASS.
+Trabajar CV, LinkedIn y preparación de entrevista. No quedan features de
+software pendientes para cerrar el portfolio.
 
 ## Límites actuales
 
@@ -457,4 +463,4 @@ y cerrar Gate 10 únicamente si todo permanece en PASS.
 - La VM única sigue siendo un punto único de fallo. Phase 6 recupera estados internos stale después de 15 minutos, pero una entrega externa interrumpida puede quedar como `DELIVERY_STATE_UNKNOWN` y requiere conciliación manual.
 - El webhook no sustituye un portal autenticado ni una plataforma ITSM completa.
 - El contrato de intake y sus límites ya están documentados; la categoría residual permanece aprobada como `other`.
-- Gate 0–9 están aprobados. Phase 10 está en progreso y Gate 10 permanece pendiente.
+- Gates 0–10 están aprobados. Phase 10 está completa.
